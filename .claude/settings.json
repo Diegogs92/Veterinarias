@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(gh auth:*)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\diego\\veterinaria\\src",
+      "c:\\Users\\diego\\.claude\\projects\\c--Users-diego-veterinaria\\memory"
+    ]
+  }
+}
