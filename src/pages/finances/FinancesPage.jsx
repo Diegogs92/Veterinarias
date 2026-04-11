@@ -125,7 +125,7 @@ export default function FinancesPage() {
         </div>
 
         {/* Category breakdown */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+        <div className="two-col-grid" style={{ marginBottom: 20 }}>
           {['income', 'expense'].map(type => {
             const items = cash.items.filter(m => m.type === type)
             const cats = {}

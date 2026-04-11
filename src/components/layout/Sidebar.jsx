@@ -1,4 +1,5 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Users, PawPrint, CalendarDays,
   Stethoscope, Syringe, ShoppingCart, Hospital,
@@ -23,15 +24,19 @@ const NAV_VET = [
   { to: '/finances', Icon: Banknote, label: 'Caja / Finanzas' },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ open, onClose }) {
   const { currentUser, logout, isVet } = useAuth()
   const { theme, toggle } = useTheme()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => { onClose?.() }, [location.pathname])
 
   const handleLogout = () => { logout(); navigate('/login') }
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${open ? ' sidebar--open' : ''}`}>
       <div className="sidebar__logo">
         <div className="sidebar__logo-icon">
           <PawPrint size={18} strokeWidth={2} color="white" />
