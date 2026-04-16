@@ -7,10 +7,11 @@ import EmptyState from '../../components/ui/EmptyState'
 import Modal from '../../components/ui/Modal'
 import SpeciesIcon from '../../components/ui/SpeciesIcon'
 import ConsultationForm from './ConsultationForm'
-import { formatDate } from '../../utils/helpers'
+import { formatDate, formatCurrency } from '../../utils/helpers'
+import Badge from '../../components/ui/Badge'
 
 export default function ConsultationsPage() {
-  const { consultations, pets, owners } = useApp()
+  const { consultations, pets, owners, syncDebt } = useApp()
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [petFilter, setPetFilter] = useState('')
@@ -32,12 +33,35 @@ export default function ConsultationsPage() {
   )
 
   const handleSave = (data) => {
-    if (editing) consultations.update(editing.id, data)
-    else consultations.add(data)
+    let savedId
+    if (editing) {
+      consultations.update(editing.id, data)
+      savedId = editing.id
+    } else {
+      const created = consultations.add(data)
+      savedId = created.id
+    }
+    // Sync debt if price is set
+    if (data.price > 0) {
+      const pet = pets.find(data.petId)
+      const ownerId = pet?.ownerId
+      if (ownerId) {
+        syncDebt('consultation', savedId, ownerId, data.price, data.paidAmount)
+      }
+    }
     setEditing(null)
   }
 
-  const handleDelete = () => { consultations.remove(deleting.id); setDeleting(null) }
+  const handleDelete = () => {
+    if (deleting.price > 0) {
+      const pet = pets.find(deleting.petId)
+      if (pet?.ownerId) {
+        syncDebt('consultation', deleting.id, pet.ownerId, deleting.price, deleting.price)
+      }
+    }
+    consultations.remove(deleting.id)
+    setDeleting(null)
+  }
 
   return (
     <>
@@ -110,6 +134,14 @@ export default function ConsultationsPage() {
                     <div style={{ textAlign: 'right', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600 }}>{formatDate(c.date)}</div>
+                        {c.price > 0 && (
+                          <div style={{ marginTop: 3, display: 'flex', justifyContent: 'flex-end', gap: 6, alignItems: 'center' }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--vet-teal)' }}>{formatCurrency(c.price)}</span>
+                            <Badge color={c.paymentStatus === 'paid' ? 'green' : c.paymentStatus === 'partial' ? 'orange' : 'red'} dot>
+                              {c.paymentStatus === 'paid' ? 'Pagado' : c.paymentStatus === 'partial' ? 'Parcial' : 'Pendiente'}
+                            </Badge>
+                          </div>
+                        )}
                         <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 3, display: 'flex', justifyContent: 'flex-end' }}>
                           {isExpanded ? <ChevronUp size={14} strokeWidth={2} /> : <ChevronDown size={14} strokeWidth={2} />}
                         </div>

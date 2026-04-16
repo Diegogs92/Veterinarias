@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { TrendingUp, TrendingDown, Scale, ShoppingCart, Lock, Pencil, Trash2, Banknote } from 'lucide-react'
+import {
+  TrendingUp, TrendingDown, Scale, ShoppingCart, Lock,
+  Pencil, Trash2, Banknote, Stethoscope, AlertCircle, CheckCircle2, Plus,
+} from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { useAuth } from '../../context/AuthContext'
 import Header from '../../components/layout/Header'
@@ -9,23 +11,29 @@ import EmptyState from '../../components/ui/EmptyState'
 import Modal from '../../components/ui/Modal'
 import { formatDate, formatCurrency, todayStr } from '../../utils/helpers'
 
-const EMPTY_MOVEMENT = { type: 'income', category: '', description: '', amount: '', date: todayStr() }
+const EXPENSE_CATEGORIES = [
+  'Insumos médicos', 'Alimentos', 'Personal', 'Servicios',
+  'Alquiler', 'Mantenimiento', 'Impuestos', 'Otros gastos',
+]
 
-const CATEGORIES = {
-  income:  ['Consultas', 'Productos', 'Vacunas', 'Cirugías', 'Internación', 'Otros ingresos'],
-  expense: ['Insumos médicos', 'Alimentos', 'Personal', 'Servicios', 'Alquiler', 'Mantenimiento', 'Impuestos', 'Otros gastos'],
-}
+const EMPTY_EXPENSE = { category: '', description: '', amount: '', date: todayStr() }
+const EMPTY_PAYMENT = { amount: '', date: todayStr(), notes: '' }
 
 export default function FinancesPage() {
-  const { cash, sales } = useApp()
+  const { cash, sales, consultations, owners, pets, debts, registerDebtPayment } = useApp()
   const { canViewFinances } = useAuth()
-  const navigate = useNavigate()
-  const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState(null)
-  const [deleting, setDeleting] = useState(null)
-  const [form, setForm] = useState(EMPTY_MOVEMENT)
-  const [errors, setErrors] = useState({})
-  const [typeFilter, setTypeFilter] = useState('')
+
+  // Expense modal
+  const [expenseOpen, setExpenseOpen]   = useState(false)
+  const [editingExp, setEditingExp]     = useState(null)
+  const [expForm, setExpForm]           = useState(EMPTY_EXPENSE)
+  const [expErrors, setExpErrors]       = useState({})
+  const [deletingExp, setDeletingExp]   = useState(null)
+
+  // Debt payment modal
+  const [paymentDebt, setPaymentDebt]   = useState(null)  // debt object
+  const [payForm, setPayForm]           = useState(EMPTY_PAYMENT)
+  const [payErrors, setPayErrors]       = useState({})
 
   if (!canViewFinances) {
     return (
@@ -41,163 +49,371 @@ export default function FinancesPage() {
     )
   }
 
-  const filtered = useMemo(() =>
-    cash.items
-      .filter(m => !typeFilter || m.type === typeFilter)
+  // ── Income calculations (auto) ─────────────────────────────────────────────
+  const salesIncome  = sales.items
+    .filter(s => s.paymentStatus === 'paid' || s.paymentStatus === 'partial')
+    .reduce((sum, s) => sum + (s.paidAmount || 0), 0)
+
+  const consultIncome = consultations.items
+    .filter(c => c.price > 0 && (c.paymentStatus === 'paid' || c.paymentStatus === 'partial'))
+    .reduce((sum, c) => sum + (c.paidAmount || 0), 0)
+
+  const totalIncome = salesIncome + consultIncome
+
+  // ── Debts ──────────────────────────────────────────────────────────────────
+  const pendingDebts = useMemo(() =>
+    debts.items
+      .filter(d => d.status !== 'paid')
       .sort((a, b) => new Date(b.date) - new Date(a.date)),
-    [cash.items, typeFilter]
+    [debts.items]
   )
 
-  const totalIncome  = cash.items.filter(m => m.type === 'income').reduce((s, m) => s + m.amount, 0)
-  const totalExpense = cash.items.filter(m => m.type === 'expense').reduce((s, m) => s + m.amount, 0)
-  const balance      = totalIncome - totalExpense
-  const salesIncome  = sales.items.reduce((s, m) => s + m.price, 0)
+  // Group by owner
+  const debtsByOwner = useMemo(() => {
+    const map = {}
+    pendingDebts.forEach(d => {
+      if (!map[d.ownerId]) map[d.ownerId] = { ownerId: d.ownerId, debts: [] }
+      map[d.ownerId].debts.push(d)
+    })
+    return Object.values(map).map(entry => ({
+      ...entry,
+      totalDebt: entry.debts.reduce((s, d) => s + d.totalAmount, 0),
+      totalPaid: entry.debts.reduce((s, d) => s + (d.paidAmount || 0), 0),
+      balance:   entry.debts.reduce((s, d) => s + (d.totalAmount - (d.paidAmount || 0)), 0),
+    })).sort((a, b) => b.balance - a.balance)
+  }, [pendingDebts])
 
-  const setF = (field) => (e) => {
-    setForm(f => ({ ...f, [field]: e.target.value }))
-    setErrors(er => ({ ...er, [field]: '' }))
+  // ── Expenses ───────────────────────────────────────────────────────────────
+  const expenses = useMemo(() =>
+    cash.items
+      .filter(m => m.type === 'expense')
+      .sort((a, b) => new Date(b.date) - new Date(a.date)),
+    [cash.items]
+  )
+
+  const totalExpenses = expenses.reduce((s, m) => s + m.amount, 0)
+  const balance       = totalIncome - totalExpenses
+
+  // ── Expense handlers ───────────────────────────────────────────────────────
+  const setEF = (field) => (e) => {
+    setExpForm(f => ({ ...f, [field]: e.target.value }))
+    setExpErrors(er => ({ ...er, [field]: '' }))
   }
 
-  const validate = () => {
+  const validateExp = () => {
     const errs = {}
-    if (!form.description.trim()) errs.description = 'Requerido'
-    if (!form.amount || parseFloat(form.amount) <= 0) errs.amount = 'Monto válido requerido'
-    if (!form.date) errs.date = 'Requerido'
+    if (!expForm.description.trim()) errs.description = 'Requerido'
+    if (!expForm.amount || parseFloat(expForm.amount) <= 0) errs.amount = 'Monto válido requerido'
+    if (!expForm.date) errs.date = 'Requerido'
     return errs
   }
 
-  const handleSave = () => {
-    const errs = validate()
-    if (Object.keys(errs).length) { setErrors(errs); return }
-    const data = { ...form, amount: parseFloat(form.amount) }
-    if (editing) cash.update(editing.id, data)
+  const handleSaveExpense = () => {
+    const errs = validateExp()
+    if (Object.keys(errs).length) { setExpErrors(errs); return }
+    const data = { ...expForm, type: 'expense', amount: parseFloat(expForm.amount) }
+    if (editingExp) cash.update(editingExp.id, data)
     else cash.add(data)
-    setEditing(null); setFormOpen(false); setForm(EMPTY_MOVEMENT)
+    setEditingExp(null); setExpenseOpen(false); setExpForm(EMPTY_EXPENSE)
   }
 
-  const openEdit = (item) => { setEditing(item); setForm({ ...item, amount: String(item.amount) }); setFormOpen(true) }
-  const openNew  = () => { setEditing(null); setForm(EMPTY_MOVEMENT); setErrors({}); setFormOpen(true) }
-  const handleDelete = () => { cash.remove(deleting.id); setDeleting(null) }
+  const openEditExp = (item) => {
+    setEditingExp(item)
+    setExpForm({ category: item.category || '', description: item.description, amount: String(item.amount), date: item.date })
+    setExpErrors({})
+    setExpenseOpen(true)
+  }
+
+  const openNewExp = () => { setEditingExp(null); setExpForm(EMPTY_EXPENSE); setExpErrors({}); setExpenseOpen(true) }
+
+  // ── Debt payment handlers ──────────────────────────────────────────────────
+  const setPF = (field) => (e) => {
+    setPayForm(f => ({ ...f, [field]: e.target.value }))
+    setPayErrors(er => ({ ...er, [field]: '' }))
+  }
+
+  const openPayment = (debt) => {
+    setPaymentDebt(debt)
+    setPayForm(EMPTY_PAYMENT)
+    setPayErrors({})
+  }
+
+  const handleSavePayment = () => {
+    const errs = {}
+    const amount = parseFloat(payForm.amount)
+    const saldo = paymentDebt.totalAmount - (paymentDebt.paidAmount || 0)
+    if (!amount || amount <= 0) errs.amount = 'Ingresá un monto'
+    else if (amount > saldo) errs.amount = `El monto no puede superar el saldo (${ formatCurrency(saldo) })`
+    if (!payForm.date) errs.date = 'Requerido'
+    if (Object.keys(errs).length) { setPayErrors(errs); return }
+    registerDebtPayment(paymentDebt.id, amount, payForm.date, payForm.notes)
+    setPaymentDebt(null)
+  }
+
+  // ── Category breakdown for expenses ───────────────────────────────────────
+  const expenseByCat = useMemo(() => {
+    const cats = {}
+    expenses.forEach(m => { cats[m.category || 'Sin categoría'] = (cats[m.category || 'Sin categoría'] || 0) + m.amount })
+    return Object.entries(cats).sort((a, b) => b[1] - a[1])
+  }, [expenses])
+
+  // ── Recent income table ────────────────────────────────────────────────────
+  const recentIncome = useMemo(() => {
+    const salesEntries = sales.items
+      .filter(s => s.paidAmount > 0)
+      .map(s => ({
+        id: s.id, type: 'sale', date: s.date,
+        label: `Venta (${owners.find(s.ownerId)?.name || '—'})`,
+        amount: s.paidAmount || 0,
+        status: s.paymentStatus,
+      }))
+    const consultEntries = consultations.items
+      .filter(c => c.price > 0 && c.paidAmount > 0)
+      .map(c => {
+        const pet = pets.find(c.petId)
+        return {
+          id: c.id, type: 'consultation', date: c.date,
+          label: `Consulta · ${pet?.name || '—'} (${owners.find(pet?.ownerId)?.name || '—'})`,
+          amount: c.paidAmount || 0,
+          status: c.paymentStatus,
+        }
+      })
+    return [...salesEntries, ...consultEntries]
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 20)
+  }, [sales.items, consultations.items, owners, pets])
 
   return (
     <>
       <Header
         title="Caja / Finanzas"
         subtitle="Solo visible para veterinarios"
-        actions={<button className="btn btn--primary" onClick={openNew}>+ Registrar movimiento</button>}
+        actions={
+          <button className="btn btn--danger" onClick={openNewExp}>
+            <Plus size={16} /> Registrar egreso
+          </button>
+        }
       />
+
       <div className="page">
-        <div className="stats-grid" style={{ marginBottom: 24 }}>
+
+        {/* ── BLOCK 1: Income summary ─────────────────────────────────────── */}
+        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--text-secondary)' }}>
+          Ingresos cobrados
+        </h2>
+        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', marginBottom: 20 }}>
           <div className="stat-card">
-            <div className="stat-card__icon" style={{ background: 'rgba(52,199,89,0.12)', color: 'var(--green)' }}>
-              <TrendingUp size={22} strokeWidth={1.75} />
+            <div className="stat-card__icon" style={{ color: 'var(--vet-teal)' }}>
+              <ShoppingCart size={32} strokeWidth={1.75} />
             </div>
-            <div className="stat-card__label">Ingresos registrados</div>
-            <div className="stat-card__value" style={{ color: 'var(--green)', fontSize: 18 }}>{formatCurrency(totalIncome)}</div>
-            <div className="stat-card__sub">en caja manual</div>
+            <div className="stat-card__label">Ventas cobradas</div>
+            <div className="stat-card__value" style={{ color: 'var(--vet-teal)', fontSize: 20 }}>{formatCurrency(salesIncome)}</div>
           </div>
           <div className="stat-card">
-            <div className="stat-card__icon" style={{ background: 'rgba(255,59,48,0.12)', color: 'var(--red)' }}>
-              <TrendingDown size={22} strokeWidth={1.75} />
+            <div className="stat-card__icon" style={{ color: 'var(--vet-purple)' }}>
+              <Stethoscope size={32} strokeWidth={1.75} />
             </div>
-            <div className="stat-card__label">Egresos</div>
-            <div className="stat-card__value" style={{ color: 'var(--red)', fontSize: 18 }}>{formatCurrency(totalExpense)}</div>
-            <div className="stat-card__sub">{cash.items.filter(m => m.type === 'expense').length} movimientos</div>
+            <div className="stat-card__label">Consultas cobradas</div>
+            <div className="stat-card__value" style={{ color: 'var(--vet-purple)', fontSize: 20 }}>{formatCurrency(consultIncome)}</div>
           </div>
           <div className="stat-card">
-            <div className="stat-card__icon" style={{ background: balance >= 0 ? 'rgba(0,122,255,0.12)' : 'rgba(255,59,48,0.12)', color: balance >= 0 ? 'var(--blue)' : 'var(--red)' }}>
-              <Scale size={22} strokeWidth={1.75} />
+            <div className="stat-card__icon" style={{ color: 'var(--vet-emerald)' }}>
+              <TrendingUp size={32} strokeWidth={1.75} />
             </div>
-            <div className="stat-card__label">Balance</div>
-            <div className="stat-card__value" style={{ color: balance >= 0 ? 'var(--blue)' : 'var(--red)', fontSize: 18 }}>
+            <div className="stat-card__label">Total ingresos</div>
+            <div className="stat-card__value" style={{ color: 'var(--vet-emerald)', fontSize: 20 }}>{formatCurrency(totalIncome)}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-card__icon" style={{ color: balance >= 0 ? 'var(--vet-amber)' : 'var(--vet-rose)' }}>
+              <Scale size={32} strokeWidth={1.75} />
+            </div>
+            <div className="stat-card__label">Balance (ingresos − egresos)</div>
+            <div className="stat-card__value" style={{ color: balance >= 0 ? 'var(--vet-amber)' : 'var(--vet-rose)', fontSize: 20 }}>
               {formatCurrency(balance)}
             </div>
-            <div className="stat-card__sub">{balance >= 0 ? 'Positivo' : 'Negativo'}</div>
           </div>
-          <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/sales')}>
-            <div className="stat-card__icon" style={{ background: 'rgba(175,82,222,0.12)', color: 'var(--purple)' }}>
-              <ShoppingCart size={22} strokeWidth={1.75} />
+        </div>
+
+        {/* Recent income table */}
+        <div className="card card--no-hover" style={{ marginBottom: 32 }}>
+          <div className="card__header">
+            <span className="card__title">Últimos cobros</span>
+          </div>
+          {recentIncome.length === 0 ? (
+            <div style={{ padding: '24px 20px', color: 'var(--text-tertiary)', fontSize: 13 }}>
+              Aún no hay cobros registrados.
             </div>
-            <div className="stat-card__label">Total ventas</div>
-            <div className="stat-card__value" style={{ color: 'var(--purple)', fontSize: 18 }}>{formatCurrency(salesIncome)}</div>
-            <div className="stat-card__sub">Ver módulo ventas →</div>
+          ) : (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Origen</th>
+                    <th>Descripción</th>
+                    <th style={{ textAlign: 'right' }}>Cobrado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentIncome.map(entry => (
+                    <tr key={`${entry.type}-${entry.id}`}>
+                      <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(entry.date)}</td>
+                      <td>
+                        <Badge color={entry.type === 'sale' ? 'blue' : 'purple'}>
+                          {entry.type === 'sale' ? 'Venta' : 'Consulta'}
+                        </Badge>
+                      </td>
+                      <td style={{ fontSize: 13 }} className="truncate">{entry.label}</td>
+                      <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-emerald)', whiteSpace: 'nowrap' }}>
+                        + {formatCurrency(entry.amount)}
+                        {entry.status === 'partial' && (
+                          <Badge color="orange" style={{ marginLeft: 6 }}>Parcial</Badge>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* ── BLOCK 2: Debts ──────────────────────────────────────────────── */}
+        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--text-secondary)' }}>
+          Deudas pendientes
+        </h2>
+        {debtsByOwner.length === 0 ? (
+          <div className="card card--no-hover" style={{ marginBottom: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px', color: 'var(--vet-emerald)' }}>
+              <CheckCircle2 size={20} strokeWidth={2} />
+              <span style={{ fontSize: 14, fontWeight: 600 }}>Sin deudas pendientes</span>
+            </div>
+          </div>
+        ) : (
+          <div className="card card--no-hover" style={{ marginBottom: 32 }}>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th style={{ textAlign: 'right' }}>Deuda total</th>
+                    <th style={{ textAlign: 'right' }}>Pagado</th>
+                    <th style={{ textAlign: 'right' }}>Saldo</th>
+                    <th style={{ width: 80 }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {debtsByOwner.map(entry => {
+                    const owner = owners.find(entry.ownerId)
+                    return (
+                      <tr key={entry.ownerId}>
+                        <td style={{ fontWeight: 600 }}>{owner?.name || '—'}</td>
+                        <td style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>
+                          {formatCurrency(entry.totalDebt)}
+                        </td>
+                        <td style={{ textAlign: 'right', color: 'var(--vet-emerald)' }}>
+                          {formatCurrency(entry.totalPaid)}
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: 800, color: 'var(--vet-rose)' }}>
+                          {formatCurrency(entry.balance)}
+                        </td>
+                        <td>
+                          {entry.debts.map(d => (
+                            <button
+                              key={d.id}
+                              className="btn btn--subtle btn--sm"
+                              style={{ fontSize: 12, whiteSpace: 'nowrap' }}
+                              onClick={() => openPayment(d)}
+                            >
+                              Registrar pago
+                            </button>
+                          ))}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ── BLOCK 3: Expenses ───────────────────────────────────────────── */}
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 16 }}>Egresos</h2>
+
+        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', marginBottom: 20 }}>
+          <div className="stat-card">
+            <div className="stat-card__icon" style={{ color: 'var(--vet-rose)' }}>
+              <TrendingDown size={32} strokeWidth={1.75} />
+            </div>
+            <div className="stat-card__label">Total egresos</div>
+            <div className="stat-card__value" style={{ color: 'var(--vet-rose)', fontSize: 20 }}>{formatCurrency(totalExpenses)}</div>
+            <div className="stat-card__sub">{expenses.length} movimientos</div>
           </div>
         </div>
 
         {/* Category breakdown */}
-        <div className="two-col-grid" style={{ marginBottom: 20 }}>
-          {['income', 'expense'].map(type => {
-            const items = cash.items.filter(m => m.type === type)
-            const cats = {}
-            items.forEach(m => { cats[m.category || 'Sin categoría'] = (cats[m.category || 'Sin categoría'] || 0) + m.amount })
-            const sorted = Object.entries(cats).sort((a, b) => b[1] - a[1])
-            const total = items.reduce((s, m) => s + m.amount, 0)
-            return (
-              <div key={type} className="card card--no-hover">
-                <div className="card__header">
-                  <span className="card__title" style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                    {type === 'income'
-                      ? <TrendingUp size={15} strokeWidth={2} style={{ color: 'var(--green)' }} />
-                      : <TrendingDown size={15} strokeWidth={2} style={{ color: 'var(--red)' }} />
-                    }
-                    {type === 'income' ? 'Ingresos por categoría' : 'Egresos por categoría'}
-                  </span>
-                </div>
-                <div className="card__body">
-                  {sorted.length === 0 ? (
-                    <p style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>Sin datos</p>
-                  ) : sorted.map(([cat, amount]) => (
-                    <div key={cat} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{cat}</div>
-                        <div style={{ height: 6, borderRadius: 3, background: type === 'income' ? 'rgba(52,199,89,0.15)' : 'rgba(255,59,48,0.10)', overflow: 'hidden' }}>
-                          <div style={{ height: '100%', width: `${total > 0 ? (amount / total) * 100 : 0}%`, background: type === 'income' ? 'var(--green)' : 'var(--red)', borderRadius: 3 }} />
-                        </div>
-                      </div>
-                      <div style={{ fontWeight: 700, fontSize: 13, marginLeft: 12, flexShrink: 0 }}>{formatCurrency(amount)}</div>
+        {expenseByCat.length > 0 && (
+          <div className="card card--no-hover" style={{ marginBottom: 20 }}>
+            <div className="card__header">
+              <span className="card__title">Egresos por categoría</span>
+            </div>
+            <div className="card__body">
+              {expenseByCat.map(([cat, amount]) => (
+                <div key={cat} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{cat}</div>
+                    <div style={{ height: 6, borderRadius: 3, background: 'rgba(244,63,94,0.10)', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0}%`, background: 'var(--vet-rose)', borderRadius: 3 }} />
                     </div>
-                  ))}
+                  </div>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginLeft: 12, flexShrink: 0 }}>{formatCurrency(amount)}</div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
-
-        <div style={{ marginBottom: 12 }}>
-          <div className="tabs" style={{ display: 'inline-flex' }}>
-            <button className={`tab${typeFilter === '' ? ' active' : ''}`} onClick={() => setTypeFilter('')}>Todos</button>
-            <button className={`tab${typeFilter === 'income' ? ' active' : ''}`} onClick={() => setTypeFilter('income')}>Ingresos</button>
-            <button className={`tab${typeFilter === 'expense' ? ' active' : ''}`} onClick={() => setTypeFilter('expense')}>Egresos</button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
-        {filtered.length === 0 ? (
+        {expenses.length === 0 ? (
           <EmptyState
-            icon={<Banknote size={48} strokeWidth={1.25} />}
-            title="Sin movimientos"
-            action={<button className="btn btn--primary" onClick={openNew}>+ Registrar movimiento</button>}
+            icon={<Banknote size={40} strokeWidth={1.5} />}
+            title="Sin egresos"
+            text="Usá el botón 'Registrar egreso' para agregar gastos de la veterinaria"
           />
         ) : (
           <div className="card card--no-hover">
             <div className="table-wrap">
               <table>
                 <thead>
-                  <tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Descripción</th><th style={{ textAlign: 'right' }}>Monto</th><th></th></tr>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Categoría</th>
+                    <th>Descripción</th>
+                    <th style={{ textAlign: 'right' }}>Monto</th>
+                    <th style={{ width: 80 }}></th>
+                  </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(m => (
+                  {expenses.map(m => (
                     <tr key={m.id}>
-                      <td style={{ fontSize: 13 }}>{formatDate(m.date)}</td>
-                      <td><Badge color={m.type === 'income' ? 'green' : 'red'} dot>{m.type === 'income' ? 'Ingreso' : 'Egreso'}</Badge></td>
+                      <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(m.date)}</td>
                       <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{m.category || '—'}</td>
                       <td className="truncate" style={{ maxWidth: 240 }}>{m.description}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: m.type === 'income' ? 'var(--green)' : 'var(--red)', fontVariantNumeric: 'tabular-nums' }}>
-                        {m.type === 'expense' ? '− ' : '+ '}{formatCurrency(m.amount)}
+                      <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-rose)', whiteSpace: 'nowrap' }}>
+                        − {formatCurrency(m.amount)}
                       </td>
                       <td>
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <button className="btn btn--subtle btn--sm btn--icon" onClick={() => openEdit(m)}><Pencil size={14} strokeWidth={2} /></button>
-                          <button className="btn btn--subtle btn--sm btn--icon" onClick={() => setDeleting(m)}><Trash2 size={14} strokeWidth={2} /></button>
+                        <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                          <button className="btn btn--subtle btn--sm btn--icon" onClick={() => openEditExp(m)}>
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            className="btn btn--subtle btn--sm btn--icon"
+                            onClick={() => setDeletingExp(m)}
+                            style={{ color: 'var(--vet-rose)' }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -209,63 +425,133 @@ export default function FinancesPage() {
         )}
       </div>
 
+      {/* Expense modal */}
       <Modal
-        isOpen={formOpen}
-        onClose={() => { setFormOpen(false); setEditing(null); setForm(EMPTY_MOVEMENT) }}
-        title={editing ? 'Editar movimiento' : 'Nuevo movimiento'}
+        isOpen={expenseOpen}
+        onClose={() => { setExpenseOpen(false); setEditingExp(null); setExpForm(EMPTY_EXPENSE) }}
+        title={editingExp ? 'Editar egreso' : 'Registrar egreso'}
         footer={
           <>
-            <button className="btn btn--ghost" onClick={() => { setFormOpen(false); setEditing(null) }}>Cancelar</button>
-            <button className="btn btn--primary" onClick={handleSave}>{editing ? 'Guardar' : 'Registrar'}</button>
+            <button className="btn btn--ghost" onClick={() => { setExpenseOpen(false); setEditingExp(null) }}>Cancelar</button>
+            <button className="btn btn--primary" onClick={handleSaveExpense}>{editingExp ? 'Guardar' : 'Registrar'}</button>
           </>
         }
       >
         <div className="form-row form-row--2">
           <div className="form-group">
-            <label className="form-label">Tipo</label>
-            <select className="form-input" value={form.type} onChange={setF('type')}>
-              <option value="income">Ingreso</option>
-              <option value="expense">Egreso</option>
+            <label className="form-label">Categoría</label>
+            <select className="form-input" value={expForm.category} onChange={setEF('category')}>
+              <option value="">Sin categoría</option>
+              {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div className="form-group">
             <label className="form-label">Fecha *</label>
-            <input className={`form-input${errors.date ? ' form-input--error' : ''}`} type="date" value={form.date} onChange={setF('date')} />
+            <input
+              className={`form-input${expErrors.date ? ' form-input--error' : ''}`}
+              type="date" value={expForm.date} onChange={setEF('date')}
+            />
           </div>
         </div>
         <div className="form-group">
-          <label className="form-label">Categoría</label>
-          <select className="form-input" value={form.category} onChange={setF('category')}>
-            <option value="">Seleccionar categoría...</option>
-            {CATEGORIES[form.type].map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-        <div className="form-group">
           <label className="form-label">Descripción *</label>
-          <input className={`form-input${errors.description ? ' form-input--error' : ''}`} value={form.description} onChange={setF('description')} placeholder="Descripción del movimiento..." />
-          {errors.description && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.description}</span>}
+          <input
+            className={`form-input${expErrors.description ? ' form-input--error' : ''}`}
+            value={expForm.description} onChange={setEF('description')}
+            placeholder="Descripción del egreso..."
+          />
+          {expErrors.description && <span style={{ color: 'var(--red)', fontSize: 12 }}>{expErrors.description}</span>}
         </div>
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label className="form-label">Monto (ARS) *</label>
-          <input className={`form-input${errors.amount ? ' form-input--error' : ''}`} type="number" min="0" step="100" value={form.amount} onChange={setF('amount')} placeholder="0" />
-          {errors.amount && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.amount}</span>}
+          <input
+            className={`form-input${expErrors.amount ? ' form-input--error' : ''}`}
+            type="number" min="0" step="100"
+            value={expForm.amount} onChange={setEF('amount')} placeholder="0"
+          />
+          {expErrors.amount && <span style={{ color: 'var(--red)', fontSize: 12 }}>{expErrors.amount}</span>}
         </div>
       </Modal>
 
-      <Modal
-        isOpen={!!deleting}
-        onClose={() => setDeleting(null)}
-        title="Eliminar movimiento"
-        size="sm"
-        footer={
-          <>
-            <button className="btn btn--ghost" onClick={() => setDeleting(null)}>Cancelar</button>
-            <button className="btn btn--danger" onClick={handleDelete}>Eliminar</button>
-          </>
-        }
-      >
-        <p style={{ color: 'var(--text-secondary)' }}>¿Eliminar <strong>{deleting?.description}</strong>?</p>
-      </Modal>
+      {/* Delete expense */}
+      {deletingExp && (
+        <Modal
+          isOpen
+          onClose={() => setDeletingExp(null)}
+          title="Eliminar egreso"
+          size="sm"
+          footer={
+            <>
+              <button className="btn btn--ghost" onClick={() => setDeletingExp(null)}>Cancelar</button>
+              <button className="btn btn--danger" onClick={() => { cash.remove(deletingExp.id); setDeletingExp(null) }}>Eliminar</button>
+            </>
+          }
+        >
+          <p style={{ fontSize: 15 }}>¿Eliminar <strong>{deletingExp.description}</strong>?</p>
+        </Modal>
+      )}
+
+      {/* Debt payment modal */}
+      {paymentDebt && (
+        <Modal
+          isOpen
+          onClose={() => setPaymentDebt(null)}
+          title="Registrar pago de deuda"
+          size="sm"
+          footer={
+            <>
+              <button className="btn btn--ghost" onClick={() => setPaymentDebt(null)}>Cancelar</button>
+              <button className="btn btn--primary" onClick={handleSavePayment}>Registrar pago</button>
+            </>
+          }
+        >
+          {/* Debt info */}
+          <div style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Deuda total</span>
+              <span style={{ fontWeight: 600 }}>{formatCurrency(paymentDebt.totalAmount)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Ya pagado</span>
+              <span style={{ color: 'var(--vet-emerald)', fontWeight: 600 }}>{formatCurrency(paymentDebt.paidAmount || 0)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, borderTop: '1px solid var(--border)', paddingTop: 8, fontWeight: 800 }}>
+              <span>Saldo pendiente</span>
+              <span style={{ color: 'var(--vet-rose)' }}>
+                {formatCurrency(paymentDebt.totalAmount - (paymentDebt.paidAmount || 0))}
+              </span>
+            </div>
+          </div>
+
+          <div className="form-row form-row--2">
+            <div className="form-group">
+              <label className="form-label">Monto a pagar (ARS) *</label>
+              <input
+                className={`form-input${payErrors.amount ? ' form-input--error' : ''}`}
+                type="number" min="0" step="100"
+                value={payForm.amount} onChange={setPF('amount')} placeholder="0"
+                autoFocus
+              />
+              {payErrors.amount && <span style={{ color: 'var(--red)', fontSize: 12 }}>{payErrors.amount}</span>}
+            </div>
+            <div className="form-group">
+              <label className="form-label">Fecha *</label>
+              <input
+                className={`form-input${payErrors.date ? ' form-input--error' : ''}`}
+                type="date" value={payForm.date} onChange={setPF('date')}
+              />
+            </div>
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Notas</label>
+            <input
+              className="form-input"
+              value={payForm.notes} onChange={setPF('notes')}
+              placeholder="Efectivo, transferencia..."
+            />
+          </div>
+        </Modal>
+      )}
     </>
   )
 }

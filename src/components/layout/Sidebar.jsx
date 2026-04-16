@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Users, PawPrint, CalendarDays,
   Stethoscope, Syringe, ShoppingCart, Hospital,
-  Banknote, Moon, Sun, LogOut,
+  Banknote, Moon, Sun, LogOut, PackageSearch,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
@@ -16,6 +16,7 @@ const NAV = [
   { to: '/appointments',  Icon: CalendarDays,    label: 'Turnos' },
   { to: '/consultations', Icon: Stethoscope,     label: 'Historial Clínico' },
   { to: '/vaccines',      Icon: Syringe,         label: 'Vacunas' },
+  { to: '/catalog',       Icon: PackageSearch,   label: 'Catálogo' },
   { to: '/sales',         Icon: ShoppingCart,    label: 'Ventas' },
   { to: '/internments',   Icon: Hospital,        label: 'Internación' },
 ]
@@ -52,11 +53,12 @@ export default function Sidebar({ open, onClose }) {
             to={to}
             end={to === '/'}
             className={({ isActive }) => `sidebar__item${isActive ? ' active' : ''}`}
+            data-tooltip={label}
           >
             <span className="sidebar__item-icon">
               <Icon size={16} strokeWidth={1.75} />
             </span>
-            {label}
+            <span className="sidebar__item-text">{label}</span>
           </NavLink>
         ))}
 
@@ -68,11 +70,12 @@ export default function Sidebar({ open, onClose }) {
                 key={to}
                 to={to}
                 className={({ isActive }) => `sidebar__item${isActive ? ' active' : ''}`}
+                data-tooltip={label}
               >
                 <span className="sidebar__item-icon">
                   <Icon size={16} strokeWidth={1.75} />
                 </span>
-                {label}
+                <span className="sidebar__item-text">{label}</span>
               </NavLink>
             ))}
           </>
@@ -84,6 +87,7 @@ export default function Sidebar({ open, onClose }) {
           className="sidebar__item"
           style={{ width: '100%', border: 'none', background: 'transparent', marginBottom: 4 }}
           onClick={toggle}
+          data-tooltip={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
         >
           <span className="sidebar__item-icon">
             {theme === 'dark'
@@ -91,7 +95,7 @@ export default function Sidebar({ open, onClose }) {
               : <Moon size={16} strokeWidth={1.75} />
             }
           </span>
-          {theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+          <span className="sidebar__item-text">{theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>
         </button>
 
         <div className="sidebar__user" onClick={handleLogout} title="Cerrar sesión">

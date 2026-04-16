@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Modal from '../../components/ui/Modal'
 
-const EMPTY = { name: '', phone: '', email: '', address: '' }
+const EMPTY = { name: '', phone: '', email: '', address: '', discount: 0 }
 
 export default function OwnerForm({ isOpen, onClose, onSave, initial = null }) {
   const [form, setForm] = useState(initial || EMPTY)
@@ -62,6 +62,19 @@ export default function OwnerForm({ isOpen, onClose, onSave, initial = null }) {
       <div className="form-group">
         <label className="form-label">Dirección</label>
         <input className="form-input" value={form.address} onChange={set('address')} placeholder="Calle 123, Ciudad" />
+      </div>
+      <div className="form-group" style={{ marginBottom: 0 }}>
+        <label className="form-label">Descuento especial (%)</label>
+        <input
+          className="form-input"
+          type="number" min="0" max="100" step="1"
+          value={form.discount ?? 0}
+          onChange={set('discount')}
+          placeholder="0"
+        />
+        <span style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4, display: 'block' }}>
+          Se aplica automáticamente en cada venta a este cliente
+        </span>
       </div>
     </Modal>
   )

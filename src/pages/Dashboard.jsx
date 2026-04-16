@@ -77,42 +77,41 @@ export default function Dashboard() {
         {/* Stats */}
         <div className="stats-grid">
           <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/appointments')}>
-            <div className="stat-card__icon" style={{ background: 'rgba(0,122,255,0.12)', color: 'var(--blue)' }}>
-              <CalendarDays size={22} strokeWidth={1.75} />
+            <div className="stat-card__icon" style={{ color: 'var(--vet-cyan)' }}>
+              <CalendarDays size={32} strokeWidth={1.75} />
             </div>
             <div className="stat-card__label">Turnos hoy</div>
-            <div className="stat-card__value" style={{ color: 'var(--blue)' }}>{todayAppointments.length}</div>
+            <div className="stat-card__value" style={{ color: 'var(--vet-cyan)' }}>{todayAppointments.length}</div>
             <div className="stat-card__sub">{attendedToday} atendidos</div>
           </div>
 
           <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/pets')}>
-            <div className="stat-card__icon" style={{ background: 'rgba(52,199,89,0.12)', color: 'var(--green)' }}>
-              <PawPrint size={22} strokeWidth={1.75} />
+            <div className="stat-card__icon" style={{ color: 'var(--vet-emerald)' }}>
+              <PawPrint size={32} strokeWidth={1.75} />
             </div>
             <div className="stat-card__label">Mascotas registradas</div>
-            <div className="stat-card__value" style={{ color: 'var(--green)' }}>{pets.items.length}</div>
+            <div className="stat-card__value" style={{ color: 'var(--vet-emerald)' }}>{pets.items.length}</div>
             <div className="stat-card__sub">{owners.items.length} dueños</div>
           </div>
 
           <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/vaccines')}>
-            <div className="stat-card__icon" style={{ background: 'rgba(255,159,10,0.12)', color: 'var(--orange)' }}>
-              <Syringe size={22} strokeWidth={1.75} />
+            <div className="stat-card__icon" style={{ color: 'var(--vet-amber)' }}>
+              <Syringe size={32} strokeWidth={1.75} />
             </div>
             <div className="stat-card__label">Vacunas próximas</div>
-            <div className="stat-card__value" style={{ color: 'var(--orange)' }}>{upcomingVaccines.length}</div>
+            <div className="stat-card__value" style={{ color: 'var(--vet-amber)' }}>{upcomingVaccines.length}</div>
             <div className="stat-card__sub">en los próximos 30 días</div>
           </div>
 
           <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/internments')}>
             <div className="stat-card__icon" style={{
-              background: activeInternments.some(i => i.status === 'critical') ? 'rgba(255,59,48,0.12)' : 'rgba(50,173,230,0.12)',
-              color: activeInternments.some(i => i.status === 'critical') ? 'var(--red)' : 'var(--teal)',
+              color: activeInternments.some(i => i.status === 'critical') ? 'var(--vet-rose)' : 'var(--vet-teal)',
             }}>
-              <Hospital size={22} strokeWidth={1.75} />
+              <Hospital size={32} strokeWidth={1.75} />
             </div>
             <div className="stat-card__label">Internados</div>
             <div className="stat-card__value" style={{
-              color: activeInternments.some(i => i.status === 'critical') ? 'var(--red)' : 'var(--teal)',
+              color: activeInternments.some(i => i.status === 'critical') ? 'var(--vet-rose)' : 'var(--vet-teal)',
             }}>
               {activeInternments.length}
             </div>
@@ -125,11 +124,11 @@ export default function Dashboard() {
 
           {isVet && (
             <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/finances')}>
-              <div className="stat-card__icon" style={{ background: 'rgba(175,82,222,0.12)', color: 'var(--purple)' }}>
-                <Banknote size={22} strokeWidth={1.75} />
+              <div className="stat-card__icon" style={{ color: 'var(--vet-purple)' }}>
+                <Banknote size={32} strokeWidth={1.75} />
               </div>
               <div className="stat-card__label">Ingresos totales</div>
-              <div className="stat-card__value" style={{ color: 'var(--purple)', fontSize: 20 }}>{formatCurrency(totalIncome)}</div>
+              <div className="stat-card__value" style={{ color: 'var(--vet-purple)', fontSize: 40 }}>{formatCurrency(totalIncome)}</div>
               <div className="stat-card__sub">{sales.items.length} ventas</div>
             </div>
           )}

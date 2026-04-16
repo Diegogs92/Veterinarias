@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import Modal from '../../components/ui/Modal'
 import { useApp } from '../../context/AppContext'
-import { todayStr } from '../../utils/helpers'
+import { todayStr, formatCurrency } from '../../utils/helpers'
 
 const EMPTY = {
   petId: '', date: todayStr(), reason: '', diagnosis: '',
   treatment: '', medication: '', observations: '',
+  price: '', paymentStatus: 'paid', paidAmount: '',
 }
 
 export default function ConsultationForm({ isOpen, onClose, onSave, initial = null, defaultPetId = '' }) {
@@ -14,7 +15,13 @@ export default function ConsultationForm({ isOpen, onClose, onSave, initial = nu
   const [errors, setErrors] = useState({})
 
   useEffect(() => {
-    if (isOpen) setForm(initial || { ...EMPTY, petId: defaultPetId })
+    if (isOpen) {
+      setErrors({})
+      setForm(initial
+        ? { ...initial, price: initial.price != null ? String(initial.price) : '', paidAmount: initial.paidAmount != null ? String(initial.paidAmount) : '' }
+        : { ...EMPTY, petId: defaultPetId }
+      )
+    }
   }, [isOpen, initial, defaultPetId])
 
   const set = (field) => (e) => {
@@ -27,15 +34,27 @@ export default function ConsultationForm({ isOpen, onClose, onSave, initial = nu
     if (!form.petId)         errs.petId  = 'Seleccioná una mascota'
     if (!form.date)          errs.date   = 'Requerido'
     if (!form.reason.trim()) errs.reason = 'Requerido'
+    if (form.price && (isNaN(parseFloat(form.price)) || parseFloat(form.price) < 0)) errs.price = 'Precio inválido'
+    if (form.paymentStatus === 'partial') {
+      const paid = parseFloat(form.paidAmount)
+      if (!paid || paid <= 0) errs.paidAmount = 'Ingresá el monto pagado'
+    }
     return errs
   }
+
+  const priceVal = parseFloat(form.price) || 0
 
   const handleSave = () => {
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
-    onSave(form)
+    const paidAmount = form.paymentStatus === 'paid' ? priceVal
+      : form.paymentStatus === 'partial' ? parseFloat(form.paidAmount) || 0
+      : 0
+    onSave({ ...form, price: priceVal, paidAmount })
     onClose()
   }
+
+  const paymentLabel = { paid: 'Pagado', unpaid: 'No pagado', partial: 'Pago parcial' }
 
   return (
     <Modal
@@ -95,10 +114,72 @@ export default function ConsultationForm({ isOpen, onClose, onSave, initial = nu
         <input className="form-input" value={form.medication} onChange={set('medication')} placeholder="Nombre del medicamento, dosis, frecuencia..." />
       </div>
 
-      <div className="form-group" style={{ marginBottom: 0 }}>
+      <div className="form-group">
         <label className="form-label">Observaciones</label>
         <textarea className="form-input" value={form.observations} onChange={set('observations')} placeholder="Notas adicionales, próximo control..." rows={2} />
       </div>
+
+      {/* Price & payment */}
+      <div className="form-group">
+        <label className="form-label">Precio de la consulta (ARS)</label>
+        <input
+          className={`form-input${errors.price ? ' form-input--error' : ''}`}
+          type="number" min="0" step="100"
+          value={form.price}
+          onChange={e => { setForm(f => ({ ...f, price: e.target.value })); setErrors(er => ({ ...er, price: '' })) }}
+          placeholder="0 (sin cargo)"
+        />
+        {errors.price && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.price}</span>}
+      </div>
+
+      {priceVal > 0 && (
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label className="form-label">Estado de pago</label>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {['paid', 'unpaid', 'partial'].map(status => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => setForm(f => ({ ...f, paymentStatus: status }))}
+                style={{
+                  padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600,
+                  border: '2px solid',
+                  borderColor: form.paymentStatus === status
+                    ? status === 'paid' ? 'var(--vet-emerald)' : status === 'unpaid' ? 'var(--vet-rose)' : 'var(--vet-amber)'
+                    : 'var(--border)',
+                  background: form.paymentStatus === status
+                    ? status === 'paid' ? 'rgba(16,185,129,0.12)' : status === 'unpaid' ? 'rgba(244,63,94,0.12)' : 'rgba(245,158,11,0.12)'
+                    : 'transparent',
+                  color: form.paymentStatus === status
+                    ? status === 'paid' ? 'var(--vet-emerald)' : status === 'unpaid' ? 'var(--vet-rose)' : 'var(--vet-amber)'
+                    : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                }}
+              >
+                {paymentLabel[status]}
+              </button>
+            ))}
+          </div>
+          {form.paymentStatus === 'partial' && (
+            <div className="form-group" style={{ marginTop: 10, marginBottom: 0 }}>
+              <label className="form-label">Monto pagado (ARS) *</label>
+              <input
+                className={`form-input${errors.paidAmount ? ' form-input--error' : ''}`}
+                type="number" min="0" step="100"
+                value={form.paidAmount}
+                onChange={e => { setForm(f => ({ ...f, paidAmount: e.target.value })); setErrors(er => ({ ...er, paidAmount: '' })) }}
+                placeholder="0"
+              />
+              {errors.paidAmount && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.paidAmount}</span>}
+              {priceVal > 0 && parseFloat(form.paidAmount) > 0 && (
+                <span style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4, display: 'block' }}>
+                  Saldo pendiente: {formatCurrency(priceVal - parseFloat(form.paidAmount))}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </Modal>
   )
 }
