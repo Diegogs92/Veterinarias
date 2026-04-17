@@ -3,9 +3,9 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Users, PawPrint, CalendarDays,
   Stethoscope, Syringe, ShoppingCart, Hospital,
-  Banknote, Moon, Sun, LogOut, PackageSearch,
+  Banknote, Moon, Sun, LogOut, PackageSearch, ShieldCheck,
 } from 'lucide-react'
-import { useAuth } from '../../context/AuthContext'
+import { useAuth, ROLE_LABELS } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import { initials, avatarColor } from '../../utils/helpers'
 
@@ -25,8 +25,12 @@ const NAV_VET = [
   { to: '/finances', Icon: Banknote, label: 'Caja / Finanzas' },
 ]
 
+const NAV_ADMIN = [
+  { to: '/users', Icon: ShieldCheck, label: 'Usuarios' },
+]
+
 export default function Sidebar({ open, onClose }) {
-  const { currentUser, logout, isVet } = useAuth()
+  const { currentUser, logout, isVet, canManageUsers } = useAuth()
   const { theme, toggle } = useTheme()
   const navigate = useNavigate()
   const location = useLocation()
@@ -62,7 +66,7 @@ export default function Sidebar({ open, onClose }) {
           </NavLink>
         ))}
 
-        {isVet && (
+        {(isVet || canManageUsers) && (
           <>
             <div className="sidebar__section-title" style={{ marginTop: 8 }}>Administración</div>
             {NAV_VET.map(({ to, Icon, label }) => (
@@ -78,6 +82,23 @@ export default function Sidebar({ open, onClose }) {
                 <span className="sidebar__item-text">{label}</span>
               </NavLink>
             ))}
+            {canManageUsers && (
+              <>
+                {NAV_ADMIN.map(({ to, Icon, label }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    className={({ isActive }) => `sidebar__item${isActive ? ' active' : ''}`}
+                    data-tooltip={label}
+                  >
+                    <span className="sidebar__item-icon">
+                      <Icon size={16} strokeWidth={1.75} />
+                    </span>
+                    <span className="sidebar__item-text">{label}</span>
+                  </NavLink>
+                ))}
+              </>
+            )}
           </>
         )}
       </nav>
@@ -108,7 +129,7 @@ export default function Sidebar({ open, onClose }) {
           <div className="sidebar__user-info">
             <div className="sidebar__user-name">{currentUser?.name}</div>
             <div className="sidebar__user-role">
-              {currentUser?.role === 'vet' ? 'Veterinario' : 'Recepcionista'}
+              {ROLE_LABELS[currentUser?.role] || currentUser?.role}
             </div>
           </div>
           <LogOut size={14} strokeWidth={1.75} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />

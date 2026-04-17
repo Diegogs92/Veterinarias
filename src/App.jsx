@@ -16,6 +16,7 @@ import SalesPage from './pages/sales/SalesPage'
 import FinancesPage from './pages/finances/FinancesPage'
 import InternmentsPage from './pages/internments/InternmentsPage'
 import CatalogPage from './pages/catalog/CatalogPage'
+import UsersPage from './pages/users/UsersPage'
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
                 <Route path="/finances"      element={<FinancesPage />} />
                 <Route path="/internments"  element={<InternmentsPage />} />
                 <Route path="/catalog"      element={<CatalogPage />} />
+                <Route path="/users"        element={<UsersPage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
