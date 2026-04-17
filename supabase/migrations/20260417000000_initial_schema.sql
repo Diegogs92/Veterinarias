@@ -5,6 +5,17 @@
 -- Extensiones
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- ── USUARIOS (perfiles) ────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS profiles (
+  id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  name        TEXT NOT NULL,
+  username    TEXT NOT NULL UNIQUE,
+  role        TEXT NOT NULL DEFAULT 'employee' CHECK (role IN ('developer','owner','employee','vet','receptionist')),
+  is_active   BOOLEAN DEFAULT TRUE,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ
+);
+
 -- ── PROPIETARIOS ──────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS owners (
   id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -184,6 +195,8 @@ CREATE TABLE IF NOT EXISTS debt_payments (
 );
 
 -- ── ÍNDICES ───────────────────────────────────────────────────────────────────
+CREATE INDEX IF NOT EXISTS idx_profiles_username     ON profiles(username);
+CREATE INDEX IF NOT EXISTS idx_profiles_is_active    ON profiles(is_active);
 CREATE INDEX IF NOT EXISTS idx_pets_owner_id         ON pets(owner_id);
 CREATE INDEX IF NOT EXISTS idx_appointments_pet_id   ON appointments(pet_id);
 CREATE INDEX IF NOT EXISTS idx_appointments_owner_id ON appointments(owner_id);
@@ -203,6 +216,7 @@ CREATE INDEX IF NOT EXISTS idx_debts_source          ON debts(source_type, sourc
 CREATE INDEX IF NOT EXISTS idx_debt_payments_debt_id ON debt_payments(debt_id);
 
 -- ── ROW LEVEL SECURITY ────────────────────────────────────────────────────────
+ALTER TABLE profiles         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE owners           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pets             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appointments     ENABLE ROW LEVEL SECURITY;
@@ -224,7 +238,7 @@ DECLARE
   tbl TEXT;
 BEGIN
   FOREACH tbl IN ARRAY ARRAY[
-    'owners','pets','appointments','consultations','vaccines',
+    'profiles','owners','pets','appointments','consultations','vaccines',
     'product_categories','products','sales','sale_items',
     'internments','internment_notes','cash_movements','debts','debt_payments'
   ]
@@ -250,7 +264,7 @@ DECLARE
   tbl TEXT;
 BEGIN
   FOREACH tbl IN ARRAY ARRAY[
-    'owners','pets','appointments','consultations','vaccines',
+    'profiles','owners','pets','appointments','consultations','vaccines',
     'products','sales','internments','cash_movements','debts'
   ]
   LOOP
