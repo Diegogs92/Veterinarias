@@ -7,13 +7,17 @@ export default function Login() {
   const { currentUser, login, error, setError } = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const navigate = useNavigate()
 
   if (currentUser) return <Navigate to="/" replace />
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (login(username, password)) navigate('/')
+    setSubmitting(true)
+    const ok = await login(username, password)
+    setSubmitting(false)
+    if (ok) navigate('/')
   }
 
   const fillDemo = (user, pass) => {
@@ -60,7 +64,9 @@ export default function Login() {
             </div>
           )}
 
-          <button type="submit" className="login-btn">Iniciar sesión</button>
+          <button type="submit" className="login-btn" disabled={submitting}>
+            {submitting ? 'Ingresando...' : 'Iniciar sesión'}
+          </button>
         </form>
 
         <div className="demo-accounts" style={{ marginTop: 20 }}>
