@@ -244,6 +244,10 @@ BEGIN
   ]
   LOOP
     EXECUTE format(
+      'DROP POLICY IF EXISTS "authenticated_full_access" ON %I',
+      tbl
+    );
+    EXECUTE format(
       'CREATE POLICY "authenticated_full_access" ON %I FOR ALL TO authenticated USING (true) WITH CHECK (true)',
       tbl
     );
