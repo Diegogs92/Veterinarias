@@ -20,10 +20,6 @@ export default function Login() {
     if (ok) navigate('/')
   }
 
-  const fillDemo = (user, pass) => {
-    setUsername(user); setPassword(pass); setError('')
-  }
-
   return (
     <div className="login-screen">
       <div className="login-card">
@@ -69,15 +65,6 @@ export default function Login() {
           </button>
         </form>
 
-        <div className="demo-accounts" style={{ marginTop: 20 }}>
-          <div className="demo-accounts__title">Acceso rápido</div>
-          <div className="demo-account" onClick={() => fillDemo('dgarcias', 'drokerson')}>
-            <div className="demo-account__info">
-              <span>dgarcias</span><span>/ drokerson</span>
-            </div>
-            <span className="demo-account__role">Administrador</span>
-          </div>
-        </div>
       </div>
     </div>
   )
