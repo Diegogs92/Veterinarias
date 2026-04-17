@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Modal from '../../components/ui/Modal'
-import { useApp } from '../../context/AppContext'
+import PetSelect from '../../components/ui/PetSelect'
 import { todayStr } from '../../utils/helpers'
 
 const COMMON_VACCINES = [
@@ -16,7 +16,6 @@ const COMMON_VACCINES = [
 const EMPTY = { petId: '', name: '', appliedDate: todayStr(), nextDose: '', notes: '' }
 
 export default function VaccineForm({ isOpen, onClose, onSave, initial = null, defaultPetId = '' }) {
-  const { pets, owners } = useApp()
   const [form, setForm] = useState(initial || { ...EMPTY, petId: defaultPetId })
   const [errors, setErrors] = useState({})
 
@@ -58,17 +57,12 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null, d
         </>
       }
     >
-      <div className="form-group">
-        <label className="form-label">Mascota *</label>
-        <select className={`form-input${errors.petId ? ' form-input--error' : ''}`} value={form.petId} onChange={set('petId')}>
-          <option value="">Seleccionar mascota...</option>
-          {pets.items.map(p => {
-            const owner = owners.find(p.ownerId)
-            return <option key={p.id} value={p.id}>{p.name} ({owner?.name || '?'})</option>
-          })}
-        </select>
-        {errors.petId && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.petId}</span>}
-      </div>
+      <PetSelect
+        value={form.petId}
+        onChange={id => { setForm(f => ({ ...f, petId: id })); setErrors(er => ({ ...er, petId: '' })) }}
+        error={errors.petId}
+        required
+      />
 
       <div className="form-group">
         <label className="form-label">Nombre de la vacuna *</label>

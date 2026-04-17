@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import Modal from '../../components/ui/Modal'
+import OwnerSelect from '../../components/ui/OwnerSelect'
+import PetSelect from '../../components/ui/PetSelect'
 import { useApp } from '../../context/AppContext'
 import { todayStr } from '../../utils/helpers'
 
@@ -10,7 +12,7 @@ const EMPTY = {
 }
 
 export default function InternmentForm({ isOpen, onClose, onSave, initial = null }) {
-  const { pets, owners } = useApp()
+  const { pets } = useApp()
   const [form, setForm] = useState(initial || EMPTY)
   const [errors, setErrors] = useState({})
 
@@ -19,16 +21,14 @@ export default function InternmentForm({ isOpen, onClose, onSave, initial = null
   }, [isOpen, initial])
 
   const set = (field) => (e) => {
-    const value = e.target.value
-    setForm(f => {
-      const updated = { ...f, [field]: value }
-      if (field === 'petId') {
-        const pet = pets.items.find(p => p.id === value)
-        if (pet) updated.ownerId = pet.ownerId
-      }
-      return updated
-    })
+    setForm(f => ({ ...f, [field]: e.target.value }))
     setErrors(er => ({ ...er, [field]: '' }))
+  }
+
+  const handlePetChange = (petId) => {
+    const pet = pets.items.find(p => p.id === petId)
+    setForm(f => ({ ...f, petId, ownerId: pet?.ownerId || f.ownerId }))
+    setErrors(er => ({ ...er, petId: '' }))
   }
 
   const validate = () => {
@@ -65,26 +65,18 @@ export default function InternmentForm({ isOpen, onClose, onSave, initial = null
         </>
       }
     >
-      <div className="form-row form-row--2">
-        <div className="form-group">
-          <label className="form-label">Mascota *</label>
-          <select className={`form-input${errors.petId ? ' form-input--error' : ''}`} value={form.petId} onChange={set('petId')}>
-            <option value="">Seleccionar mascota...</option>
-            {pets.items.map(p => {
-              const owner = owners.find(p.ownerId)
-              return <option key={p.id} value={p.id}>{p.name} ({owner?.name || '?'})</option>
-            })}
-          </select>
-          {errors.petId && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.petId}</span>}
-        </div>
-        <div className="form-group">
-          <label className="form-label">Dueño</label>
-          <select className="form-input" value={form.ownerId} onChange={set('ownerId')} disabled={!!form.petId}>
-            <option value="">—</option>
-            {owners.items.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-          </select>
-        </div>
-      </div>
+      <PetSelect
+        value={form.petId}
+        onChange={handlePetChange}
+        error={errors.petId}
+        required
+      />
+      <OwnerSelect
+        value={form.ownerId}
+        onChange={id => setForm(f => ({ ...f, ownerId: id }))}
+        disabled={!!form.petId}
+        label="Dueño (auto-completa al elegir mascota)"
+      />
 
       <div className="form-row form-row--3">
         <div className="form-group">

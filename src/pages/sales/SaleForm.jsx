@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import Modal from '../../components/ui/Modal'
 import BarcodeScanner from '../../components/ui/BarcodeScanner'
+import OwnerSelect from '../../components/ui/OwnerSelect'
+import PetSelect from '../../components/ui/PetSelect'
 import { useApp } from '../../context/AppContext'
 import { todayStr, formatCurrency } from '../../utils/helpers'
 import { Plus, Trash2, Search, ScanLine } from 'lucide-react'
@@ -46,16 +48,11 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
   const total = subtotal - discountAmount
 
   // ── Owner change → auto-load discount ─────────────────────────────────────
-  const handleOwnerChange = (e) => {
-    const ownerId = e.target.value
+  const handleOwnerChange = (ownerId) => {
     const owner = owners.items.find(o => o.id === ownerId)
     setForm(f => ({ ...f, ownerId, petId: '', discount: owner?.discount ?? 0 }))
     setErrors(er => ({ ...er, ownerId: '' }))
   }
-
-  const filteredPets = form.ownerId
-    ? pets.items.filter(p => p.ownerId === form.ownerId)
-    : pets.items
 
   // ── Product search & add ───────────────────────────────────────────────────
   const searchedProducts = useMemo(() => {
@@ -167,34 +164,20 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
       }
     >
       {/* Owner + Pet */}
-      <div className="form-row form-row--2">
-        <div className="form-group">
-          <label className="form-label">Dueño *</label>
-          <select
-            className={`form-input${errors.ownerId ? ' form-input--error' : ''}`}
-            value={form.ownerId}
-            onChange={handleOwnerChange}
-          >
-            <option value="">Seleccionar dueño...</option>
-            {owners.items.sort((a, b) => a.name.localeCompare(b.name)).map(o => (
-              <option key={o.id} value={o.id}>{o.name}</option>
-            ))}
-          </select>
-          {errors.ownerId && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.ownerId}</span>}
-        </div>
-        <div className="form-group">
-          <label className="form-label">Mascota</label>
-          <select
-            className="form-input"
-            value={form.petId}
-            onChange={e => setForm(f => ({ ...f, petId: e.target.value }))}
-            disabled={!form.ownerId}
-          >
-            <option value="">Sin mascota</option>
-            {filteredPets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-        </div>
-      </div>
+      <OwnerSelect
+        value={form.ownerId}
+        onChange={handleOwnerChange}
+        error={errors.ownerId}
+        required
+      />
+      <PetSelect
+        value={form.petId}
+        onChange={id => setForm(f => ({ ...f, petId: id }))}
+        ownerId={form.ownerId}
+        disabled={!form.ownerId}
+        label="Mascota"
+        placeholder="Sin mascota"
+      />
 
       {/* Product search */}
       <div className="form-group">
