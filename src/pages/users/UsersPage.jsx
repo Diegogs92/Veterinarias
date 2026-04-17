@@ -27,8 +27,9 @@ export default function UsersPage() {
 
   const load = async () => {
     setLoading(true)
-    const { data, error: e } = await supabase.from('profiles').select('*').order('created_at')
-    if (!e) setUsers(data || [])
+    const { data, error: e } = await supabaseAdmin.from('profiles').select('*').order('created_at')
+    if (e) console.error('[profiles] load:', e.message)
+    setUsers(data || [])
     setLoading(false)
   }
 
@@ -53,22 +54,24 @@ export default function UsersPage() {
     setError('')
     try {
       if (editing) {
-        // Update auth metadata
+        // Update auth user
         const updatePayload = {
           user_metadata: { name: data.name, username: editing.username, role: data.role },
         }
         if (data.password) updatePayload.password = data.password
 
         const { error: authErr } = await supabaseAdmin.auth.admin.updateUserById(editing.id, updatePayload)
-        if (authErr) { setError(authErr.message); return }
+        if (authErr) { setError(`Auth: ${authErr.message}`); return }
 
-        // Update profile
-        await supabase.from('profiles').update({
+        // Update profile (use admin client to bypass RLS)
+        const { error: dbErr } = await supabaseAdmin.from('profiles').update({
           name: data.name,
           role: data.role,
           is_active: data.isActive,
           updated_at: new Date().toISOString(),
         }).eq('id', editing.id)
+        if (dbErr) { setError(`Perfil: ${dbErr.message}`); return }
+
       } else {
         // Create auth user
         const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.createUser({
@@ -77,17 +80,19 @@ export default function UsersPage() {
           user_metadata: { name: data.name, username: data.username, role: data.role },
           email_confirm: true,
         })
-        if (authErr) { setError(authErr.message); return }
+        if (authErr) { setError(`Auth: ${authErr.message}`); return }
 
-        // Insert profile
-        await supabase.from('profiles').insert({
+        // Insert profile (use admin client to bypass RLS)
+        const { error: dbErr } = await supabaseAdmin.from('profiles').insert({
           id: authData.user.id,
           name: data.name,
           username: data.username,
           role: data.role,
           is_active: true,
         })
+        if (dbErr) { setError(`Perfil: ${dbErr.message}`); return }
       }
+
       setFormOpen(false)
       setEditing(null)
       load()
@@ -100,8 +105,12 @@ export default function UsersPage() {
     if (!deleting) return
     setDeleteLoading(true)
     try {
-      await supabaseAdmin.auth.admin.deleteUser(deleting.id)
-      await supabase.from('profiles').delete().eq('id', deleting.id)
+      const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(deleting.id)
+      if (authErr) { setError(`Auth: ${authErr.message}`); setDeleteLoading(false); return }
+
+      const { error: dbErr } = await supabaseAdmin.from('profiles').delete().eq('id', deleting.id)
+      if (dbErr) { setError(`Perfil: ${dbErr.message}`); setDeleteLoading(false); return }
+
       setDeleting(null)
       load()
     } catch (e) {
