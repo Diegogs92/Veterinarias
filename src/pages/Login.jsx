@@ -70,24 +70,12 @@ export default function Login() {
         </form>
 
         <div className="demo-accounts" style={{ marginTop: 20 }}>
-          <div className="demo-accounts__title">Cuentas de demo</div>
-          <div className="demo-account" onClick={() => fillDemo('dev', '1234')}>
+          <div className="demo-accounts__title">Acceso rápido</div>
+          <div className="demo-account" onClick={() => fillDemo('dgarcias', 'drokerson')}>
             <div className="demo-account__info">
-              <span>dev</span><span>/ 1234</span>
+              <span>dgarcias</span><span>/ drokerson</span>
             </div>
-            <span className="demo-account__role">Desarrollador</span>
-          </div>
-          <div className="demo-account" onClick={() => fillDemo('vet', '1234')}>
-            <div className="demo-account__info">
-              <span>vet</span><span>/ 1234</span>
-            </div>
-            <span className="demo-account__role">Dueño</span>
-          </div>
-          <div className="demo-account" onClick={() => fillDemo('recep', '1234')}>
-            <div className="demo-account__info">
-              <span>recep</span><span>/ 1234</span>
-            </div>
-            <span className="demo-account__role">Empleado</span>
+            <span className="demo-account__role">Administrador</span>
           </div>
         </div>
       </div>
