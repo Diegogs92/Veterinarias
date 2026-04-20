@@ -20,7 +20,7 @@ const EMPTY_EXPENSE = { category: '', description: '', amount: '', date: todaySt
 const EMPTY_PAYMENT = { amount: '', date: todayStr(), notes: '' }
 
 export default function FinancesPage() {
-  const { cash, sales, owners, pets, debts, registerDebtPayment } = useApp()
+  const { cash, sales, owners, debts, registerDebtPayment } = useApp()
   const { canViewFinances } = useAuth()
 
   // Expense modal
@@ -193,13 +193,6 @@ export default function FinancesPage() {
             </div>
             <div className="stat-card__label">Ventas cobradas</div>
             <div className="stat-card__value" style={{ color: 'var(--vet-teal)', fontSize: 20 }}>{formatCurrency(salesIncome)}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-card__icon" style={{ color: 'var(--vet-purple)' }}>
-              <Stethoscope size={32} strokeWidth={1.75} />
-            </div>
-            <div className="stat-card__label">Consultas cobradas</div>
-            <div className="stat-card__value" style={{ color: 'var(--vet-purple)', fontSize: 20 }}>{formatCurrency(consultIncome)}</div>
           </div>
           <div className="stat-card">
             <div className="stat-card__icon" style={{ color: 'var(--vet-emerald)' }}>
