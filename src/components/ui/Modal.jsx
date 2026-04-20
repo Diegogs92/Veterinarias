@@ -16,8 +16,8 @@ export default function Modal({ isOpen, onClose, title, children, footer, size =
       <div className={`modal ${size ? `modal--${size}` : ''} ${className}`} role="dialog" aria-modal="true">
         <div className="modal__header">
           <h2 className="modal__title">{title}</h2>
-          <button className="btn btn--subtle btn--icon btn--sm" onClick={onClose} aria-label="Cerrar">
-            <X size={16} strokeWidth={2} />
+          <button className="btn btn--subtle btn--icon" onClick={onClose} aria-label="Cerrar">
+            <X size={18} strokeWidth={2} />
           </button>
         </div>
         <div className="modal__body">

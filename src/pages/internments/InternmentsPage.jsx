@@ -201,10 +201,10 @@ export default function InternmentsPage() {
                         </button>
                       )}
                       <button className="btn btn--subtle btn--sm btn--icon" onClick={() => { setEditing(intern); setFormOpen(true) }}>
-                        <Pencil size={14} strokeWidth={2} />
+                        <Pencil size={16} strokeWidth={2} />
                       </button>
                       <button className="btn btn--subtle btn--sm btn--icon" onClick={() => setDeleting(intern)}>
-                        <Trash2 size={14} strokeWidth={2} />
+                        <Trash2 size={16} strokeWidth={2} />
                       </button>
                     </div>
                   </div>

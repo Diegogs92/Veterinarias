@@ -205,7 +205,7 @@ export default function UsersPage() {
                               onClick={() => openEdit(u)}
                               title="Editar"
                             >
-                              <Pencil size={14} />
+                              <Pencil size={16} />
                             </button>
                             <button
                               className="btn btn--subtle btn--sm btn--icon"
@@ -214,7 +214,7 @@ export default function UsersPage() {
                               style={{ color: 'var(--vet-rose)' }}
                               disabled={isSelf}
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         </td>

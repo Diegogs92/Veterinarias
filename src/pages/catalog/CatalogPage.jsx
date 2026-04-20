@@ -209,7 +209,7 @@ export default function CatalogPage() {
                               onClick={() => setProductForm({ open: true, editing: p })}
                               title="Editar"
                             >
-                              <Pencil size={14} />
+                              <Pencil size={16} />
                             </button>
                             <button
                               className="btn btn--subtle btn--sm btn--icon"
@@ -217,7 +217,7 @@ export default function CatalogPage() {
                               title="Eliminar"
                               style={{ color: 'var(--vet-rose)' }}
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         </td>
@@ -280,7 +280,7 @@ export default function CatalogPage() {
                                 onClick={() => setCategoryForm({ open: true, editing: c })}
                                 title="Editar"
                               >
-                                <Pencil size={14} />
+                                <Pencil size={16} />
                               </button>
                               <button
                                 className="btn btn--subtle btn--sm btn--icon"
@@ -288,7 +288,7 @@ export default function CatalogPage() {
                                 title="Eliminar"
                                 style={{ color: 'var(--vet-rose)' }}
                               >
-                                <Trash2 size={14} />
+                                <Trash2 size={16} />
                               </button>
                             </div>
                           </td>

@@ -405,14 +405,14 @@ export default function FinancesPage() {
                       <td>
                         <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
                           <button className="btn btn--subtle btn--sm btn--icon" onClick={() => openEditExp(m)}>
-                            <Pencil size={14} />
+                            <Pencil size={16} />
                           </button>
                           <button
                             className="btn btn--subtle btn--sm btn--icon"
                             onClick={() => setDeletingExp(m)}
                             style={{ color: 'var(--vet-rose)' }}
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>

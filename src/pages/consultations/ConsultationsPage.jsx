@@ -149,10 +149,10 @@ export default function ConsultationsPage() {
                     </div>
                     <div style={{ display: 'flex', gap: 4, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
                       <button className="btn btn--subtle btn--sm btn--icon" onClick={() => { setEditing(c); setFormOpen(true) }}>
-                        <Pencil size={14} strokeWidth={2} />
+                        <Pencil size={16} strokeWidth={2} />
                       </button>
                       <button className="btn btn--subtle btn--sm btn--icon" onClick={() => setDeleting(c)}>
-                        <Trash2 size={14} strokeWidth={2} />
+                        <Trash2 size={16} strokeWidth={2} />
                       </button>
                     </div>
                   </div>

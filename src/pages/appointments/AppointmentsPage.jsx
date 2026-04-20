@@ -150,10 +150,10 @@ export default function AppointmentsPage() {
                         <td>
                           <div style={{ display: 'flex', gap: 4 }}>
                             <button className="btn btn--subtle btn--sm btn--icon" onClick={() => { setEditing(appt); setFormOpen(true) }}>
-                              <Pencil size={14} strokeWidth={2} />
+                              <Pencil size={16} strokeWidth={2} />
                             </button>
                             <button className="btn btn--subtle btn--sm btn--icon" onClick={() => setDeleting(appt)}>
-                              <Trash2 size={14} strokeWidth={2} />
+                              <Trash2 size={16} strokeWidth={2} />
                             </button>
                           </div>
                         </td>

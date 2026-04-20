@@ -204,7 +204,7 @@ export default function SalesPage() {
                               onClick={() => { setEditing(sale); setFormOpen(true) }}
                               title="Editar"
                             >
-                              <Pencil size={14} />
+                              <Pencil size={16} />
                             </button>
                             <button
                               className="btn btn--subtle btn--sm btn--icon"
@@ -212,7 +212,7 @@ export default function SalesPage() {
                               title="Eliminar"
                               style={{ color: 'var(--vet-rose)' }}
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         </td>
