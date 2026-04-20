@@ -106,10 +106,10 @@ export default function OwnersPage() {
                       <td style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>{formatDate(owner.createdAt)}</td>
                       <td onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex', gap: 4 }}>
-                          <button className="btn btn--subtle btn--sm btn--icon" title="Editar" onClick={() => { setEditing(owner); setFormOpen(true) }}>
+                          <button className="btn btn--subtle btn--icon" title="Editar" onClick={() => { setEditing(owner); setFormOpen(true) }}>
                             <Pencil size={16} strokeWidth={2} />
                           </button>
-                          <button className="btn btn--subtle btn--sm btn--icon" title="Eliminar" onClick={() => setDeleting(owner)}>
+                          <button className="btn btn--subtle btn--icon" title="Eliminar" onClick={() => setDeleting(owner)}>
                             <Trash2 size={16} strokeWidth={2} />
                           </button>
                         </div>

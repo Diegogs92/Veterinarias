@@ -200,10 +200,10 @@ export default function InternmentsPage() {
                           <Check size={13} strokeWidth={2.5} /> Alta
                         </button>
                       )}
-                      <button className="btn btn--subtle btn--sm btn--icon" onClick={() => { setEditing(intern); setFormOpen(true) }}>
+                      <button className="btn btn--subtle btn--icon" onClick={() => { setEditing(intern); setFormOpen(true) }}>
                         <Pencil size={16} strokeWidth={2} />
                       </button>
-                      <button className="btn btn--subtle btn--sm btn--icon" onClick={() => setDeleting(intern)}>
+                      <button className="btn btn--subtle btn--icon" onClick={() => setDeleting(intern)}>
                         <Trash2 size={16} strokeWidth={2} />
                       </button>
                     </div>
@@ -269,7 +269,7 @@ export default function InternmentsPage() {
                                 </div>
                                 {intern.status !== 'discharged' && (
                                   <button
-                                    className="btn btn--subtle btn--sm btn--icon"
+                                    className="btn btn--subtle btn--icon"
                                     style={{ flexShrink: 0 }}
                                     onClick={() => removeDailyNote(intern.id, note.id)}
                                   >

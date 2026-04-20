@@ -173,10 +173,10 @@ export default function BoardingPage() {
                           <Check size={13} strokeWidth={2.5} /> Retirar
                         </button>
                       )}
-                      <button className="btn btn--subtle btn--sm btn--icon" onClick={() => { setEditing(b); setFormOpen(true) }}>
+                      <button className="btn btn--subtle btn--icon" onClick={() => { setEditing(b); setFormOpen(true) }}>
                         <Pencil size={16} strokeWidth={2} />
                       </button>
-                      <button className="btn btn--subtle btn--sm btn--icon" onClick={() => setDeleting(b)}>
+                      <button className="btn btn--subtle btn--icon" onClick={() => setDeleting(b)}>
                         <Trash2 size={16} strokeWidth={2} />
                       </button>
                     </div>

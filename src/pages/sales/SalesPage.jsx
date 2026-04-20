@@ -200,14 +200,14 @@ export default function SalesPage() {
                         <td>
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
                             <button
-                              className="btn btn--subtle btn--sm btn--icon"
+                              className="btn btn--subtle btn--icon"
                               onClick={() => { setEditing(sale); setFormOpen(true) }}
                               title="Editar"
                             >
                               <Pencil size={16} />
                             </button>
                             <button
-                              className="btn btn--subtle btn--sm btn--icon"
+                              className="btn btn--subtle btn--icon"
                               onClick={() => setDeleting(sale)}
                               title="Eliminar"
                               style={{ color: 'var(--vet-rose)' }}

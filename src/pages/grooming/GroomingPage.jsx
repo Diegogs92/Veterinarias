@@ -142,10 +142,10 @@ export default function GroomingPage() {
                         </td>
                         <td>
                           <div style={{ display: 'flex', gap: 4 }}>
-                            <button className="btn btn--subtle btn--sm btn--icon" onClick={() => { setEditing(g); setFormOpen(true) }}>
+                            <button className="btn btn--subtle btn--icon" onClick={() => { setEditing(g); setFormOpen(true) }}>
                               <Pencil size={16} strokeWidth={2} />
                             </button>
-                            <button className="btn btn--subtle btn--sm btn--icon" onClick={() => setDeleting(g)}>
+                            <button className="btn btn--subtle btn--icon" onClick={() => setDeleting(g)}>
                               <Trash2 size={16} strokeWidth={2} />
                             </button>
                           </div>

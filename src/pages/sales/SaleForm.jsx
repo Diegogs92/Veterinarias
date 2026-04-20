@@ -291,7 +291,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                   <td style={{ padding: '4px 8px' }}>
                     <button
                       type="button"
-                      className="btn btn--subtle btn--sm btn--icon"
+                      className="btn btn--subtle btn--icon"
                       onClick={() => removeItem(idx)}
                       style={{ color: 'var(--vet-rose)' }}
                     >

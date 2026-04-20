@@ -205,14 +205,14 @@ export default function CatalogPage() {
                         <td>
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
                             <button
-                              className="btn btn--subtle btn--sm btn--icon"
+                              className="btn btn--subtle btn--icon"
                               onClick={() => setProductForm({ open: true, editing: p })}
                               title="Editar"
                             >
                               <Pencil size={16} />
                             </button>
                             <button
-                              className="btn btn--subtle btn--sm btn--icon"
+                              className="btn btn--subtle btn--icon"
                               onClick={() => setDeleting({ type: 'product', item: p })}
                               title="Eliminar"
                               style={{ color: 'var(--vet-rose)' }}
@@ -276,14 +276,14 @@ export default function CatalogPage() {
                           <td onClick={e => e.stopPropagation()}>
                             <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
                               <button
-                                className="btn btn--subtle btn--sm btn--icon"
+                                className="btn btn--subtle btn--icon"
                                 onClick={() => setCategoryForm({ open: true, editing: c })}
                                 title="Editar"
                               >
                                 <Pencil size={16} />
                               </button>
                               <button
-                                className="btn btn--subtle btn--sm btn--icon"
+                                className="btn btn--subtle btn--icon"
                                 onClick={() => setDeleting({ type: 'category', item: c })}
                                 title="Eliminar"
                                 style={{ color: 'var(--vet-rose)' }}

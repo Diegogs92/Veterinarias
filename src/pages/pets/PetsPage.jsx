@@ -130,13 +130,13 @@ export default function PetsPage() {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
                     <button
-                      className="btn btn--subtle btn--sm btn--icon"
+                      className="btn btn--subtle btn--icon"
                       onClick={e => { e.stopPropagation(); setEditing(pet); setFormOpen(true) }}
                     >
                       <Pencil size={16} strokeWidth={2} />
                     </button>
                     <button
-                      className="btn btn--subtle btn--sm btn--icon"
+                      className="btn btn--subtle btn--icon"
                       onClick={e => { e.stopPropagation(); setDeleting(pet) }}
                     >
                       <Trash2 size={16} strokeWidth={2} />

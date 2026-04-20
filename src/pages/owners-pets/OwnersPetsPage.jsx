@@ -196,10 +196,10 @@ export default function OwnersPetsPage() {
                           <td style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>{formatDate(owner.createdAt)}</td>
                           <td onClick={e => e.stopPropagation()}>
                             <div style={{ display: 'flex', gap: 4 }}>
-                              <button className="btn btn--subtle btn--sm btn--icon" title="Editar" onClick={() => { setEditingOwner(owner); setOwnerFormOpen(true) }}>
+                              <button className="btn btn--subtle btn--icon" title="Editar" onClick={() => { setEditingOwner(owner); setOwnerFormOpen(true) }}>
                                 <Pencil size={16} strokeWidth={2} />
                               </button>
-                              <button className="btn btn--subtle btn--sm btn--icon" title="Eliminar" onClick={() => setDeletingOwner(owner)}>
+                              <button className="btn btn--subtle btn--icon" title="Eliminar" onClick={() => setDeletingOwner(owner)}>
                                 <Trash2 size={16} strokeWidth={2} />
                               </button>
                             </div>
@@ -283,13 +283,13 @@ export default function OwnersPetsPage() {
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
                         <button
-                          className="btn btn--subtle btn--sm btn--icon"
+                          className="btn btn--subtle btn--icon"
                           onClick={e => { e.stopPropagation(); setEditingPet(pet); setPetFormOpen(true) }}
                         >
                           <Pencil size={16} strokeWidth={2} />
                         </button>
                         <button
-                          className="btn btn--subtle btn--sm btn--icon"
+                          className="btn btn--subtle btn--icon"
                           onClick={e => { e.stopPropagation(); setDeletingPet(pet) }}
                         >
                           <Trash2 size={16} strokeWidth={2} />

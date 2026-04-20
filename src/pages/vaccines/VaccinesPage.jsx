@@ -144,10 +144,10 @@ export default function VaccinesPage() {
                         </td>
                         <td>
                           <div style={{ display: 'flex', gap: 4 }}>
-                            <button className="btn btn--subtle btn--sm btn--icon" onClick={() => { setEditing(vac); setFormOpen(true) }}>
+                            <button className="btn btn--subtle btn--icon" onClick={() => { setEditing(vac); setFormOpen(true) }}>
                               <Pencil size={16} strokeWidth={2} />
                             </button>
-                            <button className="btn btn--subtle btn--sm btn--icon" onClick={() => setDeleting(vac)}>
+                            <button className="btn btn--subtle btn--icon" onClick={() => setDeleting(vac)}>
                               <Trash2 size={16} strokeWidth={2} />
                             </button>
                           </div>

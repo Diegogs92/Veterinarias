@@ -404,11 +404,11 @@ export default function FinancesPage() {
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                          <button className="btn btn--subtle btn--sm btn--icon" onClick={() => openEditExp(m)}>
+                          <button className="btn btn--subtle btn--icon" onClick={() => openEditExp(m)}>
                             <Pencil size={16} />
                           </button>
                           <button
-                            className="btn btn--subtle btn--sm btn--icon"
+                            className="btn btn--subtle btn--icon"
                             onClick={() => setDeletingExp(m)}
                             style={{ color: 'var(--vet-rose)' }}
                           >
