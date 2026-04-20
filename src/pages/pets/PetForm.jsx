@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Camera, X, Link } from 'lucide-react'
 import Modal from '../../components/ui/Modal'
 import SpeciesIcon from '../../components/ui/SpeciesIcon'
-import { useApp } from '../../context/AppContext'
+import OwnerSelect from '../../components/ui/OwnerSelect'
 
 const EMPTY = {
   name: '', species: 'perro', breed: '', birthDate: '', weight: '',
@@ -23,7 +23,6 @@ const SPECIES = [
 const MAX_SIZE = 2 * 1024 * 1024 // 2 MB
 
 export default function PetForm({ isOpen, onClose, onSave, initial = null, defaultOwnerId = '' }) {
-  const { owners } = useApp()
   const [form, setForm] = useState(initial || { ...EMPTY, ownerId: defaultOwnerId })
   const [errors, setErrors] = useState({})
   const [photoError, setPhotoError] = useState('')
@@ -174,14 +173,13 @@ export default function PetForm({ isOpen, onClose, onSave, initial = null, defau
           <label className="form-label">Raza</label>
           <input className="form-input" value={form.breed} onChange={set('breed')} placeholder="Ej: Labrador, Siamés..." />
         </div>
-        <div className="form-group">
-          <label className="form-label">Dueño *</label>
-          <select className={`form-input${errors.ownerId ? ' form-input--error' : ''}`} value={form.ownerId} onChange={set('ownerId')}>
-            <option value="">Seleccionar dueño...</option>
-            {owners.items.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-          </select>
-          {errors.ownerId && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.ownerId}</span>}
-        </div>
+        <OwnerSelect
+          value={form.ownerId}
+          onChange={id => { setForm(f => ({ ...f, ownerId: id })); setErrors(er => ({ ...er, ownerId: '' })) }}
+          error={errors.ownerId}
+          label="Dueño"
+          required
+        />
       </div>
 
       <div className="form-row form-row--2">
