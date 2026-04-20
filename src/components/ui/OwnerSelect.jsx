@@ -5,12 +5,13 @@ import { useApp } from '../../context/AppContext'
 const EMPTY = { name: '', apellido: '', phone: '', email: '' }
 
 /**
- * OwnerSelect — select de dueño con botón "+ Nuevo" que abre panel inline.
- * Props: value, onChange(id), error, required, disabled, label
+ * OwnerSelect — select de dueño con botón "+ Nuevo".
+ * Props: value, onChange(id), error, required, disabled, label, onAddNew
+ * Si onAddNew es provided, abre modal; de lo contrario, muestra inline panel
  */
 export default function OwnerSelect({
   value, onChange, error,
-  required = false, disabled = false, label = 'Dueño',
+  required = false, disabled = false, label = 'Dueño', onAddNew,
 }) {
   const { owners } = useApp()
   const [showAdd, setShowAdd] = useState(false)
@@ -56,7 +57,7 @@ export default function OwnerSelect({
           <button
             type="button"
             className="btn btn--subtle btn--sm"
-            onClick={() => setShowAdd(v => !v)}
+            onClick={() => onAddNew ? onAddNew() : setShowAdd(v => !v)}
             style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}
           >
             <Plus size={13} strokeWidth={2.5} />
@@ -66,7 +67,7 @@ export default function OwnerSelect({
       </div>
       {error && <span style={{ color: 'var(--red)', fontSize: 12 }}>{error}</span>}
 
-      {showAdd && (
+      {showAdd && !onAddNew && (
         <div style={{
           marginTop: 8, padding: '14px 16px',
           background: 'var(--surface-2)',

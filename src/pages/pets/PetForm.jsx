@@ -3,6 +3,8 @@ import { Camera, X, Link } from 'lucide-react'
 import Modal from '../../components/ui/Modal'
 import SpeciesIcon from '../../components/ui/SpeciesIcon'
 import OwnerSelect from '../../components/ui/OwnerSelect'
+import OwnerForm from '../owners/OwnerForm'
+import { useApp } from '../../context/AppContext'
 
 const EMPTY = {
   name: '', species: 'perro', breed: '', birthDate: '', weight: '',
@@ -23,10 +25,12 @@ const SPECIES = [
 const MAX_SIZE = 2 * 1024 * 1024 // 2 MB
 
 export default function PetForm({ isOpen, onClose, onSave, initial = null, defaultOwnerId = '' }) {
+  const { owners } = useApp()
   const [form, setForm] = useState(initial || { ...EMPTY, ownerId: defaultOwnerId })
   const [errors, setErrors] = useState({})
   const [photoError, setPhotoError] = useState('')
   const [urlMode, setUrlMode] = useState(false)
+  const [ownerFormOpen, setOwnerFormOpen] = useState(false)
   const fileRef = useRef(null)
 
   useEffect(() => {
@@ -71,6 +75,13 @@ export default function PetForm({ isOpen, onClose, onSave, initial = null, defau
   }
 
   const hasPhoto = !!form.photo
+
+  const handleAddOwner = (ownerData) => {
+    const newOwner = owners.add(ownerData)
+    setForm(f => ({ ...f, ownerId: newOwner.id }))
+    setErrors(er => ({ ...er, ownerId: '' }))
+    setOwnerFormOpen(false)
+  }
 
   return (
     <Modal
@@ -179,6 +190,7 @@ export default function PetForm({ isOpen, onClose, onSave, initial = null, defau
           error={errors.ownerId}
           label="Dueño"
           required
+          onAddNew={() => setOwnerFormOpen(true)}
         />
       </div>
 
@@ -201,6 +213,12 @@ export default function PetForm({ isOpen, onClose, onSave, initial = null, defau
         <label className="form-label">Observaciones</label>
         <textarea className="form-input" value={form.observations} onChange={set('observations')} placeholder="Notas adicionales..." rows={3} />
       </div>
+
+      <OwnerForm
+        isOpen={ownerFormOpen}
+        onClose={() => setOwnerFormOpen(false)}
+        onSave={handleAddOwner}
+      />
     </Modal>
   )
 }
