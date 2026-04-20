@@ -259,12 +259,21 @@ export default function CatalogPage() {
                     {filteredCategories.map(c => {
                       const count = products.items.filter(p => p.categoryId === c.id).length
                       return (
-                        <tr key={c.id}>
+                        <tr
+                          key={c.id}
+                          style={{ cursor: count > 0 ? 'pointer' : undefined }}
+                          onClick={() => {
+                            if (count === 0) return
+                            setSearch('')
+                            setCatFilter(c.id)
+                            setTab('products')
+                          }}
+                        >
                           <td style={{ fontWeight: 600 }}>{c.name}</td>
                           <td>
-                            <Badge color="gray">{count} producto{count !== 1 ? 's' : ''}</Badge>
+                            <Badge color={count > 0 ? 'blue' : 'gray'}>{count} producto{count !== 1 ? 's' : ''}</Badge>
                           </td>
-                          <td>
+                          <td onClick={e => e.stopPropagation()}>
                             <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
                               <button
                                 className="btn btn--subtle btn--sm btn--icon"
