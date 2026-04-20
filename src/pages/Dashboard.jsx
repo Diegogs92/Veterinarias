@@ -1,42 +1,22 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  CalendarDays, PawPrint, Syringe, Hospital, Banknote,
-  Clock, Stethoscope, CheckCircle,
-} from 'lucide-react'
+import { PawPrint, Hospital, Banknote, ShoppingCart } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import Header from '../components/layout/Header'
 import Badge from '../components/ui/Badge'
 import SpeciesIcon from '../components/ui/SpeciesIcon'
-import {
-  formatDate, formatCurrency, todayStr, daysUntil,
-  appointmentStatusLabel, appointmentStatusColor,
-} from '../utils/helpers'
+import { formatDate, formatCurrency } from '../utils/helpers'
 
 export default function Dashboard() {
-  const { appointments, pets, owners, consultations, vaccines, sales, internments } = useApp()
+  const { pets, owners, sales, internments } = useApp()
   const { currentUser, isVet } = useAuth()
   const navigate = useNavigate()
-  const today = todayStr()
-
-  const todayAppointments = useMemo(() =>
-    appointments.items
-      .filter(a => a.date === today && a.status !== 'cancelled')
-      .sort((a, b) => a.time.localeCompare(b.time)),
-    [appointments.items, today]
-  )
-
-  const upcomingVaccines = useMemo(() =>
-    vaccines.items
-      .filter(v => { const d = daysUntil(v.nextDose); return d !== null && d >= 0 && d <= 30 })
-      .sort((a, b) => new Date(a.nextDose) - new Date(b.nextDose))
-      .slice(0, 5),
-    [vaccines.items]
-  )
 
   const totalIncome = useMemo(() =>
-    sales.items.reduce((s, i) => s + (i.price || 0), 0),
+    sales.items
+      .filter(s => s.paymentStatus === 'paid' || s.paymentStatus === 'partial')
+      .reduce((s, i) => s + (i.paidAmount || 0), 0),
     [sales.items]
   )
 
@@ -50,16 +30,11 @@ export default function Dashboard() {
     [internments.items]
   )
 
-  const attendedToday = appointments.items.filter(a => a.date === today && a.status === 'attended').length
-
-  const recentActivity = useMemo(() =>
-    [
-      ...consultations.items.map(c => ({ ...c, _type: 'consultation', _date: new Date(c.date) })),
-      ...appointments.items.filter(a => a.status === 'attended').map(a => ({ ...a, _type: 'appointment', _date: new Date(a.date) })),
-    ]
-    .sort((a, b) => b._date - a._date)
-    .slice(0, 6),
-    [consultations.items, appointments.items]
+  const recentSales = useMemo(() =>
+    [...sales.items]
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 6),
+    [sales.items]
   )
 
   const greeting = () => {
@@ -76,31 +51,13 @@ export default function Dashboard() {
 
         {/* Stats */}
         <div className="stats-grid">
-          <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/appointments')}>
-            <div className="stat-card__icon" style={{ color: 'var(--vet-cyan)' }}>
-              <CalendarDays size={32} strokeWidth={1.75} />
-            </div>
-            <div className="stat-card__label">Turnos hoy</div>
-            <div className="stat-card__value" style={{ color: 'var(--vet-cyan)' }}>{todayAppointments.length}</div>
-            <div className="stat-card__sub">{attendedToday} atendidos</div>
-          </div>
-
-          <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/pets')}>
+          <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/owners-pets')}>
             <div className="stat-card__icon" style={{ color: 'var(--vet-emerald)' }}>
               <PawPrint size={32} strokeWidth={1.75} />
             </div>
             <div className="stat-card__label">Mascotas registradas</div>
             <div className="stat-card__value" style={{ color: 'var(--vet-emerald)' }}>{pets.items.length}</div>
             <div className="stat-card__sub">{owners.items.length} dueños</div>
-          </div>
-
-          <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/vaccines')}>
-            <div className="stat-card__icon" style={{ color: 'var(--vet-amber)' }}>
-              <Syringe size={32} strokeWidth={1.75} />
-            </div>
-            <div className="stat-card__label">Vacunas próximas</div>
-            <div className="stat-card__value" style={{ color: 'var(--vet-amber)' }}>{upcomingVaccines.length}</div>
-            <div className="stat-card__sub">en los próximos 30 días</div>
           </div>
 
           <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/internments')}>
@@ -122,6 +79,15 @@ export default function Dashboard() {
             </div>
           </div>
 
+          <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/sales')}>
+            <div className="stat-card__icon" style={{ color: 'var(--vet-cyan)' }}>
+              <ShoppingCart size={32} strokeWidth={1.75} />
+            </div>
+            <div className="stat-card__label">Ventas</div>
+            <div className="stat-card__value" style={{ color: 'var(--vet-cyan)' }}>{sales.items.length}</div>
+            <div className="stat-card__sub">registradas</div>
+          </div>
+
           {isVet && (
             <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/finances')}>
               <div className="stat-card__icon" style={{ color: 'var(--vet-purple)' }}>
@@ -135,95 +101,6 @@ export default function Dashboard() {
         </div>
 
         <div className="two-col-grid">
-
-          {/* Today's appointments */}
-          <div className="card card--no-hover">
-            <div className="card__header">
-              <span className="card__title">Turnos de hoy</span>
-              <button className="btn btn--subtle btn--sm" onClick={() => navigate('/appointments')}>Ver todos</button>
-            </div>
-            {todayAppointments.length === 0 ? (
-              <div className="empty-state" style={{ padding: '32px 20px' }}>
-                <div className="empty-state__icon"><CalendarDays size={36} strokeWidth={1.5} /></div>
-                <div className="empty-state__title" style={{ fontSize: 15 }}>Sin turnos hoy</div>
-              </div>
-            ) : (
-              <div>
-                {todayAppointments.map(appt => {
-                  const pet = pets.find(appt.petId)
-                  return (
-                    <div
-                      key={appt.id}
-                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background var(--t-fast)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                      onMouseLeave={e => e.currentTarget.style.background = ''}
-                      onClick={() => navigate('/appointments')}
-                    >
-                      <div style={{ minWidth: 52, fontWeight: 700, fontSize: 14, color: 'var(--blue)', fontVariantNumeric: 'tabular-nums' }}>
-                        {appt.time}
-                      </div>
-                      <div style={{ color: 'var(--text-secondary)' }}>
-                        <SpeciesIcon species={pet?.species} size={18} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, fontSize: 14 }} className="truncate">{pet?.name || '—'}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }} className="truncate">{appt.reason}</div>
-                      </div>
-                      <Badge color={appointmentStatusColor(appt.status)} dot>
-                        {appointmentStatusLabel(appt.status)}
-                      </Badge>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Upcoming vaccines */}
-          <div className="card card--no-hover">
-            <div className="card__header">
-              <span className="card__title">Vacunas próximas</span>
-              <button className="btn btn--subtle btn--sm" onClick={() => navigate('/vaccines')}>Ver todas</button>
-            </div>
-            {upcomingVaccines.length === 0 ? (
-              <div className="empty-state" style={{ padding: '32px 20px' }}>
-                <div className="empty-state__icon"><CheckCircle size={36} strokeWidth={1.5} style={{ color: 'var(--green)' }} /></div>
-                <div className="empty-state__title" style={{ fontSize: 15 }}>Todo al día</div>
-              </div>
-            ) : (
-              <div>
-                {upcomingVaccines.map(vac => {
-                  const pet = pets.find(vac.petId)
-                  const days = daysUntil(vac.nextDose)
-                  return (
-                    <div
-                      key={vac.id}
-                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background var(--t-fast)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                      onMouseLeave={e => e.currentTarget.style.background = ''}
-                      onClick={() => navigate('/vaccines')}
-                    >
-                      <div style={{ color: 'var(--text-secondary)' }}>
-                        <SpeciesIcon species={pet?.species} size={18} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, fontSize: 14 }} className="truncate">{pet?.name || '—'}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }} className="truncate">{vac.name}</div>
-                      </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <Badge color={days <= 7 ? 'red' : 'orange'} dot>
-                          {days === 0 ? 'Hoy' : `${days}d`}
-                        </Badge>
-                        <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-                          {formatDate(vac.nextDose)}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
 
           {/* Active internments */}
           {activeInternments.length > 0 && (
@@ -284,48 +161,40 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Recent activity */}
+          {/* Recent sales */}
           <div className="card card--no-hover" style={{ gridColumn: '1 / -1' }}>
             <div className="card__header">
-              <span className="card__title">Actividad reciente</span>
+              <span className="card__title">Ventas recientes</span>
+              <button className="btn btn--subtle btn--sm" onClick={() => navigate('/sales')}>Ver todas</button>
             </div>
-            {recentActivity.length === 0 ? (
+            {recentSales.length === 0 ? (
               <div className="empty-state" style={{ padding: '32px 20px' }}>
-                <div className="empty-state__icon"><Clock size={36} strokeWidth={1.5} /></div>
-                <div className="empty-state__title" style={{ fontSize: 15 }}>Sin actividad registrada</div>
+                <div className="empty-state__icon"><ShoppingCart size={36} strokeWidth={1.5} /></div>
+                <div className="empty-state__title" style={{ fontSize: 15 }}>Sin ventas registradas</div>
               </div>
             ) : (
-              <div style={{ padding: '8px 0' }}>
-                {recentActivity.map(item => {
-                  const pet = pets.find(item.petId)
-                  const isConsult = item._type === 'consultation'
+              <div>
+                {recentSales.map(sale => {
+                  const owner = owners.find(sale.ownerId)
                   return (
                     <div
-                      key={item.id}
-                      style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 20px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background var(--t-fast)' }}
+                      key={sale.id}
+                      style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 20px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background var(--t-fast)' }}
                       onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
                       onMouseLeave={e => e.currentTarget.style.background = ''}
-                      onClick={() => navigate(isConsult ? '/consultations' : '/appointments')}
+                      onClick={() => navigate('/sales')}
                     >
-                      <div style={{
-                        width: 32, height: 32, borderRadius: 'var(--r-sm)',
-                        background: isConsult ? 'rgba(0,122,255,0.12)' : 'rgba(52,199,89,0.12)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: isConsult ? 'var(--blue)' : 'var(--green)', flexShrink: 0,
-                      }}>
-                        {isConsult
-                          ? <Stethoscope size={16} strokeWidth={1.75} />
-                          : <CheckCircle  size={16} strokeWidth={1.75} />
-                        }
-                      </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, fontSize: 14 }}>
-                          {isConsult ? 'Consulta' : 'Turno atendido'} — {pet?.name || '—'}
+                        <div style={{ fontWeight: 600, fontSize: 14 }} className="truncate">
+                          {owner?.name || 'Sin dueño'}
                         </div>
-                        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }} className="truncate">{item.reason}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{formatDate(sale.date)}</div>
                       </div>
-                      <div style={{ fontSize: 12, color: 'var(--text-tertiary)', flexShrink: 0 }}>
-                        {formatDate(item._date.toISOString())}
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div style={{ fontWeight: 700, color: 'var(--vet-teal)' }}>{formatCurrency(sale.total || 0)}</div>
+                        <Badge color={sale.paymentStatus === 'paid' ? 'green' : sale.paymentStatus === 'partial' ? 'orange' : 'red'} dot>
+                          {{ paid: 'Pagado', partial: 'Parcial', pending: 'Pendiente' }[sale.paymentStatus] || sale.paymentStatus}
+                        </Badge>
                       </div>
                     </div>
                   )
@@ -339,4 +208,3 @@ export default function Dashboard() {
     </>
   )
 }
-

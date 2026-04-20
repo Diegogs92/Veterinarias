@@ -61,9 +61,6 @@ export function AppProvider({ children }) {
 
   const owners            = useSupaCrud('owners')
   const pets              = useSupaCrud('pets')
-  const appointments      = useSupaCrud('appointments')
-  const consultations     = useSupaCrud('consultations')
-  const vaccines          = useSupaCrud('vaccines')
   const _sales            = useSupaCrud('sales', ['items'])
   const cash              = useSupaCrud('cash_movements')
   const internments       = useSupaCrud('internments', ['dailyNotes'])
@@ -82,12 +79,9 @@ export function AppProvider({ children }) {
     setLoading(true)
     ;(async () => {
       try {
-        const [o, p, a, c, v, s, cm, im, pc, pr, d, dp, gr, bo, co] = await Promise.all([
+        const [o, p, s, cm, im, pc, pr, d, dp, gr, bo, co] = await Promise.all([
           supabase.from('owners').select('*'),
           supabase.from('pets').select('*'),
-          supabase.from('appointments').select('*'),
-          supabase.from('consultations').select('*'),
-          supabase.from('vaccines').select('*'),
           supabase.from('sales').select('*, sale_items(*)'),
           supabase.from('cash_movements').select('*'),
           supabase.from('internments').select('*, internment_notes(*)'),
@@ -102,9 +96,6 @@ export function AppProvider({ children }) {
 
         owners.setItems(convRows(o.data))
         pets.setItems(convRows(p.data))
-        appointments.setItems(convRows(a.data))
-        consultations.setItems(convRows(c.data))
-        vaccines.setItems(convRows(v.data))
 
         _sales.setItems((s.data || []).map(row => {
           const { sale_items: si, ...rest } = row
@@ -300,7 +291,7 @@ export function AppProvider({ children }) {
   return (
     <AppContext.Provider value={{
       loading,
-      owners, pets, appointments, consultations, vaccines,
+      owners, pets,
       sales, cash, internments,
       productCategories, products,
       debts, debtPayments,

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import {
   TrendingUp, TrendingDown, Scale, ShoppingCart, Lock,
-  Pencil, Trash2, Banknote, Stethoscope, AlertCircle, CheckCircle2, Plus,
+  Pencil, Trash2, Banknote, AlertCircle, CheckCircle2, Plus,
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { useAuth } from '../../context/AuthContext'
@@ -20,7 +20,7 @@ const EMPTY_EXPENSE = { category: '', description: '', amount: '', date: todaySt
 const EMPTY_PAYMENT = { amount: '', date: todayStr(), notes: '' }
 
 export default function FinancesPage() {
-  const { cash, sales, consultations, owners, pets, debts, registerDebtPayment } = useApp()
+  const { cash, sales, owners, pets, debts, registerDebtPayment } = useApp()
   const { canViewFinances } = useAuth()
 
   // Expense modal
@@ -54,11 +54,7 @@ export default function FinancesPage() {
     .filter(s => s.paymentStatus === 'paid' || s.paymentStatus === 'partial')
     .reduce((sum, s) => sum + (s.paidAmount || 0), 0)
 
-  const consultIncome = consultations.items
-    .filter(c => c.price > 0 && (c.paymentStatus === 'paid' || c.paymentStatus === 'partial'))
-    .reduce((sum, c) => sum + (c.paidAmount || 0), 0)
-
-  const totalIncome = salesIncome + consultIncome
+  const totalIncome = salesIncome
 
   // ── Debts ──────────────────────────────────────────────────────────────────
   const pendingDebts = useMemo(() =>
@@ -167,21 +163,10 @@ export default function FinancesPage() {
         amount: s.paidAmount || 0,
         status: s.paymentStatus,
       }))
-    const consultEntries = consultations.items
-      .filter(c => c.price > 0 && c.paidAmount > 0)
-      .map(c => {
-        const pet = pets.find(c.petId)
-        return {
-          id: c.id, type: 'consultation', date: c.date,
-          label: `Consulta · ${pet?.name || '—'} (${owners.find(pet?.ownerId)?.name || '—'})`,
-          amount: c.paidAmount || 0,
-          status: c.paymentStatus,
-        }
-      })
-    return [...salesEntries, ...consultEntries]
+    return salesEntries
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 20)
-  }, [sales.items, consultations.items, owners, pets])
+  }, [sales.items, owners])
 
   return (
     <>

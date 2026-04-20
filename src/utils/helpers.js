@@ -62,19 +62,6 @@ export const speciesLabel = (species) => {
   return map[species?.toLowerCase()] ?? species ?? '—'
 }
 
-export const appointmentStatusLabel = (s) => ({
-  pending:   'Pendiente',
-  confirmed: 'Confirmado',
-  attended:  'Atendido',
-  cancelled: 'Cancelado',
-}[s] ?? s)
-
-export const appointmentStatusColor = (s) => ({
-  pending:   'orange',
-  confirmed: 'blue',
-  attended:  'green',
-  cancelled: 'red',
-}[s] ?? 'gray')
 
 export const initials = (name = '') =>
   name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
