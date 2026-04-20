@@ -15,7 +15,7 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
   useEffect(() => {
     if (isOpen) {
       setForm(initial
-        ? { ...initial, price: String(initial.price) }
+        ? { ...initial, price: String(Math.round(initial.price)) }
         : EMPTY
       )
       setErrors({})
@@ -31,14 +31,14 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
   const validate = () => {
     const errs = {}
     if (!form.name.trim()) errs.name = 'Requerido'
-    if (!form.price || isNaN(parseFloat(form.price)) || parseFloat(form.price) < 0) errs.price = 'Precio válido requerido'
+    if (!form.price || isNaN(parseInt(form.price, 10)) || parseInt(form.price, 10) < 0) errs.price = 'Precio válido requerido'
     return errs
   }
 
   const handleSave = () => {
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
-    onSave({ ...form, price: parseFloat(form.price) })
+    onSave({ ...form, price: parseInt(form.price, 10) })
     onClose()
   }
 
@@ -82,7 +82,7 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
           <label className="form-label">Precio (ARS) *</label>
           <input
             className={`form-input${errors.price ? ' form-input--error' : ''}`}
-            type="number" min="0" step="100"
+            type="number" min="0" step="1"
             value={form.price}
             onChange={set('price')}
             placeholder="0"

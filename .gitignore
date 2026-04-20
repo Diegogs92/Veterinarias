@@ -9,3 +9,7 @@ dist
 Thumbs.db
 
 .vercel
+
+# Archivos de precios originales (solo se commitea el SQL generado)
+*.xltx
+*.xlsx
