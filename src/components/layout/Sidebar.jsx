@@ -1,24 +1,37 @@
 import { useEffect } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard, Users, PawPrint, CalendarDays,
-  Stethoscope, Syringe, ShoppingCart, Hospital,
+  LayoutDashboard, Users, Scissors, ShoppingCart, Hospital,
   Banknote, Moon, Sun, LogOut, PackageSearch, ShieldCheck,
+  Stethoscope, Home,
 } from 'lucide-react'
 import { useAuth, ROLE_LABELS } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
 import { initials, avatarColor } from '../../utils/helpers'
 
+function DogLogo() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="4.5" cy="6.5" rx="3" ry="4.5" fill="white" opacity="0.9" transform="rotate(-12 4.5 6.5)" />
+      <ellipse cx="15.5" cy="6.5" rx="3" ry="4.5" fill="white" opacity="0.9" transform="rotate(12 15.5 6.5)" />
+      <circle cx="10" cy="12" r="6.5" fill="white" />
+      <circle cx="7.8" cy="10.5" r="1.1" fill="#1a6bc4" />
+      <circle cx="12.2" cy="10.5" r="1.1" fill="#1a6bc4" />
+      <ellipse cx="10" cy="13.5" rx="1.8" ry="1.2" fill="#1a6bc4" />
+      <path d="M8 15.5 Q10 17.5 12 15.5" stroke="#1a6bc4" strokeWidth="1" fill="none" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 const NAV = [
-  { to: '/',              Icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/owners',        Icon: Users,           label: 'Dueños' },
-  { to: '/pets',          Icon: PawPrint,        label: 'Mascotas' },
-  { to: '/appointments',  Icon: CalendarDays,    label: 'Turnos' },
-  { to: '/consultations', Icon: Stethoscope,     label: 'Historial Clínico' },
-  { to: '/vaccines',      Icon: Syringe,         label: 'Vacunas' },
-  { to: '/catalog',       Icon: PackageSearch,   label: 'Catálogo' },
-  { to: '/sales',         Icon: ShoppingCart,    label: 'Ventas' },
-  { to: '/internments',   Icon: Hospital,        label: 'Internación' },
+  { to: '/',            Icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/owners-pets', Icon: Users,           label: 'Dueños y Mascotas' },
+  { to: '/consultas',   Icon: Stethoscope,     label: 'Consultas' },
+  { to: '/grooming',    Icon: Scissors,        label: 'Peluquería' },
+  { to: '/boarding',    Icon: Home,            label: 'Pensionados' },
+  { to: '/internments', Icon: Hospital,        label: 'Internación' },
+  { to: '/catalog',     Icon: PackageSearch,   label: 'Catálogo' },
+  { to: '/sales',       Icon: ShoppingCart,    label: 'Ventas' },
 ]
 
 const NAV_VET = [
@@ -44,9 +57,9 @@ export default function Sidebar({ open, onClose }) {
     <aside className={`sidebar${open ? ' sidebar--open' : ''}`}>
       <div className="sidebar__logo">
         <div className="sidebar__logo-icon">
-          <PawPrint size={18} strokeWidth={2} color="white" />
+          <DogLogo />
         </div>
-        <span className="sidebar__logo-text">VetAdmin</span>
+        <span className="sidebar__logo-text">Salud Animal</span>
       </div>
 
       <nav className="sidebar__nav">

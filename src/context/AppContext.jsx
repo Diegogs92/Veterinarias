@@ -71,6 +71,9 @@ export function AppProvider({ children }) {
   const products          = useSupaCrud('products')
   const debts             = useSupaCrud('debts')
   const debtPayments      = useSupaCrud('debt_payments')
+  const grooming          = useSupaCrud('grooming_sessions')
+  const boarding          = useSupaCrud('boarding')
+  const consultas         = useSupaCrud('consultas')
 
   // ── Initial data load ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -79,7 +82,7 @@ export function AppProvider({ children }) {
     setLoading(true)
     ;(async () => {
       try {
-        const [o, p, a, c, v, s, cm, im, pc, pr, d, dp] = await Promise.all([
+        const [o, p, a, c, v, s, cm, im, pc, pr, d, dp, gr, bo, co] = await Promise.all([
           supabase.from('owners').select('*'),
           supabase.from('pets').select('*'),
           supabase.from('appointments').select('*'),
@@ -92,6 +95,9 @@ export function AppProvider({ children }) {
           supabase.from('products').select('*'),
           supabase.from('debts').select('*'),
           supabase.from('debt_payments').select('*'),
+          supabase.from('grooming_sessions').select('*'),
+          supabase.from('boarding').select('*'),
+          supabase.from('consultas').select('*'),
         ])
 
         owners.setItems(convRows(o.data))
@@ -116,6 +122,9 @@ export function AppProvider({ children }) {
         products.setItems(convRows(pr.data))
         debts.setItems(convRows(d.data))
         debtPayments.setItems(convRows(dp.data))
+        grooming.setItems(convRows(gr.data))
+        boarding.setItems(convRows(bo.data))
+        consultas.setItems(convRows(co.data))
       } catch (e) {
         console.error('Error loading data:', e)
       } finally {
@@ -295,6 +304,7 @@ export function AppProvider({ children }) {
       sales, cash, internments,
       productCategories, products,
       debts, debtPayments,
+      grooming, boarding, consultas,
       addDailyNote, removeDailyNote,
       syncDebt, registerDebtPayment,
     }}>
