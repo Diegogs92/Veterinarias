@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 
-const EMPTY = { name: '', phone: '', email: '' }
+const EMPTY = { name: '', apellido: '', phone: '', email: '' }
 
 /**
  * OwnerSelect — select de dueño con botón "+ Nuevo" que abre panel inline.
@@ -49,7 +49,7 @@ export default function OwnerSelect({
         >
           <option value="">Seleccionar dueño...</option>
           {[...owners.items].sort((a, b) => a.name.localeCompare(b.name)).map(o => (
-            <option key={o.id} value={o.id}>{o.name}</option>
+            <option key={o.id} value={o.id}>{o.name}{o.apellido ? ` ${o.apellido}` : ''}</option>
           ))}
         </select>
         {!disabled && (
@@ -79,14 +79,24 @@ export default function OwnerSelect({
               <X size={14} strokeWidth={2} />
             </button>
           </div>
-          <div className="form-group">
-            <label className="form-label" style={{ fontSize: 12 }}>Nombre *</label>
-            <input
-              className={`form-input${errs.name ? ' form-input--error' : ''}`}
-              value={form.name} onChange={set('name')}
-              placeholder="Nombre completo" autoFocus style={{ fontSize: 13 }}
-            />
-            {errs.name && <span style={{ color: 'var(--red)', fontSize: 11 }}>{errs.name}</span>}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: 12 }}>Nombre *</label>
+              <input
+                className={`form-input${errs.name ? ' form-input--error' : ''}`}
+                value={form.name} onChange={set('name')}
+                placeholder="Nombre" autoFocus style={{ fontSize: 13 }}
+              />
+              {errs.name && <span style={{ color: 'var(--red)', fontSize: 11 }}>{errs.name}</span>}
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label" style={{ fontSize: 12 }}>Apellido</label>
+              <input
+                className="form-input"
+                value={form.apellido} onChange={set('apellido')}
+                placeholder="Apellido" style={{ fontSize: 13 }}
+              />
+            </div>
           </div>
           <div className="form-group">
             <label className="form-label" style={{ fontSize: 12 }}>Teléfono *</label>

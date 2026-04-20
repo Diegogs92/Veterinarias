@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Modal from '../../components/ui/Modal'
 
-const EMPTY = { name: '', phone: '', email: '', address: '', discount: 0 }
+const EMPTY = { name: '', apellido: '', phone: '', email: '', address: '', discount: 0 }
 
 export default function OwnerForm({ isOpen, onClose, onSave, initial = null }) {
   const [form, setForm] = useState(initial || EMPTY)
@@ -46,18 +46,24 @@ export default function OwnerForm({ isOpen, onClose, onSave, initial = null }) {
       <div className="form-row form-row--2">
         <div className="form-group">
           <label className="form-label">Nombre *</label>
-          <input className={`form-input${errors.name ? ' form-input--error' : ''}`} value={form.name} onChange={set('name')} placeholder="Nombre completo" />
+          <input className={`form-input${errors.name ? ' form-input--error' : ''}`} value={form.name} onChange={set('name')} placeholder="Nombre" />
           {errors.name && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.name}</span>}
         </div>
+        <div className="form-group">
+          <label className="form-label">Apellido</label>
+          <input className="form-input" value={form.apellido} onChange={set('apellido')} placeholder="Apellido" />
+        </div>
+      </div>
+      <div className="form-row form-row--2">
         <div className="form-group">
           <label className="form-label">Teléfono *</label>
           <input className={`form-input${errors.phone ? ' form-input--error' : ''}`} value={form.phone} onChange={set('phone')} placeholder="11-1234-5678" />
           {errors.phone && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.phone}</span>}
         </div>
-      </div>
-      <div className="form-group">
-        <label className="form-label">Email</label>
-        <input className="form-input" type="email" value={form.email} onChange={set('email')} placeholder="correo@email.com" />
+        <div className="form-group">
+          <label className="form-label">Email</label>
+          <input className="form-input" type="email" value={form.email} onChange={set('email')} placeholder="correo@email.com" />
+        </div>
       </div>
       <div className="form-group">
         <label className="form-label">Dirección</label>

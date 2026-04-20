@@ -48,7 +48,7 @@ export default function OwnersPetsPage() {
 
   const filteredOwners = useMemo(() =>
     owners.items.filter(o =>
-      `${o.name} ${o.phone} ${o.email}`.toLowerCase().includes(ownerSearch.toLowerCase())
+      `${o.name} ${o.apellido} ${o.phone} ${o.email}`.toLowerCase().includes(ownerSearch.toLowerCase())
     ),
     [owners.items, ownerSearch]
   )
@@ -73,7 +73,7 @@ export default function OwnersPetsPage() {
   const filteredPets = useMemo(() =>
     pets.items.filter(p => {
       const owner = owners.find(p.ownerId)
-      const searchStr = `${p.name} ${p.breed} ${owner?.name || ''}`.toLowerCase()
+      const searchStr = `${p.name} ${p.breed} ${owner?.name || ''} ${owner?.apellido || ''}`.toLowerCase()
       return (
         searchStr.includes(petSearch.toLowerCase()) &&
         (!speciesFilter || p.species === speciesFilter) &&
@@ -91,7 +91,8 @@ export default function OwnersPetsPage() {
 
   const handleDeletePet = () => { pets.remove(deletingPet.id); setDeletingPet(null) }
 
-  const ownerName = ownerFilter ? owners.find(ownerFilter)?.name : null
+  const ownerData = ownerFilter ? owners.find(ownerFilter) : null
+  const ownerName = ownerData ? `${ownerData.name}${ownerData.apellido ? ` ${ownerData.apellido}` : ''}` : null
 
   return (
     <>
@@ -157,7 +158,8 @@ export default function OwnersPetsPage() {
                   <table>
                     <thead>
                       <tr>
-                        <th>Dueño</th>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
                         <th>Teléfono</th>
                         <th>Email</th>
                         <th>Dirección</th>
@@ -172,11 +174,12 @@ export default function OwnersPetsPage() {
                           <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                               <div className="avatar avatar--sm" style={{ background: avatarColor(owner.name), fontSize: 11 }}>
-                                {initials(owner.name)}
+                                {initials(`${owner.name}${owner.apellido ? ` ${owner.apellido}` : ''}`)}
                               </div>
                               <span style={{ fontWeight: 600 }}>{owner.name}</span>
                             </div>
                           </td>
+                          <td style={{ color: 'var(--text-secondary)' }}>{owner.apellido || '—'}</td>
                           <td style={{ color: 'var(--text-secondary)' }}>{owner.phone}</td>
                           <td style={{ color: 'var(--text-secondary)' }}>{owner.email || '—'}</td>
                           <td style={{ color: 'var(--text-secondary)', maxWidth: 180 }} className="truncate">{owner.address || '—'}</td>
@@ -274,7 +277,7 @@ export default function OwnersPetsPage() {
                           {speciesLabel(pet.species)}{pet.breed ? ` · ${pet.breed}` : ''}
                         </div>
                         <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>
-                          {owner?.name || '—'}
+                          {owner ? `${owner.name}${owner.apellido ? ` ${owner.apellido}` : ''}` : '—'}
                           {pet.birthDate && ` · ${calcAge(pet.birthDate)}`}
                         </div>
                       </div>
