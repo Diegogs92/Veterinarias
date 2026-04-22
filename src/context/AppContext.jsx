@@ -28,9 +28,16 @@ function useSupaCrud(table, omit = []) {
 
   const add = (data) => {
     const item = { ...data, id: crypto.randomUUID(), createdAt: new Date().toISOString() }
+    const payload = objToSnake(item, ['updatedAt', ...omit])
     setItems(prev => [...prev, item])
-    supabase.from(table).insert(objToSnake(item, ['updatedAt', ...omit]))
-      .then(({ error }) => { if (error) console.error(`[${table}] insert:`, error.message) })
+    supabase.from(table).insert(payload)
+      .then(({ error }) => {
+        if (error) {
+          console.error(`[${table}] insert error:`, error.message, '\nPayload:', JSON.stringify(payload))
+          setItems(prev => prev.filter(i => i.id !== item.id))
+          alert(`❌ Error al guardar (${table}):\n${error.message}`)
+        }
+      })
     return item
   }
 
@@ -192,13 +199,21 @@ export function AppProvider({ children }) {
 
     ;(async () => {
       const { error } = await supabase.from('sales').insert(objToSnake(sale, ['updatedAt']))
-      if (error) { console.error('[sales] insert:', error.message); return }
+      if (error) {
+        console.error('[sales] insert:', error.message, objToSnake(sale, ['updatedAt']))
+        setSales.current(prev => prev.filter(s => s.id !== id))
+        alert(`❌ Error al guardar la venta:\n${error.message}`)
+        return
+      }
       if (saleItems.length) {
         const rows = saleItems.map(item => objToSnake({
           ...item, id: item.id || crypto.randomUUID(), saleId: id,
         }))
         const { error: ie } = await supabase.from('sale_items').insert(rows)
-        if (ie) console.error('[sale_items] insert:', ie.message)
+        if (ie) {
+          console.error('[sale_items] insert:', ie.message)
+          alert(`⚠️ Venta guardada pero error en los productos:\n${ie.message}`)
+        }
       }
     })()
 
