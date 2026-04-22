@@ -76,7 +76,7 @@ export default function GroomingForm({ isOpen, onClose, onSave, initial = null }
         value={form.ownerId}
         onChange={id => setForm(f => ({ ...f, ownerId: id }))}
         disabled={!!form.petId}
-        label="Dueño (auto-completa al elegir mascota)"
+        label="Dueño"
       />
 
       <div className="form-row form-row--2">
@@ -86,35 +86,38 @@ export default function GroomingForm({ isOpen, onClose, onSave, initial = null }
             className={`form-input${errors.date ? ' form-input--error' : ''}`}
             type="date" value={form.date} onChange={set('date')}
           />
+          {errors.date && <span className="form-error">{errors.date}</span>}
         </div>
         <div className="form-group">
           <label className="form-label">Estado</label>
-          <select className="form-input" value={form.status} onChange={set('status')}>
-            <option value="completed">Realizado</option>
-            <option value="scheduled">Programado</option>
-          </select>
+          <div className="toggle-group">
+            <button
+              type="button"
+              className={`toggle-btn${form.status === 'scheduled' ? ' on' : ''}`}
+              onClick={() => setForm(f => ({ ...f, status: 'scheduled' }))}
+            >
+              📅 Programado
+            </button>
+            <button
+              type="button"
+              className={`toggle-btn${form.status === 'completed' ? ' on--ok' : ''}`}
+              onClick={() => setForm(f => ({ ...f, status: 'completed' }))}
+            >
+              ✅ Realizado
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="form-group">
         <label className="form-label">Servicios</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+        <div className="toggle-group">
           {SERVICES.map(svc => (
             <button
               key={svc}
               type="button"
+              className={`toggle-btn${form.services.includes(svc) ? ' on' : ''}`}
               onClick={() => toggleService(svc)}
-              style={{
-                padding: '5px 12px',
-                borderRadius: 'var(--r-full)',
-                border: '1.5px solid',
-                fontSize: 13,
-                cursor: 'pointer',
-                background: form.services.includes(svc) ? 'var(--blue)' : 'transparent',
-                borderColor: form.services.includes(svc) ? 'var(--blue)' : 'var(--border)',
-                color: form.services.includes(svc) ? 'white' : 'var(--text-primary)',
-                transition: 'all 0.15s',
-              }}
             >
               {svc}
             </button>
@@ -126,10 +129,8 @@ export default function GroomingForm({ isOpen, onClose, onSave, initial = null }
         <div className="form-group">
           <label className="form-label">Precio</label>
           <input
-            className="form-input"
-            type="number" min="0" step="0.01"
-            value={form.price} onChange={set('price')}
-            placeholder="0.00"
+            className="form-input" type="number" min="0" step="0.01"
+            value={form.price} onChange={set('price')} placeholder="0"
           />
         </div>
       </div>

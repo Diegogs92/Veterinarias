@@ -61,11 +61,10 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
         <label className="form-label">Nombre del producto *</label>
         <input
           className={`form-input${errors.name ? ' form-input--error' : ''}`}
-          value={form.name}
-          onChange={set('name')}
+          value={form.name} onChange={set('name')} autoFocus
           placeholder="Ej: Amoxicilina 500mg x 20 comp"
         />
-        {errors.name && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.name}</span>}
+        {errors.name && <span className="form-error">{errors.name}</span>}
       </div>
 
       <div className="form-row form-row--2">
@@ -83,47 +82,50 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
           <input
             className={`form-input${errors.price ? ' form-input--error' : ''}`}
             type="number" min="0" step="1"
-            value={form.price}
-            onChange={set('price')}
-            placeholder="0"
+            value={form.price} onChange={set('price')} placeholder="0"
           />
-          {errors.price && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.price}</span>}
+          {errors.price && <span className="form-error">{errors.price}</span>}
         </div>
       </div>
 
-      <div className="form-row form-row--2">
-        <div className="form-group">
-          <label className="form-label">Código de barras</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <input
-              className="form-input"
-              value={form.barcode}
-              onChange={set('barcode')}
-              placeholder="7790001234"
-              style={{ flex: 1 }}
-            />
-            <button
-              type="button"
-              className="btn btn--subtle btn--icon"
-              onClick={() => setScannerOpen(true)}
-              title="Escanear con cámara"
-              style={{ flexShrink: 0 }}
-            >
-              <ScanLine size={16} strokeWidth={2} />
-            </button>
-          </div>
-        </div>
-        <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: 22 }}>
+      <div className="form-group">
+        <label className="form-label">Código de barras</label>
+        <div style={{ display: 'flex', gap: 8 }}>
           <input
-            id="inStock"
-            type="checkbox"
-            checked={form.inStock}
-            onChange={set('inStock')}
-            style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--vet-teal)' }}
+            className="form-input"
+            value={form.barcode} onChange={set('barcode')}
+            placeholder="7790001234"
+            style={{ flex: 1 }}
           />
-          <label htmlFor="inStock" style={{ fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
-            Disponible en stock
-          </label>
+          <button
+            type="button"
+            className="btn btn--subtle btn--icon"
+            onClick={() => setScannerOpen(true)}
+            title="Escanear con cámara"
+            style={{ flexShrink: 0 }}
+          >
+            <ScanLine size={18} strokeWidth={2} />
+          </button>
+        </div>
+      </div>
+
+      <div className="form-group" style={{ marginBottom: 0 }}>
+        <label className="form-label">Disponibilidad</label>
+        <div className="toggle-group">
+          <button
+            type="button"
+            className={`toggle-btn${form.inStock ? ' on--ok' : ''}`}
+            onClick={() => setForm(f => ({ ...f, inStock: true }))}
+          >
+            ✅ En stock
+          </button>
+          <button
+            type="button"
+            className={`toggle-btn${!form.inStock ? ' on--danger' : ''}`}
+            onClick={() => setForm(f => ({ ...f, inStock: false }))}
+          >
+            ✗ Sin stock
+          </button>
         </div>
       </div>
     </Modal>
@@ -131,10 +133,7 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
     <BarcodeScanner
       isOpen={scannerOpen}
       onClose={() => setScannerOpen(false)}
-      onScan={(code) => {
-        setForm(f => ({ ...f, barcode: code }))
-        setScannerOpen(false)
-      }}
+      onScan={(code) => { setForm(f => ({ ...f, barcode: code })); setScannerOpen(false) }}
       title="Escanear código de barras"
     />
     </>

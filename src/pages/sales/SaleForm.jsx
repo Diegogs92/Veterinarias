@@ -205,7 +205,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
             <ScanLine size={16} strokeWidth={2} />
           </button>
         </div>
-        {errors.items && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.items}</span>}
+        {errors.items && <span className="form-error">{errors.items}</span>}
         {scanFeedback && (
           <div style={{
             marginTop: 6, padding: '6px 12px', borderRadius: 6, fontSize: 13, fontWeight: 500,
@@ -278,7 +278,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                       style={{
                         width: 56, textAlign: 'center', padding: '4px 6px',
                         border: '1px solid var(--border)', borderRadius: 6,
-                        background: 'var(--surface-2)', color: 'var(--text-primary)', fontSize: 14,
+                        background: 'var(--bg-sub)', color: 'var(--text-primary)', fontSize: 14,
                       }}
                     />
                   </td>
@@ -336,7 +336,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
       {/* Summary */}
       {form.items.length > 0 && (
         <div style={{
-          background: 'var(--surface-2)', borderRadius: 10, padding: '14px 16px',
+          background: 'var(--bg-sub)', borderRadius: 10, padding: '14px 16px',
           marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 6,
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)' }}>
@@ -394,7 +394,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
               onChange={e => { setForm(f => ({ ...f, paidAmount: e.target.value })); setErrors(er => ({ ...er, paidAmount: '' })) }}
               placeholder="0"
             />
-            {errors.paidAmount && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.paidAmount}</span>}
+            {errors.paidAmount && <span className="form-error">{errors.paidAmount}</span>}
             {total > 0 && parseFloat(form.paidAmount) > 0 && (
               <span style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4, display: 'block' }}>
                 Saldo pendiente: {formatCurrency(total - parseFloat(form.paidAmount))}

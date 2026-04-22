@@ -43,11 +43,7 @@ export default function BoardingForm({ isOpen, onClose, onSave, initial = null }
   const handleSave = () => {
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
-    onSave({
-      ...form,
-      dailyPrice: parseFloat(form.dailyPrice) || 0,
-      exitDate: form.exitDate || null,
-    })
+    onSave({ ...form, dailyPrice: parseFloat(form.dailyPrice) || 0, exitDate: form.exitDate || null })
     onClose()
   }
 
@@ -71,30 +67,30 @@ export default function BoardingForm({ isOpen, onClose, onSave, initial = null }
         value={form.ownerId}
         onChange={id => setForm(f => ({ ...f, ownerId: id }))}
         disabled={!!form.petId}
-        label="Dueño (auto-completa al elegir mascota)"
+        label="Dueño"
       />
 
-      <div className="form-row form-row--3">
+      <div className="form-row form-row--2">
         <div className="form-group">
-          <label className="form-label">Fecha de ingreso *</label>
+          <label className="form-label">Ingreso *</label>
           <input
             className={`form-input${errors.entryDate ? ' form-input--error' : ''}`}
             type="date" value={form.entryDate} onChange={set('entryDate')}
           />
-          {errors.entryDate && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.entryDate}</span>}
+          {errors.entryDate && <span className="form-error">{errors.entryDate}</span>}
         </div>
         <div className="form-group">
-          <label className="form-label">Fecha de egreso</label>
+          <label className="form-label">Egreso</label>
           <input className="form-input" type="date" value={form.exitDate} onChange={set('exitDate')} />
         </div>
-        <div className="form-group">
-          <label className="form-label">Precio por día</label>
-          <input
-            className="form-input" type="number" min="0" step="0.01"
-            value={form.dailyPrice} onChange={set('dailyPrice')}
-            placeholder="0.00"
-          />
-        </div>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Precio por día</label>
+        <input
+          className="form-input" type="number" min="0" step="1"
+          value={form.dailyPrice} onChange={set('dailyPrice')} placeholder="0"
+        />
       </div>
 
       <div className="form-group">
@@ -102,7 +98,7 @@ export default function BoardingForm({ isOpen, onClose, onSave, initial = null }
         <input
           className="form-input"
           value={form.feeding} onChange={set('feeding')}
-          placeholder="Ej: Croquetas marca X, 2 veces por día, 150g..."
+          placeholder="Ej: 150g de croquetas, 2 veces por día..."
         />
       </div>
 
@@ -111,16 +107,28 @@ export default function BoardingForm({ isOpen, onClose, onSave, initial = null }
         <textarea
           className="form-input" rows={3}
           value={form.observations} onChange={set('observations')}
-          placeholder="Ej: El dueño dejó cama, juguetes. Tiene medicación, no convive bien con otros perros..."
+          placeholder="Medicación, cuidados especiales, notas para el personal..."
         />
       </div>
 
-      <div className="form-group">
+      <div className="form-group" style={{ marginBottom: 0 }}>
         <label className="form-label">Estado</label>
-        <select className="form-input" value={form.status} onChange={set('status')}>
-          <option value="active">🏠 En pensión</option>
-          <option value="completed">✅ Retirado</option>
-        </select>
+        <div className="toggle-group">
+          <button
+            type="button"
+            className={`toggle-btn${form.status === 'active' ? ' on' : ''}`}
+            onClick={() => setForm(f => ({ ...f, status: 'active' }))}
+          >
+            🏠 En pensión
+          </button>
+          <button
+            type="button"
+            className={`toggle-btn${form.status === 'completed' ? ' on--ok' : ''}`}
+            onClick={() => setForm(f => ({ ...f, status: 'completed' }))}
+          >
+            ✅ Retirado
+          </button>
+        </div>
       </div>
     </Modal>
   )

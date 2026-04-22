@@ -93,17 +93,17 @@ export default function PetSelect({
           </button>
         )}
       </div>
-      {error && <span style={{ color: 'var(--red)', fontSize: 12 }}>{error}</span>}
+      {error && <span className="form-error">{error}</span>}
 
       {showAdd && (
         <div style={{
           marginTop: 8, padding: '14px 16px',
-          background: 'var(--surface-2)',
-          border: '1px solid var(--vet-teal)',
-          borderRadius: 8,
+          background: 'var(--bg-sub)',
+          border: '1px solid var(--accent)',
+          borderRadius: 'var(--r-md)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--vet-teal)' }}>Nueva mascota</span>
+            <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)' }}>Nueva mascota</span>
             <button type="button" className="btn btn--subtle btn--icon btn--sm" onClick={close}>
               <X size={14} strokeWidth={2} />
             </button>

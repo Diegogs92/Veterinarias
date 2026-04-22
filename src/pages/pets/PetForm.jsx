@@ -12,17 +12,17 @@ const EMPTY = {
 }
 
 const SPECIES = [
-  { value: 'perro',   label: 'Perro' },
-  { value: 'gato',    label: 'Gato' },
-  { value: 'conejo',  label: 'Conejo' },
-  { value: 'pajaro',  label: 'Pájaro' },
-  { value: 'hamster', label: 'Hámster' },
-  { value: 'pez',     label: 'Pez' },
-  { value: 'tortuga', label: 'Tortuga' },
-  { value: 'otro',    label: 'Otro' },
+  { value: 'perro',   label: '🐕 Perro'   },
+  { value: 'gato',    label: '🐈 Gato'    },
+  { value: 'conejo',  label: '🐇 Conejo'  },
+  { value: 'pajaro',  label: '🦜 Pájaro'  },
+  { value: 'hamster', label: '🐹 Hámster' },
+  { value: 'pez',     label: '🐟 Pez'     },
+  { value: 'tortuga', label: '🐢 Tortuga' },
+  { value: 'otro',    label: '🐾 Otro'    },
 ]
 
-const MAX_SIZE = 2 * 1024 * 1024 // 2 MB
+const MAX_SIZE = 2 * 1024 * 1024
 
 export default function PetForm({ isOpen, onClose, onSave, initial = null, defaultOwnerId = '' }) {
   const { owners } = useApp()
@@ -50,10 +50,7 @@ export default function PetForm({ isOpen, onClose, onSave, initial = null, defau
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > MAX_SIZE) {
-      setPhotoError('La imagen no puede superar 2 MB.')
-      return
-    }
+    if (file.size > MAX_SIZE) { setPhotoError('La imagen no puede superar 2 MB.'); return }
     setPhotoError('')
     const reader = new FileReader()
     reader.onload = (ev) => setForm(f => ({ ...f, photo: ev.target.result }))
@@ -62,8 +59,8 @@ export default function PetForm({ isOpen, onClose, onSave, initial = null, defau
 
   const validate = () => {
     const errs = {}
-    if (!form.name.trim())    errs.name    = 'Requerido'
-    if (!form.ownerId)        errs.ownerId = 'Seleccioná un dueño'
+    if (!form.name.trim()) errs.name    = 'Requerido'
+    if (!form.ownerId)     errs.ownerId = 'Seleccioná un dueño'
     return errs
   }
 
@@ -98,69 +95,40 @@ export default function PetForm({ isOpen, onClose, onSave, initial = null, defau
         </>
       }
     >
-      {/* Photo upload area */}
+      {/* Photo upload */}
       <div className="form-group" style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-        {/* Preview */}
-        <div
-          style={{
-            width: 80, height: 80, borderRadius: 'var(--r-md)', flexShrink: 0,
-            background: 'var(--bg-input)', border: '1.5px dashed var(--border)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            overflow: 'hidden', position: 'relative',
-          }}
-        >
-          {hasPhoto ? (
-            <img src={form.photo} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => setForm(f => ({ ...f, photo: '' }))} />
-          ) : (
-            <span style={{ color: 'var(--text-tertiary)' }}>
-              <SpeciesIcon species={form.species} size={32} strokeWidth={1.25} />
-            </span>
-          )}
+        <div style={{
+          width: 76, height: 76, borderRadius: 'var(--r-md)', flexShrink: 0,
+          background: 'var(--bg-sub)', border: '1.5px dashed var(--border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          overflow: 'hidden',
+        }}>
+          {hasPhoto
+            ? <img src={form.photo} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => setForm(f => ({ ...f, photo: '' }))} />
+            : <span style={{ color: 'var(--text-tertiary)' }}><SpeciesIcon species={form.species} size={32} strokeWidth={1.25} /></span>
+          }
         </div>
-
-        {/* Controls */}
         <div style={{ flex: 1 }}>
           <label className="form-label">Foto</label>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-            <button
-              type="button"
-              className="btn btn--subtle btn--sm"
-              onClick={() => fileRef.current?.click()}
-              style={{ display: 'flex', alignItems: 'center', gap: 5 }}
-            >
-              <Camera size={13} strokeWidth={2} /> Subir imagen
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button type="button" className="btn btn--subtle btn--sm" onClick={() => fileRef.current?.click()} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <Camera size={13} strokeWidth={2} /> Subir
             </button>
-            <button
-              type="button"
-              className={`btn btn--sm ${urlMode ? 'btn--primary' : 'btn--subtle'}`}
-              onClick={() => setUrlMode(v => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: 5 }}
-            >
+            <button type="button" className={`btn btn--sm ${urlMode ? 'btn--primary' : 'btn--subtle'}`} onClick={() => setUrlMode(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <Link size={13} strokeWidth={2} /> URL
             </button>
             {hasPhoto && (
-              <button
-                type="button"
-                className="btn btn--subtle btn--sm"
-                onClick={() => { setForm(f => ({ ...f, photo: '' })); setPhotoError('') }}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--red)' }}
-              >
+              <button type="button" className="btn btn--subtle btn--sm" onClick={() => { setForm(f => ({ ...f, photo: '' })); setPhotoError('') }} style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--danger)' }}>
                 <X size={13} strokeWidth={2} /> Quitar
               </button>
             )}
           </div>
-
           {urlMode && (
-            <input
-              className="form-input"
-              value={form.photo}
+            <input className="form-input" style={{ marginTop: 8, fontSize: 13 }} value={form.photo}
               onChange={(e) => { setForm(f => ({ ...f, photo: e.target.value })); setPhotoError('') }}
-              placeholder="https://..."
-              style={{ fontSize: 13 }}
-            />
+              placeholder="https://..." />
           )}
-          {photoError && <span style={{ color: 'var(--red)', fontSize: 12 }}>{photoError}</span>}
-
+          {photoError && <span className="form-error">{photoError}</span>}
           <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
         </div>
       </div>
@@ -168,31 +136,42 @@ export default function PetForm({ isOpen, onClose, onSave, initial = null, defau
       <div className="form-row form-row--2">
         <div className="form-group">
           <label className="form-label">Nombre *</label>
-          <input className={`form-input${errors.name ? ' form-input--error' : ''}`} value={form.name} onChange={set('name')} placeholder="Nombre de la mascota" />
-          {errors.name && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.name}</span>}
+          <input
+            className={`form-input${errors.name ? ' form-input--error' : ''}`}
+            value={form.name} onChange={set('name')} placeholder="Nombre de la mascota"
+          />
+          {errors.name && <span className="form-error">{errors.name}</span>}
         </div>
-        <div className="form-group">
-          <label className="form-label">Especie</label>
-          <select className="form-input" value={form.species} onChange={set('species')}>
-            {SPECIES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-          </select>
-        </div>
-      </div>
-
-      <div className="form-row form-row--2">
         <div className="form-group">
           <label className="form-label">Raza</label>
           <input className="form-input" value={form.breed} onChange={set('breed')} placeholder="Ej: Labrador, Siamés..." />
         </div>
-        <OwnerSelect
-          value={form.ownerId}
-          onChange={id => { setForm(f => ({ ...f, ownerId: id })); setErrors(er => ({ ...er, ownerId: '' })) }}
-          error={errors.ownerId}
-          label="Dueño"
-          required
-          onAddNew={() => setOwnerFormOpen(true)}
-        />
       </div>
+
+      <div className="form-group">
+        <label className="form-label">Especie</label>
+        <div className="toggle-group">
+          {SPECIES.map(s => (
+            <button
+              key={s.value}
+              type="button"
+              className={`toggle-btn${form.species === s.value ? ' on' : ''}`}
+              onClick={() => setForm(f => ({ ...f, species: s.value }))}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <OwnerSelect
+        value={form.ownerId}
+        onChange={id => { setForm(f => ({ ...f, ownerId: id })); setErrors(er => ({ ...er, ownerId: '' })) }}
+        error={errors.ownerId}
+        label="Dueño"
+        required
+        onAddNew={() => setOwnerFormOpen(true)}
+      />
 
       <div className="form-row form-row--2">
         <div className="form-group">
@@ -209,6 +188,7 @@ export default function PetForm({ isOpen, onClose, onSave, initial = null, defau
         <label className="form-label">Alergias</label>
         <input className="form-input" value={form.allergies} onChange={set('allergies')} placeholder="Ninguna, polen, antibióticos..." />
       </div>
+
       <div className="form-group" style={{ marginBottom: 0 }}>
         <label className="form-label">Observaciones</label>
         <textarea className="form-input" value={form.observations} onChange={set('observations')} placeholder="Notas adicionales..." rows={3} />

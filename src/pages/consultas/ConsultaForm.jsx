@@ -9,14 +9,17 @@ const EMPTY = {
   petId: '', ownerId: '', date: todayStr(),
   type: 'consultorio',
   reason: '', diagnosis: '', treatment: '',
-  // consultorio specific
   medicationsProvided: false, medicationsDetail: '',
   xrays: false, xraysNotes: '',
-  // domicilio specific
   address: '',
-  // pricing
   price: '', paymentStatus: 'pending',
 }
+
+const PAYMENT_OPTS = [
+  { value: 'pending', label: 'Pendiente', tone: 'warn' },
+  { value: 'partial', label: 'Parcial',   tone: 'warn' },
+  { value: 'paid',    label: 'Pagado',    tone: 'ok'   },
+]
 
 export default function ConsultaForm({ isOpen, onClose, onSave, initial = null }) {
   const { pets, owners } = useApp()
@@ -25,11 +28,7 @@ export default function ConsultaForm({ isOpen, onClose, onSave, initial = null }
 
   useEffect(() => {
     if (isOpen) setForm(initial
-      ? {
-          ...EMPTY, ...initial,
-          medicationsProvided: initial.medicationsProvided || false,
-          xrays: initial.xrays || false,
-        }
+      ? { ...EMPTY, ...initial, medicationsProvided: initial.medicationsProvided || false, xrays: initial.xrays || false }
       : EMPTY
     )
     setErrors({})
@@ -45,18 +44,14 @@ export default function ConsultaForm({ isOpen, onClose, onSave, initial = null }
   const handlePetChange = (petId) => {
     const pet = pets.items.find(p => p.id === petId)
     const owner = pet ? owners.items.find(o => o.id === pet.ownerId) : null
-    setForm(f => ({
-      ...f, petId,
-      ownerId: pet?.ownerId || f.ownerId,
-      address: owner?.address || f.address,
-    }))
+    setForm(f => ({ ...f, petId, ownerId: pet?.ownerId || f.ownerId, address: owner?.address || f.address }))
     setErrors(er => ({ ...er, petId: '' }))
   }
 
   const validate = () => {
     const errs = {}
-    if (!form.petId)        errs.petId  = 'Seleccioná una mascota'
-    if (!form.date)         errs.date   = 'Requerido'
+    if (!form.petId)         errs.petId  = 'Seleccioná una mascota'
+    if (!form.date)          errs.date   = 'Requerido'
     if (!form.reason.trim()) errs.reason = 'Requerido'
     return errs
   }
@@ -88,7 +83,7 @@ export default function ConsultaForm({ isOpen, onClose, onSave, initial = null }
         value={form.ownerId}
         onChange={id => setForm(f => ({ ...f, ownerId: id }))}
         disabled={!!form.petId}
-        label="Dueño (auto-completa al elegir mascota)"
+        label="Dueño"
       />
 
       <div className="form-row form-row--2">
@@ -98,115 +93,125 @@ export default function ConsultaForm({ isOpen, onClose, onSave, initial = null }
             className={`form-input${errors.date ? ' form-input--error' : ''}`}
             type="date" value={form.date} onChange={set('date')}
           />
+          {errors.date && <span className="form-error">{errors.date}</span>}
         </div>
         <div className="form-group">
-          <label className="form-label">Tipo de consulta</label>
-          <select className="form-input" value={form.type} onChange={set('type')}>
-            <option value="consultorio">🏥 En consultorio</option>
-            <option value="domicilio">🏠 A domicilio</option>
-          </select>
+          <label className="form-label">Tipo</label>
+          <div className="toggle-group">
+            {[
+              { value: 'consultorio', label: '🏥 Consultorio' },
+              { value: 'domicilio',   label: '🏠 Domicilio' },
+            ].map(t => (
+              <button
+                key={t.value}
+                type="button"
+                className={`toggle-btn${form.type === t.value ? ' on' : ''}`}
+                onClick={() => setForm(f => ({ ...f, type: t.value }))}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {form.type === 'domicilio' && (
         <div className="form-group">
-          <label className="form-label">Dirección (domicilio de atención)</label>
+          <label className="form-label">Dirección de la visita</label>
           <input
             className="form-input"
             value={form.address} onChange={set('address')}
-            placeholder="Dirección donde se realizó la visita..."
+            placeholder="Calle y número..."
           />
         </div>
       )}
 
       <div className="form-group">
-        <label className="form-label">Motivo de consulta *</label>
+        <label className="form-label">Motivo *</label>
         <input
           className={`form-input${errors.reason ? ' form-input--error' : ''}`}
           value={form.reason} onChange={set('reason')}
-          placeholder="Motivo de la consulta..."
+          placeholder="¿Por qué viene el paciente?"
         />
-        {errors.reason && <span style={{ color: 'var(--red)', fontSize: 12 }}>{errors.reason}</span>}
+        {errors.reason && <span className="form-error">{errors.reason}</span>}
       </div>
 
-      <div className="form-group">
-        <label className="form-label">Diagnóstico</label>
-        <textarea className="form-input" rows={2} value={form.diagnosis} onChange={set('diagnosis')} placeholder="Diagnóstico..." />
-      </div>
-
-      <div className="form-group">
-        <label className="form-label">Tratamiento</label>
-        <textarea className="form-input" rows={2} value={form.treatment} onChange={set('treatment')} placeholder="Tratamiento indicado..." />
+      <div className="form-row form-row--2">
+        <div className="form-group">
+          <label className="form-label">Diagnóstico</label>
+          <textarea className="form-input" rows={3} value={form.diagnosis} onChange={set('diagnosis')} placeholder="Diagnóstico..." />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Tratamiento</label>
+          <textarea className="form-input" rows={3} value={form.treatment} onChange={set('treatment')} placeholder="Tratamiento indicado..." />
+        </div>
       </div>
 
       {form.type === 'consultorio' && (
-        <>
-          <div style={{
-            background: 'var(--bg-input)', borderRadius: 'var(--r-md)',
-            padding: '14px 16px', marginTop: 4,
-          }}>
-            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 12, color: 'var(--text-secondary)' }}>
-              Detalles de consultorio
-            </div>
-
-            <div className="form-group" style={{ marginBottom: 12 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={form.medicationsProvided}
-                  onChange={setCheck('medicationsProvided')}
-                  style={{ width: 16, height: 16, cursor: 'pointer' }}
-                />
-                <span style={{ fontSize: 14, fontWeight: 500 }}>Se proporcionaron medicamentos</span>
-              </label>
-              {form.medicationsProvided && (
-                <input
-                  className="form-input"
-                  style={{ marginTop: 8 }}
-                  value={form.medicationsDetail} onChange={set('medicationsDetail')}
-                  placeholder="Medicamento, dosis, frecuencia..."
-                />
-              )}
-            </div>
-
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={form.xrays}
-                  onChange={setCheck('xrays')}
-                  style={{ width: 16, height: 16, cursor: 'pointer' }}
-                />
-                <span style={{ fontSize: 14, fontWeight: 500 }}>Se realizaron radiografías</span>
-              </label>
-              {form.xrays && (
-                <input
-                  className="form-input"
-                  style={{ marginTop: 8 }}
-                  value={form.xraysNotes} onChange={set('xraysNotes')}
-                  placeholder="Zona radiografiada, hallazgos..."
-                />
-              )}
-            </div>
+        <div style={{
+          background: 'var(--bg-sub)', borderRadius: 'var(--r-md)',
+          padding: '14px 16px', marginBottom: 16,
+        }}>
+          <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 12, color: 'var(--text-secondary)' }}>
+            Detalles de consultorio
           </div>
-        </>
+          <div className="form-group" style={{ marginBottom: 10 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+              <input
+                type="checkbox" checked={form.medicationsProvided} onChange={setCheck('medicationsProvided')}
+                style={{ width: 17, height: 17, cursor: 'pointer', accentColor: 'var(--accent)' }}
+              />
+              <span style={{ fontSize: 14, fontWeight: 500 }}>Se entregaron medicamentos</span>
+            </label>
+            {form.medicationsProvided && (
+              <input
+                className="form-input" style={{ marginTop: 8 }}
+                value={form.medicationsDetail} onChange={set('medicationsDetail')}
+                placeholder="Medicamento, dosis, frecuencia..."
+              />
+            )}
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+              <input
+                type="checkbox" checked={form.xrays} onChange={setCheck('xrays')}
+                style={{ width: 17, height: 17, cursor: 'pointer', accentColor: 'var(--accent)' }}
+              />
+              <span style={{ fontSize: 14, fontWeight: 500 }}>Se realizaron radiografías</span>
+            </label>
+            {form.xrays && (
+              <input
+                className="form-input" style={{ marginTop: 8 }}
+                value={form.xraysNotes} onChange={set('xraysNotes')}
+                placeholder="Zona, hallazgos..."
+              />
+            )}
+          </div>
+        </div>
       )}
 
-      <div className="form-row form-row--2" style={{ marginTop: 8 }}>
+      <div className="form-row form-row--2">
         <div className="form-group">
           <label className="form-label">Precio</label>
           <input
             className="form-input" type="number" min="0" step="0.01"
-            value={form.price} onChange={set('price')} placeholder="0.00"
+            value={form.price} onChange={set('price')} placeholder="0"
           />
         </div>
         <div className="form-group">
           <label className="form-label">Estado de pago</label>
-          <select className="form-input" value={form.paymentStatus} onChange={set('paymentStatus')}>
-            <option value="pending">Pendiente</option>
-            <option value="partial">Parcial</option>
-            <option value="paid">Pagado</option>
-          </select>
+          <div className="toggle-group">
+            {PAYMENT_OPTS.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                className={`toggle-btn${form.paymentStatus === opt.value ? ` on--${opt.tone}` : ''}`}
+                onClick={() => setForm(f => ({ ...f, paymentStatus: opt.value }))}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </Modal>

@@ -33,8 +33,8 @@ export default function CirugiasForm({ isOpen, onClose, onSave, initial = null }
 
   const validate = () => {
     const errs = {}
-    if (!form.petId) errs.petId = 'Seleccioná una mascota'
-    if (!form.date)  errs.date  = 'Requerido'
+    if (!form.petId)              errs.petId       = 'Seleccioná una mascota'
+    if (!form.date)               errs.date        = 'Requerido'
     if (!form.diagnostico.trim()) errs.diagnostico = 'Requerido'
     return errs
   }
@@ -56,7 +56,7 @@ export default function CirugiasForm({ isOpen, onClose, onSave, initial = null }
         <>
           <button className="btn btn--ghost" onClick={onClose}>Cancelar</button>
           <button className="btn btn--primary" onClick={handleSave}>
-            {initial ? 'Guardar cambios' : 'Registrar'}
+            {initial ? 'Guardar cambios' : 'Registrar cirugía'}
           </button>
         </>
       }
@@ -66,45 +66,44 @@ export default function CirugiasForm({ isOpen, onClose, onSave, initial = null }
         value={form.ownerId}
         onChange={id => setForm(f => ({ ...f, ownerId: id }))}
         disabled={!!form.petId}
-        label="Dueño (auto-completa al elegir mascota)"
+        label="Dueño"
       />
 
-      <div className="form-group">
-        <label className="form-label">Fecha *</label>
-        <input
-          className={`form-input${errors.date ? ' form-input--error' : ''}`}
-          type="date" value={form.date} onChange={set('date')}
-        />
-        {errors.date && <span className="form-error">{errors.date}</span>}
+      <div className="form-row form-row--2">
+        <div className="form-group">
+          <label className="form-label">Fecha *</label>
+          <input
+            className={`form-input${errors.date ? ' form-input--error' : ''}`}
+            type="date" value={form.date} onChange={set('date')}
+          />
+          {errors.date && <span className="form-error">{errors.date}</span>}
+        </div>
+        <div className="form-group">
+          <label className="form-label">Costos</label>
+          <input
+            className="form-input" type="number" min="0" step="1"
+            value={form.costos} onChange={set('costos')} placeholder="0"
+          />
+        </div>
       </div>
 
       <div className="form-group">
-        <label className="form-label">Diagnóstico *</label>
+        <label className="form-label">Diagnóstico / Procedimiento *</label>
         <textarea
           className={`form-input${errors.diagnostico ? ' form-input--error' : ''}`}
           rows={3}
           value={form.diagnostico} onChange={set('diagnostico')}
-          placeholder="Diagnóstico y descripción de la cirugía..."
+          placeholder="Descripción de la cirugía y diagnóstico..."
         />
         {errors.diagnostico && <span className="form-error">{errors.diagnostico}</span>}
       </div>
 
-      <div className="form-group">
-        <label className="form-label">Costos</label>
-        <input
-          className="form-input"
-          type="number" min="0" step="0.01"
-          value={form.costos} onChange={set('costos')}
-          placeholder="0.00"
-        />
-      </div>
-
-      <div className="form-group">
+      <div className="form-group" style={{ marginBottom: 0 }}>
         <label className="form-label">Observaciones</label>
         <textarea
           className="form-input" rows={3}
           value={form.observaciones} onChange={set('observaciones')}
-          placeholder="Notas adicionales, evolución post-operatoria..."
+          placeholder="Evolución post-operatoria, notas adicionales..."
         />
       </div>
     </Modal>
