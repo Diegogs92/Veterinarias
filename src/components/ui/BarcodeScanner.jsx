@@ -1,84 +1,141 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { BrowserMultiFormatOneDReader } from '@zxing/browser'
 import { X, Camera, AlertCircle, ScanLine, Flashlight, FlashlightOff } from 'lucide-react'
+
+const BARCODE_FORMATS = [
+  'ean_13', 'ean_8', 'upc_a', 'upc_e',
+  'code_128', 'code_39', 'code_93',
+  'itf', 'codabar', 'qr_code', 'data_matrix',
+]
+
+const hasNativeBarcodeDetector = typeof BarcodeDetector !== 'undefined'
 
 export default function BarcodeScanner({ isOpen, onClose, onScan, title = 'Escanear código de barras' }) {
   const videoRef    = useRef(null)
-  const readerRef   = useRef(null)
   const streamRef   = useRef(null)
-  const [error, setError]               = useState(null)
-  const [scanning, setScanning]         = useState(false)
-  const [torchOn, setTorchOn]           = useState(false)
+  const rafRef      = useRef(null)
+  const activeRef   = useRef(false)
+
+  const [error, setError]                   = useState(null)
+  const [scanning, setScanning]             = useState(false)
+  const [torchOn, setTorchOn]               = useState(false)
   const [torchSupported, setTorchSupported] = useState(false)
 
   const stopAll = useCallback(() => {
-    try { BrowserMultiFormatOneDReader.releaseAllStreams() } catch (_) {}
+    activeRef.current = false
+    cancelAnimationFrame(rafRef.current)
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(t => t.stop())
       streamRef.current = null
     }
-    readerRef.current = null
     setScanning(false)
     setTorchOn(false)
   }, [])
 
   useEffect(() => {
     if (!isOpen) return
-    let stopped = false
+    activeRef.current = true
     setError(null)
     setScanning(false)
 
     const start = async () => {
+      // 1. Pedir acceso a la cámara
+      let stream
       try {
-        const reader = new BrowserMultiFormatOneDReader()
-        readerRef.current = reader
-
-        await reader.decodeFromConstraints(
-          {
-            video: {
-              facingMode: { ideal: 'environment' },
-              width:  { ideal: 1920 },
-              height: { ideal: 1080 },
-            },
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width:  { ideal: 1920 },
+            height: { ideal: 1080 },
           },
-          videoRef.current,
-          (result, err) => {
-            if (stopped) return
-            if (result) { onScan(result.getText()); handleClose() }
-          }
-        )
-
-        if (stopped) return
-        setScanning(true)
-
-        // Apply continuous autofocus + detect torch support
-        await new Promise(r => setTimeout(r, 600))
-        const stream = videoRef.current?.srcObject
-        if (stream) {
-          streamRef.current = stream
-          const track = stream.getVideoTracks()[0]
-          const caps  = track.getCapabilities?.() || {}
-
-          if (caps.focusMode?.includes('continuous')) {
-            await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {})
-          }
-          setTorchSupported(caps.torch === true)
-        }
+        })
       } catch (e) {
-        if (!stopped) {
-          if (e?.name === 'NotAllowedError') {
-            setError('Permiso de cámara denegado. Habilitalo en la configuración del navegador.')
-          } else if (e?.name === 'NotFoundError') {
-            setError('No se encontró ninguna cámara en este dispositivo.')
-          } else {
-            setError('No se pudo iniciar la cámara. ' + (e?.message || ''))
-          }
+        if (!activeRef.current) return
+        if (e?.name === 'NotAllowedError') {
+          setError('Permiso de cámara denegado. Habilitalo en la configuración del navegador.')
+        } else if (e?.name === 'NotFoundError') {
+          setError('No se encontró ninguna cámara en este dispositivo.')
+        } else {
+          setError('No se pudo iniciar la cámara. ' + (e?.message || ''))
         }
+        return
+      }
+
+      if (!activeRef.current) { stream.getTracks().forEach(t => t.stop()); return }
+
+      // 2. Conectar stream al video
+      streamRef.current = stream
+      const video = videoRef.current
+      video.srcObject = stream
+      await video.play()
+
+      // 3. Autofocus + torch
+      const track = stream.getVideoTracks()[0]
+      const caps  = track.getCapabilities?.() || {}
+      if (caps.focusMode?.includes('continuous')) {
+        await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {})
+      }
+      setTorchSupported(caps.torch === true)
+      setScanning(true)
+
+      // 4. Elegir motor de detección
+      if (hasNativeBarcodeDetector) {
+        runNativeLoop(video)
+      } else {
+        runZxingLoop(video, stream)
       }
     }
 
+    // ── Motor 1: BarcodeDetector nativo (Chrome / Android) ──
+    const runNativeLoop = (video) => {
+      let detector
+      try {
+        detector = new BarcodeDetector({ formats: BARCODE_FORMATS })
+      } catch {
+        // API disponible pero falló la creación → fallback
+        runZxingLoop(video, streamRef.current)
+        return
+      }
+
+      const loop = async () => {
+        if (!activeRef.current) return
+        try {
+          if (video.readyState >= 2) {
+            const results = await detector.detect(video)
+            if (results.length > 0) {
+              const code = results[0].rawValue
+              if (code) { handleScan(code); return }
+            }
+          }
+        } catch (_) {}
+        rafRef.current = requestAnimationFrame(loop)
+      }
+      rafRef.current = requestAnimationFrame(loop)
+    }
+
+    // ── Motor 2: ZXing (fallback para Firefox / Safari) ──
+    const runZxingLoop = async (video, stream) => {
+      let reader
+      try {
+        const { BrowserMultiFormatOneDReader } = await import('@zxing/browser')
+        if (!activeRef.current) return
+        reader = new BrowserMultiFormatOneDReader()
+        // decodeFromStream usa el stream ya existente sin crear uno nuevo
+        reader.decodeFromStream(stream, video, (result, err) => {
+          if (!activeRef.current) return
+          if (result) handleScan(result.getText())
+        })
+      } catch (e) {
+        if (activeRef.current) setError('No se pudo iniciar el lector. ' + (e?.message || ''))
+      }
+    }
+
+    const handleScan = (code) => {
+      onScan(code)
+      handleClose()
+    }
+
     start()
-    return () => { stopped = true; stopAll() }
+    return () => stopAll()
   }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClose = () => { stopAll(); onClose() }
@@ -86,8 +143,8 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, title = 'Escan
   const toggleTorch = async () => {
     const stream = streamRef.current
     if (!stream) return
-    const track   = stream.getVideoTracks()[0]
-    const next    = !torchOn
+    const track = stream.getVideoTracks()[0]
+    const next  = !torchOn
     await track.applyConstraints({ advanced: [{ torch: next }] }).catch(() => {})
     setTorchOn(next)
   }
@@ -155,13 +212,11 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, title = 'Escan
                 pointerEvents: 'none',
               }} />
 
-              {/* Target frame */}
               <div style={{
                 position: 'absolute',
                 top: '28%', left: '10%', right: '10%', height: '44%',
                 pointerEvents: 'none',
               }}>
-                {/* Corners */}
                 {[
                   { top: -2,    left: -2,   borderTop: true,    borderLeft: true  },
                   { top: -2,    right: -2,  borderTop: true,    borderRight: true },
@@ -179,7 +234,6 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, title = 'Escan
                     borderRadius: i === 0 ? '6px 0 0 0' : i === 1 ? '0 6px 0 0' : i === 2 ? '0 0 0 6px' : '0 0 6px 0',
                   }} />
                 ))}
-                {/* Scan line */}
                 <div style={{
                   position: 'absolute', left: 4, right: 4, height: 2,
                   background: 'linear-gradient(90deg, transparent, var(--vet-teal), transparent)',
