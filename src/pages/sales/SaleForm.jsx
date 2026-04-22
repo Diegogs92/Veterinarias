@@ -5,7 +5,7 @@ import OwnerSelect from '../../components/ui/OwnerSelect'
 import PetSelect from '../../components/ui/PetSelect'
 import { useApp } from '../../context/AppContext'
 import { todayStr, formatCurrency } from '../../utils/helpers'
-import { Trash2, Search, ScanLine, Plus, Minus, CircleCheck, CircleX, Clock } from 'lucide-react'
+import { Trash2, Search, ScanLine, Plus, Minus, CircleCheck, CircleX, Clock, AlertTriangle } from 'lucide-react'
 
 const EMPTY = { ownerId: '', petId: '', items: [], discount: 0, paidAmount: 0, date: todayStr() }
 const STEPS  = ['Cliente', 'Productos', 'Pago']
@@ -23,7 +23,7 @@ const STATUS_CFG = {
 }
 
 export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
-  const { owners, pets, products } = useApp()
+  const { owners, pets, products, debts } = useApp()
   const [form, setForm]         = useState(EMPTY)
   const [errors, setErrors]     = useState({})
   const [step, setStep]         = useState(0)
@@ -42,6 +42,11 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
   const subtotal       = useMemo(() => form.items.reduce((s, i) => s + i.subtotal, 0), [form.items])
   const discountAmount = useMemo(() => Math.round(subtotal * (parseFloat(form.discount) || 0) / 100), [subtotal, form.discount])
   const total          = subtotal - discountAmount
+  const ownerDebt      = useMemo(() => debts.items
+    .filter(d => d.ownerId === form.ownerId && d.status !== 'paid')
+    .reduce((sum, d) => sum + ((d.totalAmount || 0) - (d.paidAmount || 0)), 0),
+    [debts.items, form.ownerId]
+  )
 
   const handleOwnerChange = (ownerId) => {
     const owner = owners.items.find(o => o.id === ownerId)
@@ -223,6 +228,20 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
             </div>
           </div>
 
+          {/* Deuda pendiente del cliente */}
+          {ownerDebt > 0 && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 14px', borderRadius: 'var(--r-md)', marginBottom: 12,
+              background: 'var(--warn-3)', border: '1.5px solid var(--warn)', color: 'var(--warn)',
+            }}>
+              <AlertTriangle size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 13.5, fontWeight: 600 }}>
+                Este cliente tiene una deuda pendiente de <strong>{formatCurrency(ownerDebt)}</strong>
+              </span>
+            </div>
+          )}
+
           {/* Resumen */}
           <div style={{ background: 'var(--bg-sub)', borderRadius: 'var(--r-md)', padding: '14px 16px', marginBottom: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>
@@ -269,6 +288,20 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                   )}
                 </div>
               )
+            })()}
+            {(() => {
+              const paid = parseFloat(form.paidAmount) || 0
+              return paid > total && total > 0 ? (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8, marginTop: 8,
+                  padding: '8px 12px', borderRadius: 'var(--r-md)',
+                  background: 'var(--warn-3)', border: '1px solid var(--warn)', color: 'var(--warn)',
+                  fontSize: 13, fontWeight: 600,
+                }}>
+                  <AlertTriangle size={15} strokeWidth={2.5} />
+                  El monto supera el total en {formatCurrency(paid - total)}
+                </div>
+              ) : null
             })()}
           </div>
         </>
