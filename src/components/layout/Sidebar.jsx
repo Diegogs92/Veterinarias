@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Scissors, ShoppingCart, Hospital,
   Banknote, Moon, Sun, LogOut, PackageSearch, ShieldCheck,
-  Stethoscope, Home,
+  Stethoscope, Home, Syringe,
 } from 'lucide-react'
 import { useAuth, ROLE_LABELS } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
@@ -27,6 +27,7 @@ const NAV = [
   { to: '/',            Icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/owners-pets', Icon: Users,           label: 'Dueños y Mascotas' },
   { to: '/consultas',   Icon: Stethoscope,     label: 'Consultas' },
+  { to: '/cirugias',   Icon: Syringe,         label: 'Cirugía' },
   { to: '/grooming',    Icon: Scissors,        label: 'Peluquería' },
   { to: '/boarding',    Icon: Home,            label: 'Pensionados' },
   { to: '/internments', Icon: Hospital,        label: 'Internación' },

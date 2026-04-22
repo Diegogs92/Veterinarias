@@ -71,6 +71,7 @@ export function AppProvider({ children }) {
   const grooming          = useSupaCrud('grooming_sessions')
   const boarding          = useSupaCrud('boarding')
   const consultas         = useSupaCrud('consultas')
+  const cirugias          = useSupaCrud('cirugias')
 
   // ── Initial data load ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -79,7 +80,7 @@ export function AppProvider({ children }) {
     setLoading(true)
     ;(async () => {
       try {
-        const [o, p, s, cm, im, pc, pr, d, dp, gr, bo, co] = await Promise.all([
+        const [o, p, s, cm, im, pc, pr, d, dp, gr, bo, co, ci] = await Promise.all([
           supabase.from('owners').select('*'),
           supabase.from('pets').select('*'),
           supabase.from('sales').select('*, sale_items(*)'),
@@ -92,6 +93,7 @@ export function AppProvider({ children }) {
           supabase.from('grooming_sessions').select('*'),
           supabase.from('boarding').select('*'),
           supabase.from('consultas').select('*'),
+          supabase.from('cirugias').select('*'),
         ])
 
         owners.setItems(convRows(o.data))
@@ -116,6 +118,7 @@ export function AppProvider({ children }) {
         grooming.setItems(convRows(gr.data))
         boarding.setItems(convRows(bo.data))
         consultas.setItems(convRows(co.data))
+        cirugias.setItems(convRows(ci.data))
       } catch (e) {
         console.error('Error loading data:', e)
       } finally {
@@ -295,7 +298,7 @@ export function AppProvider({ children }) {
       sales, cash, internments,
       productCategories, products,
       debts, debtPayments,
-      grooming, boarding, consultas,
+      grooming, boarding, consultas, cirugias,
       addDailyNote, removeDailyNote,
       syncDebt, registerDebtPayment,
     }}>

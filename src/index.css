@@ -398,10 +398,10 @@ svg { display: block; }
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 8px;
-  font-size: 13px;
+  height: 41px;
+  padding: 0 17px;
+  border-radius: 9px;
+  font-size: 15px;
   font-weight: 500;
   border: 1px solid transparent;
   cursor: pointer;
@@ -416,6 +416,9 @@ svg { display: block; }
 
 .btn--primary { background: var(--accent); color: white; font-weight: 600; }
 .btn--primary:hover:not(:disabled) { background: var(--accent-2); }
+
+[data-theme="dark"] .btn--primary { color: #0C2320; }
+[data-theme="dark"] .btn--primary:hover:not(:disabled) { background: var(--accent); filter: brightness(1.1); }
 
 .btn--success { background: var(--ok); color: white; font-weight: 600; }
 .btn--success:hover:not(:disabled) { filter: brightness(0.92); }
@@ -444,10 +447,10 @@ svg { display: block; }
 }
 .btn--outline:hover:not(:disabled) { background: var(--bg-sub); border-color: var(--border-strong); }
 
-.btn--icon { width: 36px; padding: 0; }
-.btn--icon.btn--sm { width: 32px; }
-.btn--sm { height: 32px; padding: 0 12px; font-size: 13px; border-radius: 6px; }
-.btn--lg { height: 40px; padding: 0 18px; font-size: 14px; }
+.btn--icon { width: 43px; padding: 0; }
+.btn--icon.btn--sm { width: 38px; }
+.btn--sm { height: 38px; padding: 0 14px; font-size: 14px; border-radius: 7px; }
+.btn--lg { height: 48px; padding: 0 22px; font-size: 16px; }
 
 /* === CHIP (new) + BADGE (compat) === */
 .chip {
@@ -941,6 +944,9 @@ tbody tr:hover td { background: var(--bg-sub); }
 }
 .login-btn:hover { background: var(--accent-2); box-shadow: 0 6px 16px rgba(15,118,110,0.35); }
 .login-btn:active { transform: scale(0.98); }
+
+[data-theme="dark"] .login-btn { color: #0C2320; }
+[data-theme="dark"] .login-btn:hover { background: var(--accent); filter: brightness(1.1); }
 .login-error {
   background: rgba(255,59,48,0.15);
   border: 1px solid rgba(255,59,48,0.30);
@@ -1134,11 +1140,11 @@ tbody tr:hover td { background: var(--bg-sub); }
 
   /* Buttons - larger touch targets */
   .btn {
-    height: 42px;
-    padding: 0 20px;
+    height: 48px;
+    padding: 0 22px;
   }
-  .btn--lg { height: 52px; }
-  .btn--sm { height: 38px; }
+  .btn--lg { height: 56px; }
+  .btn--sm { height: 42px; }
 
   /* Table rows - more height for touch */
   tbody td { padding: 16px 16px; }

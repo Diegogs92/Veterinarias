@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
-import { PawPrint } from 'lucide-react'
+import { PawPrint, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
@@ -8,6 +8,7 @@ export default function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
 
   if (currentUser) return <Navigate to="/" replace />
@@ -44,14 +45,28 @@ export default function Login() {
           </div>
           <div className="form-group">
             <label className="login-label">Contraseña</label>
-            <input
-              className="login-input"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={e => { setPassword(e.target.value); setError('') }}
-              autoComplete="current-password"
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                className="login-input"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={password}
+                onChange={e => { setPassword(e.target.value); setError('') }}
+                autoComplete="current-password"
+                style={{ paddingRight: 44 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                style={{
+                  position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 4,
+                  color: 'rgba(255,255,255,0.55)', display: 'flex', alignItems: 'center',
+                }}
+              >
+                {showPassword ? <EyeOff size={18} strokeWidth={1.75} /> : <Eye size={18} strokeWidth={1.75} />}
+              </button>
+            </div>
           </div>
 
           {error && (
