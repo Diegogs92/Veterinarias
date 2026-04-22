@@ -423,6 +423,9 @@ svg { display: block; }
 .btn--success { background: var(--ok); color: white; font-weight: 600; }
 .btn--success:hover:not(:disabled) { filter: brightness(0.92); }
 
+[data-theme="dark"] .btn--success { color: #052912; }
+[data-theme="dark"] .btn--success:hover:not(:disabled) { filter: brightness(1.08); }
+
 .btn--danger  { background: var(--danger); color: white; font-weight: 600; }
 .btn--danger:hover:not(:disabled) { filter: brightness(0.92); }
 
@@ -869,6 +872,8 @@ tbody tr:hover td { background: var(--bg-sub); }
   justify-content: center;
   background: linear-gradient(135deg, #0A2A26 0%, #0F3D38 40%, #0F766E 100%);
   padding: 24px;
+  position: relative;
+  overflow: hidden;
 }
 .login-card {
   width: 100%;
@@ -944,6 +949,25 @@ tbody tr:hover td { background: var(--bg-sub); }
 }
 .login-btn:hover { background: var(--accent-2); box-shadow: 0 6px 16px rgba(15,118,110,0.35); }
 .login-btn:active { transform: scale(0.98); }
+.login-install-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 11px;
+  border-radius: var(--r-sm);
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.20);
+  color: rgba(255,255,255,0.85);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.login-install-btn:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.35); }
 
 [data-theme="dark"] .login-btn { color: #0C2320; }
 [data-theme="dark"] .login-btn:hover { background: var(--accent); filter: brightness(1.1); }

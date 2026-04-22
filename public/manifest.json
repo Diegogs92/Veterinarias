@@ -1,0 +1,13 @@
+{
+  "name": "VetAdmin — Gestión Veterinaria",
+  "short_name": "VetAdmin",
+  "description": "Sistema de gestión para clínicas veterinarias",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0F766E",
+  "background_color": "#0A2A26",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

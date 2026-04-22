@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
-import { PawPrint, Eye, EyeOff } from 'lucide-react'
+import { PawPrint, Eye, EyeOff, Download } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
@@ -9,7 +9,14 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [installPrompt, setInstallPrompt] = useState(null)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const handler = (e) => { e.preventDefault(); setInstallPrompt(e) }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
 
   if (currentUser) return <Navigate to="/" replace />
 
@@ -19,6 +26,13 @@ export default function Login() {
     const ok = await login(username, password)
     setSubmitting(false)
     if (ok) navigate('/')
+  }
+
+  const handleInstall = async () => {
+    if (!installPrompt) return
+    installPrompt.prompt()
+    const { outcome } = await installPrompt.userChoice
+    if (outcome === 'accepted') setInstallPrompt(null)
   }
 
   return (
@@ -80,6 +94,12 @@ export default function Login() {
           </button>
         </form>
 
+        {installPrompt && (
+          <button className="login-install-btn" onClick={handleInstall}>
+            <Download size={16} strokeWidth={2} />
+            Instalar app móvil
+          </button>
+        )}
       </div>
     </div>
   )
