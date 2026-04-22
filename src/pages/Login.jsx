@@ -101,6 +101,15 @@ export default function Login() {
           </button>
         )}
       </div>
+
+      <a
+        href="https://wa.me/5493815151163"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="login-footer"
+      >
+        Desarrollado por DGS Solutions
+      </a>
     </div>
   )
 }

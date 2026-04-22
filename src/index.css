@@ -968,6 +968,17 @@ tbody tr:hover td { background: var(--bg-sub); }
   transition: background var(--t-fast), border-color var(--t-fast);
 }
 .login-install-btn:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.35); }
+.login-footer {
+  position: absolute;
+  bottom: 16px;
+  left: 0; right: 0;
+  text-align: center;
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  text-decoration: none;
+  transition: color var(--t-fast);
+}
+.login-footer:hover { color: rgba(255,255,255,0.70); }
 
 [data-theme="dark"] .login-btn { color: #0C2320; }
 [data-theme="dark"] .login-btn:hover { background: var(--accent); filter: brightness(1.1); }
