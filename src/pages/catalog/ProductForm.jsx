@@ -79,11 +79,15 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
         </div>
         <div className="form-group">
           <label className="form-label">Precio (ARS) *</label>
-          <input
-            className={`form-input${errors.price ? ' form-input--error' : ''}`}
-            type="number" min="0" step="1"
-            value={form.price} onChange={set('price')} placeholder="0"
-          />
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontWeight: 600, pointerEvents: 'none' }}>$</span>
+            <input
+              className={`form-input${errors.price ? ' form-input--error' : ''}`}
+              type="number" min="0" step="1"
+              value={form.price} onChange={set('price')} placeholder="0"
+              style={{ paddingLeft: 26 }}
+            />
+          </div>
           {errors.price && <span className="form-error">{errors.price}</span>}
         </div>
       </div>

@@ -76,8 +76,8 @@ export default function OwnerSelect({
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)' }}>Nuevo dueño</span>
-            <button type="button" className="btn btn--subtle btn--icon btn--sm" onClick={close}>
-              <X size={14} strokeWidth={2} />
+            <button type="button" className="btn btn--subtle btn--icon" onClick={close} style={{ width: 36, height: 36 }}>
+              <X size={20} strokeWidth={2} />
             </button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>

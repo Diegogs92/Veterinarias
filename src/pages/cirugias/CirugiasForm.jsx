@@ -1,29 +1,24 @@
 import { useState, useEffect } from 'react'
-import Modal from '../../components/ui/Modal'
+import StepWizard from '../../components/ui/StepWizard'
 import OwnerSelect from '../../components/ui/OwnerSelect'
 import PetSelect from '../../components/ui/PetSelect'
 import { useApp } from '../../context/AppContext'
 import { todayStr } from '../../utils/helpers'
 
-const EMPTY = {
-  petId: '', ownerId: '', date: todayStr(),
-  diagnostico: '', costos: '', observaciones: '',
-}
+const EMPTY = { petId: '', ownerId: '', date: todayStr(), diagnostico: '', costos: '', observaciones: '' }
+const STEPS = ['Paciente', 'Diagnóstico', 'Costos']
 
 export default function CirugiasForm({ isOpen, onClose, onSave, initial = null }) {
   const { pets } = useApp()
-  const [form, setForm] = useState(initial || EMPTY)
+  const [form, setForm]     = useState(EMPTY)
   const [errors, setErrors] = useState({})
+  const [step, setStep]     = useState(0)
 
   useEffect(() => {
-    if (isOpen) setForm(initial ? { ...initial } : EMPTY)
-    setErrors({})
+    if (isOpen) { setStep(0); setErrors({}); setForm(initial ? { ...initial } : EMPTY) }
   }, [isOpen, initial])
 
-  const set = (field) => (e) => {
-    setForm(f => ({ ...f, [field]: e.target.value }))
-    setErrors(er => ({ ...er, [field]: '' }))
-  }
+  const set = (field) => (e) => { setForm(f => ({ ...f, [field]: e.target.value })); setErrors(er => ({ ...er, [field]: '' })) }
 
   const handlePetChange = (petId) => {
     const pet = pets.items.find(p => p.id === petId)
@@ -31,81 +26,69 @@ export default function CirugiasForm({ isOpen, onClose, onSave, initial = null }
     setErrors(er => ({ ...er, petId: '' }))
   }
 
-  const validate = () => {
+  const validateStep = (s) => {
     const errs = {}
-    if (!form.petId)              errs.petId       = 'Seleccioná una mascota'
-    if (!form.date)               errs.date        = 'Requerido'
-    if (!form.diagnostico.trim()) errs.diagnostico = 'Requerido'
+    if (s === 0) {
+      if (!form.petId) errs.petId = 'Seleccioná una mascota'
+    }
+    if (s === 1) {
+      if (!form.date)               errs.date        = 'Requerido'
+      if (!form.diagnostico.trim()) errs.diagnostico = 'Requerido'
+    }
     return errs
   }
 
+  const handleNext = () => { const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }; setStep(s => s + 1) }
   const handleSave = () => {
-    const errs = validate()
-    if (Object.keys(errs).length) { setErrors(errs); return }
-    onSave({ ...form, costos: parseFloat(form.costos) || 0 })
-    onClose()
+    const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }
+    onSave({ ...form, costos: parseFloat(form.costos) || 0 }); onClose()
   }
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
+    <StepWizard
+      isOpen={isOpen} onClose={onClose}
       title={initial ? 'Editar cirugía' : 'Nueva cirugía'}
-      size="lg"
-      footer={
-        <>
-          <button className="btn btn--ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn btn--primary" onClick={handleSave}>
-            {initial ? 'Guardar cambios' : 'Registrar cirugía'}
-          </button>
-        </>
-      }
+      steps={STEPS} currentStep={step}
+      onNext={handleNext} onPrev={() => setStep(s => s - 1)} onSave={handleSave}
+      saveLabel={initial ? 'Guardar cambios' : 'Registrar cirugía'}
     >
-      <PetSelect value={form.petId} onChange={handlePetChange} error={errors.petId} required />
-      <OwnerSelect
-        value={form.ownerId}
-        onChange={id => setForm(f => ({ ...f, ownerId: id }))}
-        disabled={!!form.petId}
-        label="Dueño"
-      />
+      {step === 0 && (
+        <>
+          <PetSelect value={form.petId} onChange={handlePetChange} error={errors.petId} required />
+          <OwnerSelect value={form.ownerId} onChange={id => setForm(f => ({ ...f, ownerId: id }))} disabled={!!form.petId} label="Dueño" />
+        </>
+      )}
 
-      <div className="form-row form-row--2">
-        <div className="form-group">
-          <label className="form-label">Fecha *</label>
-          <input
-            className={`form-input${errors.date ? ' form-input--error' : ''}`}
-            type="date" value={form.date} onChange={set('date')}
-          />
-          {errors.date && <span className="form-error">{errors.date}</span>}
-        </div>
-        <div className="form-group">
-          <label className="form-label">Costos</label>
-          <input
-            className="form-input" type="number" min="0" step="1"
-            value={form.costos} onChange={set('costos')} placeholder="0"
-          />
-        </div>
-      </div>
+      {step === 1 && (
+        <>
+          <div className="form-group">
+            <label className="form-label">Fecha *</label>
+            <input className={`form-input${errors.date ? ' form-input--error' : ''}`} type="date" value={form.date} onChange={set('date')} />
+            {errors.date && <span className="form-error">{errors.date}</span>}
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Diagnóstico / Procedimiento *</label>
+            <textarea className={`form-input${errors.diagnostico ? ' form-input--error' : ''}`} rows={4} value={form.diagnostico} onChange={set('diagnostico')} placeholder="Descripción de la cirugía y diagnóstico..." />
+            {errors.diagnostico && <span className="form-error">{errors.diagnostico}</span>}
+          </div>
+        </>
+      )}
 
-      <div className="form-group">
-        <label className="form-label">Diagnóstico / Procedimiento *</label>
-        <textarea
-          className={`form-input${errors.diagnostico ? ' form-input--error' : ''}`}
-          rows={3}
-          value={form.diagnostico} onChange={set('diagnostico')}
-          placeholder="Descripción de la cirugía y diagnóstico..."
-        />
-        {errors.diagnostico && <span className="form-error">{errors.diagnostico}</span>}
-      </div>
-
-      <div className="form-group" style={{ marginBottom: 0 }}>
-        <label className="form-label">Observaciones</label>
-        <textarea
-          className="form-input" rows={3}
-          value={form.observaciones} onChange={set('observaciones')}
-          placeholder="Evolución post-operatoria, notas adicionales..."
-        />
-      </div>
-    </Modal>
+      {step === 2 && (
+        <>
+          <div className="form-group">
+            <label className="form-label">Costos</label>
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontWeight: 600, pointerEvents: 'none' }}>$</span>
+              <input className="form-input" type="number" min="0" step="1" value={form.costos} onChange={set('costos')} placeholder="0" style={{ paddingLeft: 26 }} />
+            </div>
+          </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Observaciones</label>
+            <textarea className="form-input" rows={4} value={form.observaciones} onChange={set('observaciones')} placeholder="Evolución post-operatoria, notas adicionales..." />
+          </div>
+        </>
+      )}
+    </StepWizard>
   )
 }

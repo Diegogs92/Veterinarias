@@ -622,6 +622,18 @@ select.form-input {
   gap: 8px;
   flex-shrink: 0;
 }
+/* Primer botón del footer (Cancelar) siempre en rojo */
+.modal__footer > button:first-child,
+.modal__footer .btn--ghost:first-child {
+  background: var(--danger-3);
+  color: var(--danger);
+  border-color: transparent;
+}
+.modal__footer > button:first-child:hover,
+.modal__footer .btn--ghost:first-child:hover {
+  background: var(--danger);
+  color: white;
+}
 
 /* === TABLE === */
 .table-wrap { overflow-x: auto; }
