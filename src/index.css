@@ -1262,12 +1262,12 @@ tbody tr:hover td { background: var(--bg-sub); }
 /* --- Mobile: < 768px --- */
 @media (max-width: 767px) {
 
-  /* Body — allow scroll on mobile */
-  body { overflow: auto; }
-  #root { height: auto; min-height: 100vh; }
+  /* Body — fixed height, no page-level scroll */
+  body { overflow: hidden; height: 100dvh; }
+  #root { height: 100dvh; overflow: hidden; }
 
-  /* Layout */
-  .app-layout { flex-direction: column; height: auto; min-height: 100vh; overflow: visible; }
+  /* Layout — column, fixed to viewport */
+  .app-layout { flex-direction: column; height: 100dvh; overflow: hidden; }
 
   /* Sidebar — drawer pattern */
   .sidebar {
@@ -1296,8 +1296,8 @@ tbody tr:hover td { background: var(--bg-sub); }
     animation: fadeIn var(--t-fast) forwards;
   }
 
-  /* Main content fills full width */
-  .main-content { width: 100%; min-height: 100vh; overflow: visible; }
+  /* Main content fills remaining space, page scrolls internally */
+  .main-content { width: 100%; flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
 
   /* Header */
   .header { padding: 0 16px; }

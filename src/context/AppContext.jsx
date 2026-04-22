@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 
@@ -73,7 +73,22 @@ export function AppProvider({ children }) {
   const consultas         = useSupaCrud('consultas')
   const cirugias          = useSupaCrud('cirugias')
 
-  // ── Data fetchers (reutilizados por load inicial y realtime) ─────────────
+  // ── Stable setters refs (nunca cambian, evitan stale closures) ───────────
+  const setOwners   = useRef(owners.setItems)
+  const setPets     = useRef(pets.setItems)
+  const setSales    = useRef(_sales.setItems)
+  const setCash     = useRef(cash.setItems)
+  const setIntern   = useRef(internments.setItems)
+  const setProdCats = useRef(productCategories.setItems)
+  const setProds    = useRef(products.setItems)
+  const setDebts    = useRef(debts.setItems)
+  const setDebtPays = useRef(debtPayments.setItems)
+  const setGrooming = useRef(grooming.setItems)
+  const setBoarding = useRef(boarding.setItems)
+  const setConsultas= useRef(consultas.setItems)
+  const setCirugias = useRef(cirugias.setItems)
+
+  // ── Data fetcher ─────────────────────────────────────────────────────────
   const fetchAll = async () => {
     const [o, p, s, cm, im, pc, pr, d, dp, gr, bo, co, ci] = await Promise.all([
       supabase.from('owners').select('*'),
@@ -90,39 +105,37 @@ export function AppProvider({ children }) {
       supabase.from('consultas').select('*'),
       supabase.from('cirugias').select('*'),
     ])
-    owners.setItems(convRows(o.data))
-    pets.setItems(convRows(p.data))
-    _sales.setItems((s.data || []).map(row => {
-      const { sale_items: si, ...rest } = row
-      return { ...objToCamel(rest), items: (si || []).map(objToCamel) }
-    }))
-    cash.setItems(convRows(cm.data))
-    internments.setItems((im.data || []).map(row => {
-      const { internment_notes: notes, ...rest } = row
-      return { ...objToCamel(rest), dailyNotes: (notes || []).map(objToCamel) }
-    }))
-    productCategories.setItems(convRows(pc.data))
-    products.setItems(convRows(pr.data))
-    debts.setItems(convRows(d.data))
-    debtPayments.setItems(convRows(dp.data))
-    grooming.setItems(convRows(gr.data))
-    boarding.setItems(convRows(bo.data))
-    consultas.setItems(convRows(co.data))
-    cirugias.setItems(convRows(ci.data))
+    if (o.data)  setOwners.current(convRows(o.data))
+    if (p.data)  setPets.current(convRows(p.data))
+    if (s.data)  setSales.current(s.data.map(row => { const { sale_items: si, ...rest } = row; return { ...objToCamel(rest), items: (si || []).map(objToCamel) } }))
+    if (cm.data) setCash.current(convRows(cm.data))
+    if (im.data) setIntern.current(im.data.map(row => { const { internment_notes: notes, ...rest } = row; return { ...objToCamel(rest), dailyNotes: (notes || []).map(objToCamel) } }))
+    if (pc.data) setProdCats.current(convRows(pc.data))
+    if (pr.data) setProds.current(convRows(pr.data))
+    if (d.data)  setDebts.current(convRows(d.data))
+    if (dp.data) setDebtPays.current(convRows(dp.data))
+    if (gr.data) setGrooming.current(convRows(gr.data))
+    if (bo.data) setBoarding.current(convRows(bo.data))
+    if (co.data) setConsultas.current(convRows(co.data))
+    if (ci.data) setCirugias.current(convRows(ci.data))
   }
+
+  // Ref que apunta siempre a la versión más reciente de fetchAll
+  const fetchAllRef = useRef(fetchAll)
+  useEffect(() => { fetchAllRef.current = fetchAll })
 
   // ── Initial data load ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!currentUser) return
     setLoading(true)
-    fetchAll().catch(e => console.error('Error loading data:', e)).finally(() => setLoading(false))
+    fetchAllRef.current().catch(e => console.error('Error loading data:', e)).finally(() => setLoading(false))
   }, [currentUser?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Auto-sync: visibilitychange + polling cada 30s ────────────────────────
   useEffect(() => {
     if (!currentUser) return
 
-    const refresh = () => fetchAll().catch(e => console.error('Auto-sync error:', e))
+    const refresh = () => fetchAllRef.current().catch(e => console.error('Auto-sync error:', e))
 
     const onVisible = () => { if (document.visibilityState === 'visible') refresh() }
     document.addEventListener('visibilitychange', onVisible)
@@ -139,22 +152,24 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (!currentUser) return
 
+    const salesMapper = data => data.map(row => { const { sale_items: si, ...rest } = row; return { ...objToCamel(rest), items: (si || []).map(objToCamel) } })
+    const internMapper = data => data.map(row => { const { internment_notes: notes, ...rest } = row; return { ...objToCamel(rest), dailyNotes: (notes || []).map(objToCamel) } })
     const refetch = {
-      owners:             () => supabase.from('owners').select('*').then(({ data }) => data && owners.setItems(convRows(data))),
-      pets:               () => supabase.from('pets').select('*').then(({ data }) => data && pets.setItems(convRows(data))),
-      sales:              () => supabase.from('sales').select('*, sale_items(*)').then(({ data }) => data && _sales.setItems(data.map(row => { const { sale_items: si, ...rest } = row; return { ...objToCamel(rest), items: (si || []).map(objToCamel) } }))),
-      sale_items:         () => supabase.from('sales').select('*, sale_items(*)').then(({ data }) => data && _sales.setItems(data.map(row => { const { sale_items: si, ...rest } = row; return { ...objToCamel(rest), items: (si || []).map(objToCamel) } }))),
-      cash_movements:     () => supabase.from('cash_movements').select('*').then(({ data }) => data && cash.setItems(convRows(data))),
-      internments:        () => supabase.from('internments').select('*, internment_notes(*)').then(({ data }) => data && internments.setItems(data.map(row => { const { internment_notes: notes, ...rest } = row; return { ...objToCamel(rest), dailyNotes: (notes || []).map(objToCamel) } }))),
-      internment_notes:   () => supabase.from('internments').select('*, internment_notes(*)').then(({ data }) => data && internments.setItems(data.map(row => { const { internment_notes: notes, ...rest } = row; return { ...objToCamel(rest), dailyNotes: (notes || []).map(objToCamel) } }))),
-      product_categories: () => supabase.from('product_categories').select('*').then(({ data }) => data && productCategories.setItems(convRows(data))),
-      products:           () => supabase.from('products').select('*').then(({ data }) => data && products.setItems(convRows(data))),
-      debts:              () => supabase.from('debts').select('*').then(({ data }) => data && debts.setItems(convRows(data))),
-      debt_payments:      () => supabase.from('debt_payments').select('*').then(({ data }) => data && debtPayments.setItems(convRows(data))),
-      grooming_sessions:  () => supabase.from('grooming_sessions').select('*').then(({ data }) => data && grooming.setItems(convRows(data))),
-      boarding:           () => supabase.from('boarding').select('*').then(({ data }) => data && boarding.setItems(convRows(data))),
-      consultas:          () => supabase.from('consultas').select('*').then(({ data }) => data && consultas.setItems(convRows(data))),
-      cirugias:           () => supabase.from('cirugias').select('*').then(({ data }) => data && cirugias.setItems(convRows(data))),
+      owners:             () => supabase.from('owners').select('*').then(({ data }) => data && setOwners.current(convRows(data))),
+      pets:               () => supabase.from('pets').select('*').then(({ data }) => data && setPets.current(convRows(data))),
+      sales:              () => supabase.from('sales').select('*, sale_items(*)').then(({ data }) => data && setSales.current(salesMapper(data))),
+      sale_items:         () => supabase.from('sales').select('*, sale_items(*)').then(({ data }) => data && setSales.current(salesMapper(data))),
+      cash_movements:     () => supabase.from('cash_movements').select('*').then(({ data }) => data && setCash.current(convRows(data))),
+      internments:        () => supabase.from('internments').select('*, internment_notes(*)').then(({ data }) => data && setIntern.current(internMapper(data))),
+      internment_notes:   () => supabase.from('internments').select('*, internment_notes(*)').then(({ data }) => data && setIntern.current(internMapper(data))),
+      product_categories: () => supabase.from('product_categories').select('*').then(({ data }) => data && setProdCats.current(convRows(data))),
+      products:           () => supabase.from('products').select('*').then(({ data }) => data && setProds.current(convRows(data))),
+      debts:              () => supabase.from('debts').select('*').then(({ data }) => data && setDebts.current(convRows(data))),
+      debt_payments:      () => supabase.from('debt_payments').select('*').then(({ data }) => data && setDebtPays.current(convRows(data))),
+      grooming_sessions:  () => supabase.from('grooming_sessions').select('*').then(({ data }) => data && setGrooming.current(convRows(data))),
+      boarding:           () => supabase.from('boarding').select('*').then(({ data }) => data && setBoarding.current(convRows(data))),
+      consultas:          () => supabase.from('consultas').select('*').then(({ data }) => data && setConsultas.current(convRows(data))),
+      cirugias:           () => supabase.from('cirugias').select('*').then(({ data }) => data && setCirugias.current(convRows(data))),
     }
 
     const channel = supabase.channel('realtime-all')
