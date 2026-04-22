@@ -175,10 +175,10 @@ export default function UsersPage() {
                               {u.username.slice(0, 2).toUpperCase()}
                             </div>
                             <div>
-                              <div style={{ fontWeight: 600, fontSize: 14, fontFamily: 'var(--font-mono)' }}>
+                              <div style={{ fontWeight: 600, fontSize: 14 }}>
                                 @{u.username}
                                 {isSelf && (
-                                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)', marginLeft: 6, fontFamily: 'var(--font-sans)' }}>
+                                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)', marginLeft: 6 }}>
                                     (vos)
                                   </span>
                                 )}
