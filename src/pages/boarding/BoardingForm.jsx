@@ -65,7 +65,7 @@ export default function BoardingForm({ isOpen, onClose, onSave, initial = null }
             <label className="form-label">Precio por día</label>
             <div style={{ position: 'relative' }}>
               <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontWeight: 600, pointerEvents: 'none' }}>$</span>
-              <input className="form-input" type="number" min="0" step="1" value={form.dailyPrice} onChange={set('dailyPrice')} placeholder="0" style={{ paddingLeft: 26 }} />
+              <input className="form-input" type="number" min="0" step="1" value={form.dailyPrice} onFocus={e => e.target.select()} onChange={set('dailyPrice')} placeholder="0" style={{ paddingLeft: 26 }} />
             </div>
           </div>
         </>

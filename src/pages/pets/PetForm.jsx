@@ -171,7 +171,7 @@ export default function PetForm({ isOpen, onClose, onSave, initial = null, defau
             </div>
             <div className="form-group">
               <label className="form-label">Peso (kg)</label>
-              <input className="form-input" type="number" step="0.1" min="0" value={form.weight} onChange={set('weight')} placeholder="0.0" />
+              <input className="form-input" type="number" step="0.1" min="0" value={form.weight} onFocus={e => e.target.select()} onChange={set('weight')} placeholder="0.0" />
             </div>
           </div>
 
