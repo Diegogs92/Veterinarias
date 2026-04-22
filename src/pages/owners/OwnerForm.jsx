@@ -90,7 +90,7 @@ export default function OwnerForm({ isOpen, onClose, onSave, initial = null }) {
         <label className="form-label">Descuento especial (%)</label>
         <input
           className="form-input" type="number" min="0" max="100" step="1"
-          value={form.discount ?? 0} onChange={set('discount')} placeholder="0"
+          value={form.discount ?? 0} onFocus={e => e.target.select()} onChange={set('discount')} placeholder="0"
         />
         <span className="form-hint">Se aplica automáticamente en cada venta</span>
       </div>

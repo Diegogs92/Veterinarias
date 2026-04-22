@@ -445,7 +445,7 @@ export default function FinancesPage() {
           <input
             className={`form-input${expErrors.amount ? ' form-input--error' : ''}`}
             type="number" min="0" step="100"
-            value={expForm.amount} onChange={setEF('amount')} placeholder="0"
+            value={expForm.amount} onFocus={e => e.target.select()} onChange={setEF('amount')} placeholder="0"
           />
           {expErrors.amount && <span style={{ color: 'var(--red)', fontSize: 12 }}>{expErrors.amount}</span>}
         </div>
@@ -507,7 +507,7 @@ export default function FinancesPage() {
               <input
                 className={`form-input${payErrors.amount ? ' form-input--error' : ''}`}
                 type="number" min="0" step="100"
-                value={payForm.amount} onChange={setPF('amount')} placeholder="0"
+                value={payForm.amount} onFocus={e => e.target.select()} onChange={setPF('amount')} placeholder="0"
                 autoFocus
               />
               {payErrors.amount && <span style={{ color: 'var(--red)', fontSize: 12 }}>{payErrors.amount}</span>}

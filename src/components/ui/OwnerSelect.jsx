@@ -102,9 +102,9 @@ export default function OwnerSelect({
                     <span style={{ fontWeight: 500, fontSize: 14, color: 'var(--text-primary)' }}>
                       {o.name}{o.apellido ? ` ${o.apellido}` : ''}
                     </span>
-                    {(o.dni || o.phone) && (
+                    {o.dni && (
                       <span style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 1 }}>
-                        {o.dni ? `DNI ${o.dni}` : ''}{o.dni && o.phone ? ' · ' : ''}{o.phone || ''}
+                        DNI {o.dni}
                       </span>
                     )}
                   </button>

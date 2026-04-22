@@ -215,7 +215,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
             <div className="form-group">
               <label className="form-label">Descuento (%)</label>
               <input className="form-input" type="number" min="0" max="100" step="1"
-                value={form.discount} onChange={e => setForm(f => ({ ...f, discount: e.target.value }))} placeholder="0" />
+                value={form.discount} onFocus={e => e.target.select()} onChange={e => setForm(f => ({ ...f, discount: e.target.value }))} placeholder="0" />
               {form.ownerId && (
                 <span className="form-hint">Descuento del cliente: {owners.items.find(o => o.id === form.ownerId)?.discount ?? 0}%</span>
               )}
@@ -263,6 +263,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
               <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontWeight: 600, pointerEvents: 'none' }}>$</span>
               <input className="form-input" type="number" min="0" step="100"
                 value={form.paidAmount}
+                onFocus={e => e.target.select()}
                 onChange={e => setForm(f => ({ ...f, paidAmount: e.target.value }))}
                 placeholder="0" style={{ paddingLeft: 26, fontSize: 17 }} />
             </div>

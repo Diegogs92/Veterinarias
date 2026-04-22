@@ -84,7 +84,7 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
             <input
               className={`form-input${errors.price ? ' form-input--error' : ''}`}
               type="number" min="0" step="1"
-              value={form.price} onChange={set('price')} placeholder="0"
+              value={form.price} onFocus={e => e.target.select()} onChange={set('price')} placeholder="0"
               style={{ paddingLeft: 26 }}
             />
           </div>
