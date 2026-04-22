@@ -15,7 +15,7 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
   useEffect(() => {
     if (isOpen) {
       setForm(initial
-        ? { ...initial, price: String(Math.round(initial.price)) }
+        ? { ...EMPTY, ...initial, price: String(Math.round(initial.price)), barcode: initial.barcode ?? '' }
         : EMPTY
       )
       setErrors({})
