@@ -118,6 +118,23 @@ export function AppProvider({ children }) {
     fetchAll().catch(e => console.error('Error loading data:', e)).finally(() => setLoading(false))
   }, [currentUser?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Auto-sync: visibilitychange + polling cada 30s ────────────────────────
+  useEffect(() => {
+    if (!currentUser) return
+
+    const refresh = () => fetchAll().catch(e => console.error('Auto-sync error:', e))
+
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh() }
+    document.addEventListener('visibilitychange', onVisible)
+
+    const interval = setInterval(refresh, 30_000)
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      clearInterval(interval)
+    }
+  }, [currentUser?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Realtime sync ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!currentUser) return
