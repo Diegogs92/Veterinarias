@@ -1,10 +1,21 @@
 export const generateId = () =>
   `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 
+// Parsea "YYYY-MM-DD" como hora local (no UTC) para evitar el desfase de timezone
+const parseLocalDate = (dateStr) => {
+  if (!dateStr) return null
+  // Si es solo fecha (YYYY-MM-DD), forzar interpretación local
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const [y, m, d] = dateStr.split('-').map(Number)
+    return new Date(y, m - 1, d)
+  }
+  return new Date(dateStr)
+}
+
 export const formatDate = (dateStr, opts = {}) => {
   if (!dateStr) return '—'
-  const d = new Date(dateStr)
-  if (isNaN(d)) return dateStr
+  const d = parseLocalDate(dateStr)
+  if (!d || isNaN(d)) return dateStr
   return d.toLocaleDateString('es-AR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     ...opts,
@@ -25,7 +36,10 @@ export const formatCurrency = (amount) =>
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 })
     .format(amount ?? 0)
 
-export const todayStr = () => new Date().toISOString().slice(0, 10)
+export const todayStr = () => {
+  const n = new Date()
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`
+}
 
 export const calcAge = (birthDate) => {
   if (!birthDate) return null
