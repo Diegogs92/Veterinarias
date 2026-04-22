@@ -1,25 +1,29 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { BrowserMultiFormatOneDReader } from '@zxing/browser'
-import { X, Camera, AlertCircle, ScanLine } from 'lucide-react'
+import { X, Camera, AlertCircle, ScanLine, Flashlight, FlashlightOff } from 'lucide-react'
 
-/**
- * BarcodeScanner — modal con cámara para escanear código de barras.
- *
- * Props:
- *   isOpen    : boolean
- *   onClose   : () => void
- *   onScan    : (code: string) => void   — se llama al detectar un código
- *   title     : string (opcional)
- */
 export default function BarcodeScanner({ isOpen, onClose, onScan, title = 'Escanear código de barras' }) {
-  const videoRef  = useRef(null)
-  const readerRef = useRef(null)
-  const [error, setError]   = useState(null)
-  const [scanning, setScanning] = useState(false)
+  const videoRef    = useRef(null)
+  const readerRef   = useRef(null)
+  const streamRef   = useRef(null)
+  const [error, setError]               = useState(null)
+  const [scanning, setScanning]         = useState(false)
+  const [torchOn, setTorchOn]           = useState(false)
+  const [torchSupported, setTorchSupported] = useState(false)
+
+  const stopAll = useCallback(() => {
+    try { BrowserMultiFormatOneDReader.releaseAllStreams() } catch (_) {}
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop())
+      streamRef.current = null
+    }
+    readerRef.current = null
+    setScanning(false)
+    setTorchOn(false)
+  }, [])
 
   useEffect(() => {
     if (!isOpen) return
-
     let stopped = false
     setError(null)
     setScanning(false)
@@ -29,39 +33,43 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, title = 'Escan
         const reader = new BrowserMultiFormatOneDReader()
         readerRef.current = reader
 
-        // Get available cameras
-        const devices = await BrowserMultiFormatOneDReader.listVideoInputDevices()
-        if (!devices || devices.length === 0) {
-          setError('No se encontró ninguna cámara en este dispositivo.')
-          return
-        }
-
-        // Prefer back camera
-        const backCam = devices.find(d =>
-          d.label.toLowerCase().includes('back') ||
-          d.label.toLowerCase().includes('trasera') ||
-          d.label.toLowerCase().includes('environment')
-        ) || devices[devices.length - 1]
+        await reader.decodeFromConstraints(
+          {
+            video: {
+              facingMode: { ideal: 'environment' },
+              width:  { ideal: 1920 },
+              height: { ideal: 1080 },
+            },
+          },
+          videoRef.current,
+          (result, err) => {
+            if (stopped) return
+            if (result) { onScan(result.getText()); handleClose() }
+          }
+        )
 
         if (stopped) return
         setScanning(true)
 
-        await reader.decodeFromVideoDevice(
-          backCam.deviceId,
-          videoRef.current,
-          (result, err) => {
-            if (stopped) return
-            if (result) {
-              const code = result.getText()
-              onScan(code)
-              handleClose()
-            }
+        // Apply continuous autofocus + detect torch support
+        await new Promise(r => setTimeout(r, 600))
+        const stream = videoRef.current?.srcObject
+        if (stream) {
+          streamRef.current = stream
+          const track = stream.getVideoTracks()[0]
+          const caps  = track.getCapabilities?.() || {}
+
+          if (caps.focusMode?.includes('continuous')) {
+            await track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {})
           }
-        )
+          setTorchSupported(caps.torch === true)
+        }
       } catch (e) {
         if (!stopped) {
           if (e?.name === 'NotAllowedError') {
-            setError('Permiso de cámara denegado. Permitir el acceso en el navegador e intentar de nuevo.')
+            setError('Permiso de cámara denegado. Habilitalo en la configuración del navegador.')
+          } else if (e?.name === 'NotFoundError') {
+            setError('No se encontró ninguna cámara en este dispositivo.')
           } else {
             setError('No se pudo iniciar la cámara. ' + (e?.message || ''))
           }
@@ -70,24 +78,18 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, title = 'Escan
     }
 
     start()
+    return () => { stopped = true; stopAll() }
+  }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    return () => {
-      stopped = true
-      if (readerRef.current) {
-        try { BrowserMultiFormatOneDReader.releaseAllStreams() } catch (_) {}
-        readerRef.current = null
-      }
-      setScanning(false)
-    }
-  }, [isOpen])
+  const handleClose = () => { stopAll(); onClose() }
 
-  const handleClose = () => {
-    if (readerRef.current) {
-      try { BrowserMultiFormatOneDReader.releaseAllStreams() } catch (_) {}
-      readerRef.current = null
-    }
-    setScanning(false)
-    onClose()
+  const toggleTorch = async () => {
+    const stream = streamRef.current
+    if (!stream) return
+    const track   = stream.getVideoTracks()[0]
+    const next    = !torchOn
+    await track.applyConstraints({ advanced: [{ torch: next }] }).catch(() => {})
+    setTorchOn(next)
   }
 
   if (!isOpen) return null
@@ -96,11 +98,11 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, title = 'Escan
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 1100,
-        background: 'rgba(0,0,0,0.85)',
+        background: 'rgba(0,0,0,0.88)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 16,
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}
+      onClick={e => { if (e.target === e.currentTarget) handleClose() }}
     >
       <div style={{
         background: 'var(--bg-modal)', borderRadius: 'var(--r-xl)',
@@ -116,12 +118,26 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, title = 'Escan
             <ScanLine size={18} strokeWidth={2} style={{ color: 'var(--vet-teal)' }} />
             <span style={{ fontWeight: 700, fontSize: 16 }}>{title}</span>
           </div>
-          <button className="btn btn--subtle btn--icon btn--sm" onClick={handleClose}>
-            <X size={16} strokeWidth={2} />
-          </button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {torchSupported && (
+              <button
+                className="btn btn--subtle btn--icon btn--sm"
+                onClick={toggleTorch}
+                title={torchOn ? 'Apagar linterna' : 'Encender linterna'}
+              >
+                {torchOn
+                  ? <FlashlightOff size={16} strokeWidth={2} />
+                  : <Flashlight    size={16} strokeWidth={2} />
+                }
+              </button>
+            )}
+            <button className="btn btn--subtle btn--icon btn--sm" onClick={handleClose}>
+              <X size={16} strokeWidth={2} />
+            </button>
+          </div>
         </div>
 
-        {/* Camera view */}
+        {/* Camera */}
         <div style={{ position: 'relative', background: '#000', aspectRatio: '4/3', overflow: 'hidden' }}>
           <video
             ref={videoRef}
@@ -130,78 +146,75 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, title = 'Escan
             muted
           />
 
-          {/* Scanning overlay */}
           {scanning && (
             <>
-              {/* Dimmed edges */}
               <div style={{
                 position: 'absolute', inset: 0,
-                background: 'linear-gradient(rgba(0,0,0,0.4) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.4) 100%)',
+                boxShadow: 'inset 0 0 0 9999px rgba(0,0,0,0.38)',
+                clipPath: 'polygon(0% 0%, 0% 100%, 10% 100%, 10% 28%, 90% 28%, 90% 72%, 10% 72%, 10% 100%, 100% 100%, 100% 0%)',
                 pointerEvents: 'none',
               }} />
+
               {/* Target frame */}
               <div style={{
                 position: 'absolute',
-                top: '30%', left: '10%', right: '10%', height: '40%',
-                border: '2px solid rgba(255,255,255,0.8)',
-                borderRadius: 8,
+                top: '28%', left: '10%', right: '10%', height: '44%',
                 pointerEvents: 'none',
               }}>
-                {/* Corner accents */}
-                {[['0%','0%'],['0%','100%'],['100%','0%'],['100%','100%']].map(([t,l], i) => (
+                {/* Corners */}
+                {[
+                  { top: -2,    left: -2,   borderTop: true,    borderLeft: true  },
+                  { top: -2,    right: -2,  borderTop: true,    borderRight: true },
+                  { bottom: -2, left: -2,   borderBottom: true, borderLeft: true  },
+                  { bottom: -2, right: -2,  borderBottom: true, borderRight: true },
+                ].map((c, i) => (
                   <div key={i} style={{
                     position: 'absolute',
-                    top: t === '0%' ? -2 : 'auto', bottom: t === '100%' ? -2 : 'auto',
-                    left: l === '0%' ? -2 : 'auto', right: l === '100%' ? -2 : 'auto',
-                    width: 20, height: 20,
-                    borderTop: (t === '0%') ? '3px solid var(--vet-teal)' : 'none',
-                    borderBottom: (t === '100%') ? '3px solid var(--vet-teal)' : 'none',
-                    borderLeft: (l === '0%') ? '3px solid var(--vet-teal)' : 'none',
-                    borderRight: (l === '100%') ? '3px solid var(--vet-teal)' : 'none',
-                    borderRadius: (t === '0%' && l === '0%') ? '6px 0 0 0'
-                      : (t === '0%' && l === '100%') ? '0 6px 0 0'
-                      : (t === '100%' && l === '0%') ? '0 0 0 6px'
-                      : '0 0 6px 0',
+                    top: c.top, bottom: c.bottom, left: c.left, right: c.right,
+                    width: 24, height: 24,
+                    borderTop:    c.borderTop    ? '3px solid var(--vet-teal)' : 'none',
+                    borderBottom: c.borderBottom ? '3px solid var(--vet-teal)' : 'none',
+                    borderLeft:   c.borderLeft   ? '3px solid var(--vet-teal)' : 'none',
+                    borderRight:  c.borderRight  ? '3px solid var(--vet-teal)' : 'none',
+                    borderRadius: i === 0 ? '6px 0 0 0' : i === 1 ? '0 6px 0 0' : i === 2 ? '0 0 0 6px' : '0 0 6px 0',
                   }} />
                 ))}
-                {/* Scan line animation */}
+                {/* Scan line */}
                 <div style={{
-                  position: 'absolute', left: 0, right: 0, height: 2,
-                  background: 'var(--vet-teal)',
-                  animation: 'scanLine 2s ease-in-out infinite',
-                  top: '50%',
+                  position: 'absolute', left: 4, right: 4, height: 2,
+                  background: 'linear-gradient(90deg, transparent, var(--vet-teal), transparent)',
+                  animation: 'scanLine 1.8s ease-in-out infinite',
+                  boxShadow: '0 0 8px var(--vet-teal)',
                 }} />
               </div>
+
               <div style={{
-                position: 'absolute', bottom: 16, left: 0, right: 0,
-                textAlign: 'center', color: 'rgba(255,255,255,0.8)', fontSize: 13,
+                position: 'absolute', bottom: 14, left: 0, right: 0,
+                textAlign: 'center', color: 'rgba(255,255,255,0.75)', fontSize: 13,
               }}>
                 Apuntá la cámara al código de barras
               </div>
             </>
           )}
 
-          {/* Loading state */}
           {!scanning && !error && (
             <div style={{
               position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
               alignItems: 'center', justifyContent: 'center', gap: 12,
             }}>
-              <Camera size={40} strokeWidth={1.5} style={{ color: 'rgba(255,255,255,0.5)' }} />
-              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>Iniciando cámara...</span>
+              <Camera size={40} strokeWidth={1.5} style={{ color: 'rgba(255,255,255,0.45)' }} />
+              <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13 }}>Iniciando cámara...</span>
             </div>
           )}
         </div>
 
-        {/* Error */}
         {error && (
           <div style={{ padding: '14px 20px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-            <AlertCircle size={16} style={{ color: 'var(--vet-rose)', flexShrink: 0, marginTop: 1 }} />
+            <AlertCircle size={16} style={{ color: 'var(--danger)', flexShrink: 0, marginTop: 1 }} />
             <span style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{error}</span>
           </div>
         )}
 
-        {/* Footer */}
         <div style={{ padding: '12px 20px', borderTop: '1px solid var(--border)' }}>
           <button className="btn btn--ghost" style={{ width: '100%' }} onClick={handleClose}>
             Cancelar
@@ -211,8 +224,8 @@ export default function BarcodeScanner({ isOpen, onClose, onScan, title = 'Escan
 
       <style>{`
         @keyframes scanLine {
-          0%, 100% { top: 5%; opacity: 0.8; }
-          50% { top: 90%; opacity: 1; }
+          0%, 100% { top: 8%;  opacity: 0.7; }
+          50%       { top: 86%; opacity: 1;   }
         }
       `}</style>
     </div>
