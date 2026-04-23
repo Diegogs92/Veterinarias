@@ -1,24 +1,32 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Modal from '../../components/ui/Modal'
 import BarcodeScanner from '../../components/ui/BarcodeScanner'
-import { ScanLine } from 'lucide-react'
+import { ScanLine, ImagePlus, X } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
+import { supabase } from '../../lib/supabase'
 
-const EMPTY = { name: '', categoryId: '', price: '', inStock: true, barcode: '' }
+const EMPTY = { name: '', categoryId: '', price: '', inStock: true, barcode: '', photoUrl: '' }
+const BUCKET = 'product-photos'
 
 export default function ProductForm({ isOpen, onClose, onSave, initial = null }) {
   const { productCategories } = useApp()
   const [form, setForm] = useState(EMPTY)
   const [errors, setErrors] = useState({})
   const [scannerOpen, setScannerOpen] = useState(false)
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef()
 
   useEffect(() => {
     if (isOpen) {
       setForm(initial
-        ? { ...EMPTY, ...initial, price: String(Math.round(initial.price)), barcode: initial.barcode ?? '' }
+        ? { ...EMPTY, ...initial, price: String(Math.round(initial.price)), barcode: initial.barcode ?? '', photoUrl: initial.photoUrl ?? '' }
         : EMPTY
       )
       setErrors({})
+      setPhotoFile(null)
+      setPhotoPreview(null)
     }
   }, [isOpen, initial])
 
@@ -28,6 +36,20 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
     setErrors(er => ({ ...er, [field]: '' }))
   }
 
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
+  }
+
+  const clearPhoto = () => {
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    setForm(f => ({ ...f, photoUrl: '' }))
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
   const validate = () => {
     const errs = {}
     if (!form.name.trim()) errs.name = 'Requerido'
@@ -35,12 +57,31 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
     return errs
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
-    onSave({ ...form, price: parseInt(form.price, 10) })
+
+    let photoUrl = form.photoUrl
+
+    if (photoFile) {
+      setUploading(true)
+      const ext = photoFile.name.split('.').pop()
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`
+      const { error } = await supabase.storage.from(BUCKET).upload(path, photoFile, { upsert: false })
+      setUploading(false)
+      if (error) {
+        alert(`Error al subir la foto: ${error.message}`)
+        return
+      }
+      const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
+      photoUrl = data.publicUrl
+    }
+
+    onSave({ ...form, price: parseInt(form.price, 10), photoUrl })
     onClose()
   }
+
+  const displayPhoto = photoPreview || form.photoUrl
 
   return (
     <>
@@ -50,13 +91,63 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
       title={initial ? 'Editar producto' : 'Nuevo producto'}
       footer={
         <>
-          <button className="btn btn--ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn btn--primary" onClick={handleSave}>
-            {initial ? 'Guardar cambios' : 'Agregar producto'}
+          <button className="btn btn--ghost" onClick={onClose} disabled={uploading}>Cancelar</button>
+          <button className="btn btn--primary" onClick={handleSave} disabled={uploading}>
+            {uploading ? 'Subiendo foto...' : initial ? 'Guardar cambios' : 'Agregar producto'}
           </button>
         </>
       }
     >
+      <div className="form-group">
+        <label className="form-label">Foto del producto</label>
+        {displayPhoto ? (
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <img
+              src={displayPhoto}
+              alt="preview"
+              style={{ width: 96, height: 96, objectFit: 'cover', borderRadius: 10, border: '1.5px solid var(--border)', display: 'block' }}
+            />
+            <button
+              type="button"
+              onClick={clearPhoto}
+              style={{
+                position: 'absolute', top: -8, right: -8,
+                width: 22, height: 22, borderRadius: '50%',
+                background: 'var(--danger)', color: '#fff',
+                border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <X size={12} />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              width: 96, height: 96, borderRadius: 10,
+              border: '2px dashed var(--border)',
+              background: 'var(--bg-secondary)',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              gap: 6, cursor: 'pointer', color: 'var(--text-tertiary)',
+              fontSize: 12,
+            }}
+          >
+            <ImagePlus size={22} strokeWidth={1.5} />
+            Agregar foto
+          </button>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={handlePhotoChange}
+        />
+      </div>
+
       <div className="form-group">
         <label className="form-label">Nombre del producto *</label>
         <input

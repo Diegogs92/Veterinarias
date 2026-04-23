@@ -172,6 +172,7 @@ export default function CatalogPage() {
                 <table>
                   <thead>
                     <tr>
+                      <th style={{ width: 56 }}></th>
                       <th>Producto</th>
                       <th>Categoría</th>
                       <th>Código</th>
@@ -183,6 +184,12 @@ export default function CatalogPage() {
                   <tbody>
                     {filteredProducts.map(p => (
                       <tr key={p.id}>
+                        <td>
+                          {p.photoUrl
+                            ? <img src={p.photoUrl} alt={p.name} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)', display: 'block' }} />
+                            : <div style={{ width: 40, height: 40, borderRadius: 8, background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)' }}><Package size={18} strokeWidth={1.5} /></div>
+                          }
+                        </td>
                         <td style={{ fontWeight: 600 }}>{p.name}</td>
                         <td>
                           {p.categoryId
