@@ -5,7 +5,7 @@ import OwnerSelect from '../../components/ui/OwnerSelect'
 import PetSelect from '../../components/ui/PetSelect'
 import { useApp } from '../../context/AppContext'
 import { todayStr, formatCurrency } from '../../utils/helpers'
-import { Trash2, Search, ScanLine, Plus, Minus, CircleCheck, CircleX, Clock, AlertTriangle } from 'lucide-react'
+import { Trash2, Search, ScanLine, Plus, Minus, CircleCheck, CircleX, Clock, AlertTriangle, Package } from 'lucide-react'
 
 const EMPTY = { ownerId: '', petId: '', items: [], discount: 0, paidAmount: 0, date: todayStr() }
 const STEPS  = ['Cliente', 'Productos', 'Pago']
@@ -161,15 +161,19 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                   ? <div style={{ padding: '12px 16px', color: 'var(--text-tertiary)', fontSize: 13 }}>No hay productos disponibles</div>
                   : searchedProducts.map(p => (
                     <button key={p.id} type="button" onMouseDown={() => addProduct(p)} style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      width: '100%', padding: '10px 16px', background: 'none', border: 'none',
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      width: '100%', padding: '8px 12px', background: 'none', border: 'none',
                       cursor: 'pointer', textAlign: 'left', borderBottom: '1px solid var(--border)', color: 'var(--text-primary)',
                     }}>
-                      <div>
+                      {p.photoUrl
+                        ? <img src={p.photoUrl} alt={p.name} style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border)', flexShrink: 0 }} />
+                        : <div style={{ width: 36, height: 36, borderRadius: 6, background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', flexShrink: 0 }}><Package size={16} strokeWidth={1.5} /></div>
+                      }
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 500, fontSize: 14 }}>{p.name}</div>
                         {p.barcode && <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>{p.barcode}</div>}
                       </div>
-                      <div style={{ fontWeight: 700, color: 'var(--accent)', flexShrink: 0, marginLeft: 12 }}>{formatCurrency(p.price)}</div>
+                      <div style={{ fontWeight: 700, color: 'var(--accent)', flexShrink: 0, marginLeft: 4 }}>{formatCurrency(p.price)}</div>
                     </button>
                   ))
                 }
@@ -179,11 +183,17 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
 
           {form.items.length > 0 && (
             <div className="card card--no-hover" style={{ padding: 0 }}>
-              {form.items.map((item, idx) => (
+              {form.items.map((item, idx) => {
+                const productPhoto = products.items.find(p => p.id === item.productId)?.photoUrl
+                return (
                 <div key={item.productId} style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '10px 14px', borderBottom: '1px solid var(--border-2)',
                 }}>
+                  {productPhoto
+                    ? <img src={productPhoto} alt={item.productName} style={{ width: 38, height: 38, objectFit: 'cover', borderRadius: 7, border: '1px solid var(--border)', flexShrink: 0 }} />
+                    : <div style={{ width: 38, height: 38, borderRadius: 7, background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', flexShrink: 0 }}><Package size={17} strokeWidth={1.5} /></div>
+                  }
                   <div style={{ flex: 1, fontWeight: 500, fontSize: 14 }}>{item.productName}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <button type="button" className="btn btn--subtle btn--icon" onClick={() => updateQty(idx, item.quantity - 1)} style={{ width: 34, height: 34 }}>
@@ -199,7 +209,8 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                     <Trash2 size={16} />
                   </button>
                 </div>
-              ))}
+                )
+              })}
               <div style={{ padding: '10px 14px', display: 'flex', justifyContent: 'flex-end' }}>
                 <span style={{ fontWeight: 700, fontSize: 15 }}>Total: {formatCurrency(subtotal)}</span>
               </div>
