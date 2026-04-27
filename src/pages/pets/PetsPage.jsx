@@ -55,16 +55,11 @@ export default function PetsPage() {
       <Header
         title="Mascotas"
         subtitle={`${pets.items.length} registradas`}
-        actions={
-          <button className="btn btn--primary" onClick={() => { setEditing(null); setFormOpen(true) }}>
-            + Nueva mascota
-          </button>
-        }
       />
       <div className="page">
         <div className="page__header" style={{ flexWrap: 'wrap' }}>
           <div className="search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 360 }}>
-            <span className="search-icon"><Search size={14} strokeWidth={2} /></span>
+            <span className="search-icon"><Search size={18} strokeWidth={2} /></span>
             <input
               className="form-input"
               placeholder="Buscar mascota o dueño..."
@@ -83,6 +78,9 @@ export default function PetsPage() {
               </button>
             ))}
           </div>
+          <button className="btn btn--primary" style={{ marginLeft: 'auto' }} onClick={() => { setEditing(null); setFormOpen(true) }}>
+            + Nueva mascota
+          </button>
         </div>
 
         {filtered.length === 0 ? (
@@ -133,13 +131,13 @@ export default function PetsPage() {
                       className="btn btn--subtle btn--icon"
                       onClick={e => { e.stopPropagation(); setEditing(pet); setFormOpen(true) }}
                     >
-                      <Pencil size={16} strokeWidth={2} />
+                      <Pencil size={18} strokeWidth={2} />
                     </button>
                     <button
                       className="btn btn--subtle btn--icon"
                       onClick={e => { e.stopPropagation(); setDeleting(pet) }}
                     >
-                      <Trash2 size={16} strokeWidth={2} />
+                      <Trash2 size={18} strokeWidth={2} />
                     </button>
                   </div>
                 </div>

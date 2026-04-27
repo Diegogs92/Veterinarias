@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Package, Tag, Plus, Pencil, Trash2, Search, CheckCircle, XCircle } from 'lucide-react'
+import { Package, Plus, Pencil, Trash2, Search, CheckCircle, XCircle } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
 import Badge from '../../components/ui/Badge'
@@ -68,28 +68,12 @@ export default function CatalogPage() {
       <Header
         title="Catálogo"
         subtitle={`${products.items.length} productos · ${productCategories.items.length} categorías`}
-        actions={
-          tab === 'products'
-            ? <button className="btn btn--primary" onClick={() => setProductForm({ open: true, editing: null })}>
-                <Plus size={16} /> Nuevo producto
-              </button>
-            : <button className="btn btn--primary" onClick={() => setCategoryForm({ open: true, editing: null })}>
-                <Plus size={16} /> Nueva categoría
-              </button>
-        }
       />
 
       <div className="page">
 
         {/* Stats */}
-        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', marginBottom: 32 }}>
-          <div className="stat-card">
-            <div className="stat-card__icon" style={{ color: 'var(--vet-teal)' }}>
-              <Package size={32} strokeWidth={1.75} />
-            </div>
-            <div className="stat-card__label">Total productos</div>
-            <div className="stat-card__value" style={{ color: 'var(--vet-teal)' }}>{products.items.length}</div>
-          </div>
+        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', marginBottom: 24 }}>
           <div className="stat-card">
             <div className="stat-card__icon" style={{ color: 'var(--vet-emerald)' }}>
               <CheckCircle size={32} strokeWidth={1.75} />
@@ -103,13 +87,6 @@ export default function CatalogPage() {
             </div>
             <div className="stat-card__label">Sin stock</div>
             <div className="stat-card__value" style={{ color: 'var(--vet-rose)' }}>{noStock}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-card__icon" style={{ color: 'var(--vet-purple)' }}>
-              <Tag size={32} strokeWidth={1.75} />
-            </div>
-            <div className="stat-card__label">Categorías</div>
-            <div className="stat-card__value" style={{ color: 'var(--vet-purple)' }}>{productCategories.items.length}</div>
           </div>
         </div>
 
@@ -128,7 +105,7 @@ export default function CatalogPage() {
         {/* Filters */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
           <div className="search-wrap" style={{ flex: 1, minWidth: 200 }}>
-            <Search size={14} className="search-icon" />
+            <Search size={18} className="search-icon" />
             <input
               className="form-input"
               style={{ paddingLeft: 36 }}
@@ -150,6 +127,14 @@ export default function CatalogPage() {
               ))}
             </select>
           )}
+          {tab === 'products'
+            ? <button className="btn btn--primary" style={{ marginLeft: 'auto' }} onClick={() => setProductForm({ open: true, editing: null })}>
+                <Plus size={18} /> Nuevo producto
+              </button>
+            : <button className="btn btn--primary" style={{ marginLeft: 'auto' }} onClick={() => setCategoryForm({ open: true, editing: null })}>
+                <Plus size={18} /> Nueva categoría
+              </button>
+          }
         </div>
 
         {/* ── PRODUCTS TABLE ── */}
@@ -162,7 +147,7 @@ export default function CatalogPage() {
                 text={search || catFilter ? 'No hay productos que coincidan con la búsqueda' : 'Agregá el primer producto al catálogo'}
                 action={!search && !catFilter
                   ? <button className="btn btn--primary" onClick={() => setProductForm({ open: true, editing: null })}>
-                      <Plus size={16} /> Nuevo producto
+                      <Plus size={18} /> Nuevo producto
                     </button>
                   : null
                 }
@@ -216,7 +201,7 @@ export default function CatalogPage() {
                               onClick={() => setProductForm({ open: true, editing: p })}
                               title="Editar"
                             >
-                              <Pencil size={16} />
+                              <Pencil size={18} />
                             </button>
                             <button
                               className="btn btn--subtle btn--icon"
@@ -224,7 +209,7 @@ export default function CatalogPage() {
                               title="Eliminar"
                               style={{ color: 'var(--vet-rose)' }}
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={18} />
                             </button>
                           </div>
                         </td>
@@ -247,7 +232,7 @@ export default function CatalogPage() {
                 text={search ? 'No hay categorías que coincidan' : 'Creá la primera categoría de productos'}
                 action={!search
                   ? <button className="btn btn--primary" onClick={() => setCategoryForm({ open: true, editing: null })}>
-                      <Plus size={16} /> Nueva categoría
+                      <Plus size={18} /> Nueva categoría
                     </button>
                   : null
                 }
@@ -287,7 +272,7 @@ export default function CatalogPage() {
                                 onClick={() => setCategoryForm({ open: true, editing: c })}
                                 title="Editar"
                               >
-                                <Pencil size={16} />
+                                <Pencil size={18} />
                               </button>
                               <button
                                 className="btn btn--subtle btn--icon"
@@ -295,7 +280,7 @@ export default function CatalogPage() {
                                 title="Eliminar"
                                 style={{ color: 'var(--vet-rose)' }}
                               >
-                                <Trash2 size={16} />
+                                <Trash2 size={18} />
                               </button>
                             </div>
                           </td>

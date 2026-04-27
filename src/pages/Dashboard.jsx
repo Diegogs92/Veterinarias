@@ -1,209 +1,155 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PawPrint, Hospital, Banknote, ShoppingCart } from 'lucide-react'
+import {
+  Hospital, Scissors, Syringe, ShoppingCart,
+  PawPrint, Stethoscope, Home, PackageSearch, Banknote, ShieldCheck,
+  Calendar, Activity,
+} from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import Header from '../components/layout/Header'
-import Badge from '../components/ui/Badge'
-import SpeciesIcon from '../components/ui/SpeciesIcon'
-import { formatDate, formatCurrency } from '../utils/helpers'
+import { todayStr, formatCurrency } from '../utils/helpers'
+
+const SHORTCUTS = [
+  { to: '/owners-pets', Icon: PawPrint,      label: 'Mascotas',          color: 'var(--vet-emerald)' },
+  { to: '/consultas',   Icon: Stethoscope,   label: 'Consultas',         color: 'var(--vet-cyan)' },
+  { to: '/cirugias',    Icon: Activity,      label: 'Cirugía',           color: 'var(--vet-rose)' },
+  { to: '/vaccines',    Icon: Syringe,       label: 'Vacunas',           color: 'var(--info)'        },
+  { to: '/grooming',    Icon: Scissors,      label: 'Peluquería',        color: 'var(--vet-purple)' },
+  { to: '/boarding',    Icon: Home,          label: 'Pensionados',       color: 'var(--vet-amber)' },
+  { to: '/internments', Icon: Hospital,      label: 'Internación',       color: 'var(--vet-teal)' },
+  { to: '/catalog',     Icon: PackageSearch, label: 'Catálogo',          color: 'var(--vet-cyan)' },
+  { to: '/sales',       Icon: ShoppingCart,  label: 'Ventas',            color: 'var(--vet-emerald)' },
+]
+
+function greeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Buenos días'
+  if (h < 19) return 'Buenas tardes'
+  return 'Buenas noches'
+}
+
+function todayLabel() {
+  const s = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: 'long' })
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
 
 export default function Dashboard() {
-  const { pets, owners, sales, internments } = useApp()
-  const { currentUser, isVet } = useAuth()
+  const { internments, grooming, cirugias, sales } = useApp()
+  const { currentUser, isVet, canManageUsers } = useAuth()
   const navigate = useNavigate()
 
-  const totalIncome = useMemo(() =>
-    sales.items
-      .filter(s => s.paymentStatus === 'paid' || s.paymentStatus === 'partial')
-      .reduce((s, i) => s + (i.paidAmount || 0), 0),
-    [sales.items]
-  )
+  const today = todayStr()
 
-  const activeInternments = useMemo(() =>
-    internments.items
-      .filter(i => i.status !== 'discharged')
-      .sort((a, b) => {
-        const order = { critical: 0, active: 1, improving: 2 }
-        return (order[a.status] ?? 9) - (order[b.status] ?? 9)
-      }),
-    [internments.items]
-  )
+  const stats = useMemo(() => {
+    const groomingToday  = grooming.items.filter(g => g.date === today).length
+    const cirugiasToday  = cirugias.items.filter(c => c.date === today).length
+    const salesToday     = sales.items.filter(s => s.date === today)
+    const internActive   = internments.items.filter(i => i.status !== 'discharged').length
+    const internCritical = internments.items.filter(i => i.status === 'critical').length
+    return {
+      internActive, internCritical,
+      groomingToday, cirugiasToday,
+      salesTodayCount:  salesToday.length,
+      salesTodayAmount: salesToday.reduce((s, v) => s + (v.total || 0), 0),
+    }
+  }, [internments.items, grooming.items, cirugias.items, sales.items, today])
 
-  const recentSales = useMemo(() =>
-    [...sales.items]
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .slice(0, 6),
-    [sales.items]
-  )
-
-  const greeting = () => {
-    const h = new Date().getHours()
-    if (h < 12) return 'Buenos días'
-    if (h < 19) return 'Buenas tardes'
-    return 'Buenas noches'
-  }
+  const shortcuts = [
+    ...SHORTCUTS,
+    ...(isVet         ? [{ to: '/finances', Icon: Banknote,    label: 'Caja / Finanzas', color: 'var(--vet-purple)' }] : []),
+    ...(canManageUsers ? [{ to: '/users',    Icon: ShieldCheck, label: 'Usuarios',        color: 'var(--vet-cyan)'   }] : []),
+  ]
 
   return (
     <>
-      <Header title="Dashboard" subtitle={`${greeting()}, ${currentUser?.name?.split(' ')[0]}`} />
+      <Header
+        title={`${greeting()}, ${currentUser?.name?.split(' ')[0] || ''}`}
+        subtitle={todayLabel()}
+      />
       <div className="page">
 
-        {/* Stats */}
-        <div className="stats-grid">
-          <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/owners-pets')}>
-            <div className="stat-card__icon" style={{ color: 'var(--vet-emerald)' }}>
-              <PawPrint size={32} strokeWidth={1.75} />
-            </div>
-            <div className="stat-card__label">Mascotas registradas</div>
-            <div className="stat-card__value" style={{ color: 'var(--vet-emerald)' }}>{pets.items.length}</div>
-            <div className="stat-card__sub">{owners.items.length} dueños</div>
-          </div>
-
-          <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/internments')}>
+        {/* Resumen de hoy */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, color: 'var(--text-secondary)' }}>
+          <Calendar size={18} strokeWidth={2} />
+          <span style={{ fontSize: 15, fontWeight: 700 }}>Resumen de hoy</span>
+        </div>
+        <div className="stats-grid" style={{ marginBottom: 32, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+          <div className="stat-card" onClick={() => navigate('/internments')}>
             <div className="stat-card__icon" style={{
-              color: activeInternments.some(i => i.status === 'critical') ? 'var(--vet-rose)' : 'var(--vet-teal)',
+              color: stats.internCritical ? 'var(--vet-rose)' : 'var(--vet-teal)',
+              background: stats.internCritical ? 'var(--danger-3)' : 'var(--accent-3)',
             }}>
               <Hospital size={32} strokeWidth={1.75} />
             </div>
             <div className="stat-card__label">Internados</div>
-            <div className="stat-card__value" style={{
-              color: activeInternments.some(i => i.status === 'critical') ? 'var(--vet-rose)' : 'var(--vet-teal)',
-            }}>
-              {activeInternments.length}
+            <div className="stat-card__value" style={{ color: stats.internCritical ? 'var(--vet-rose)' : 'var(--vet-teal)' }}>
+              {stats.internActive}
             </div>
-            <div className="stat-card__sub">
-              {activeInternments.filter(i => i.status === 'critical').length > 0
-                ? `${activeInternments.filter(i => i.status === 'critical').length} en estado crítico`
-                : 'pacientes activos'}
-            </div>
-          </div>
-
-          <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/sales')}>
-            <div className="stat-card__icon" style={{ color: 'var(--vet-cyan)' }}>
-              <ShoppingCart size={32} strokeWidth={1.75} />
-            </div>
-            <div className="stat-card__label">Ventas</div>
-            <div className="stat-card__value" style={{ color: 'var(--vet-cyan)' }}>{sales.items.length}</div>
-            <div className="stat-card__sub">registradas</div>
-          </div>
-
-          {isVet && (
-            <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/finances')}>
-              <div className="stat-card__icon" style={{ color: 'var(--vet-purple)' }}>
-                <Banknote size={32} strokeWidth={1.75} />
-              </div>
-              <div className="stat-card__label">Ingresos totales</div>
-              <div className="stat-card__value" style={{ color: 'var(--vet-purple)', fontSize: 40 }}>{formatCurrency(totalIncome)}</div>
-              <div className="stat-card__sub">{sales.items.length} ventas</div>
-            </div>
-          )}
-        </div>
-
-        <div className="two-col-grid">
-
-          {/* Active internments */}
-          {activeInternments.length > 0 && (
-            <div className="card card--no-hover" style={{ gridColumn: '1 / -1' }}>
-              <div className="card__header">
-                <span className="card__title">Pacientes internados</span>
-                <button className="btn btn--subtle btn--sm" onClick={() => navigate('/internments')}>Ver todos</button>
-              </div>
-              <div>
-                {activeInternments.map(intern => {
-                  const pet = pets.find(intern.petId)
-                  const owner = owners.find(intern.ownerId)
-                  const isCritical = intern.status === 'critical'
-                  const days = Math.round((new Date() - new Date(intern.admissionDate)) / 86400000)
-                  return (
-                    <div
-                      key={intern.id}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 14,
-                        padding: '12px 20px', borderBottom: '1px solid var(--border)',
-                        cursor: 'pointer', transition: 'background var(--t-fast)',
-                        borderLeft: `3px solid ${isCritical ? 'var(--red)' : 'transparent'}`,
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                      onMouseLeave={e => e.currentTarget.style.background = ''}
-                      onClick={() => navigate('/internments')}
-                    >
-                      <div style={{
-                        width: 36, height: 36, borderRadius: 'var(--r-sm)',
-                        background: isCritical ? 'rgba(255,59,48,0.12)' : 'rgba(255,159,10,0.12)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: isCritical ? 'var(--red)' : 'var(--orange)', flexShrink: 0,
-                      }}>
-                        <SpeciesIcon species={pet?.species} size={18} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, fontSize: 14 }} className="truncate">
-                          {pet?.name || '—'}
-                          <span style={{ fontWeight: 400, color: 'var(--text-secondary)', marginLeft: 6, fontSize: 13 }}>
-                            · {owner?.name || '—'}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }} className="truncate">{intern.reason}</div>
-                      </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <Badge color={isCritical ? 'red' : 'orange'} dot>
-                          {isCritical ? 'Crítico' : 'Internado'}
-                        </Badge>
-                        <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 3 }}>
-                          {days === 0 ? 'Ingresó hoy' : `${days} día${days !== 1 ? 's' : ''}`}
-                          {intern.cage ? ` · ${intern.cage}` : ''}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Recent sales */}
-          <div className="card card--no-hover" style={{ gridColumn: '1 / -1' }}>
-            <div className="card__header">
-              <span className="card__title">Ventas recientes</span>
-              <button className="btn btn--subtle btn--sm" onClick={() => navigate('/sales')}>Ver todas</button>
-            </div>
-            {recentSales.length === 0 ? (
-              <div className="empty-state" style={{ padding: '32px 20px' }}>
-                <div className="empty-state__icon"><ShoppingCart size={36} strokeWidth={1.5} /></div>
-                <div className="empty-state__title" style={{ fontSize: 15 }}>Sin ventas registradas</div>
-              </div>
-            ) : (
-              <div>
-                {recentSales.map(sale => {
-                  const owner = owners.find(sale.ownerId)
-                  return (
-                    <div
-                      key={sale.id}
-                      style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 20px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background var(--t-fast)' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                      onMouseLeave={e => e.currentTarget.style.background = ''}
-                      onClick={() => navigate('/sales')}
-                    >
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, fontSize: 14 }} className="truncate">
-                          {owner?.name || 'Sin dueño'}
-                        </div>
-                        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{formatDate(sale.date)}</div>
-                      </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div style={{ fontWeight: 700, color: 'var(--vet-teal)' }}>{formatCurrency(sale.total || 0)}</div>
-                        <Badge color={sale.paymentStatus === 'paid' ? 'green' : sale.paymentStatus === 'partial' ? 'orange' : 'red'} dot>
-                          {{ paid: 'Pagado', partial: 'Parcial', pending: 'Pendiente' }[sale.paymentStatus] || sale.paymentStatus}
-                        </Badge>
-                      </div>
-                    </div>
-                  )
-                })}
+            {stats.internCritical > 0 && (
+              <div className="stat-card__sub" style={{ color: 'var(--vet-rose)', fontWeight: 600 }}>
+                {stats.internCritical} en estado crítico
               </div>
             )}
           </div>
 
+          <div className="stat-card" onClick={() => navigate('/grooming')}>
+            <div className="stat-card__icon" style={{ color: 'var(--vet-purple)', background: 'rgba(124,58,237,0.10)' }}>
+              <Scissors size={32} strokeWidth={1.75} />
+            </div>
+            <div className="stat-card__label">Peluquería hoy</div>
+            <div className="stat-card__value" style={{ color: 'var(--vet-purple)' }}>{stats.groomingToday}</div>
+          </div>
+
+          <div className="stat-card" onClick={() => navigate('/cirugias')}>
+            <div className="stat-card__icon" style={{ color: 'var(--vet-rose)', background: 'var(--danger-3)' }}>
+              <Syringe size={32} strokeWidth={1.75} />
+            </div>
+            <div className="stat-card__label">Cirugías hoy</div>
+            <div className="stat-card__value" style={{ color: 'var(--vet-rose)' }}>{stats.cirugiasToday}</div>
+          </div>
+
+          <div className="stat-card" onClick={() => navigate('/sales')}>
+            <div className="stat-card__icon" style={{ color: 'var(--vet-emerald)', background: 'var(--ok-3)' }}>
+              <ShoppingCart size={32} strokeWidth={1.75} />
+            </div>
+            <div className="stat-card__label">Ventas hoy</div>
+            <div className="stat-card__value" style={{ color: 'var(--vet-emerald)' }}>{stats.salesTodayCount}</div>
+            {stats.salesTodayAmount > 0 && (
+              <div className="stat-card__sub">{formatCurrency(stats.salesTodayAmount)}</div>
+            )}
+          </div>
         </div>
+
+        {/* Accesos directos */}
+        <div style={{ marginBottom: 12, color: 'var(--text-secondary)', fontSize: 15, fontWeight: 700 }}>
+          Accesos directos
+        </div>
+        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', marginBottom: 0 }}>
+          {shortcuts.map(({ to, Icon, label, color }) => (
+            <button
+              key={to}
+              type="button"
+              onClick={() => navigate(to)}
+              className="stat-card"
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+                padding: '26px 18px', gap: 12,
+                border: '1px solid var(--border)', cursor: 'pointer',
+              }}
+            >
+              <div style={{
+                width: 60, height: 60, borderRadius: 14,
+                background: 'var(--accent-3)', color,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Icon size={30} strokeWidth={1.85} />
+              </div>
+              <div style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text-primary)' }}>{label}</div>
+            </button>
+          ))}
+        </div>
+
       </div>
     </>
   )

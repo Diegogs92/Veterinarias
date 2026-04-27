@@ -28,8 +28,8 @@ export default function StepWizard({
         {/* Header */}
         <div className="modal__header">
           <div className="modal__title">{title}</div>
-          <button className="btn btn--subtle btn--icon" onClick={onClose} style={{ width: 44, height: 44 }}>
-            <X size={26} strokeWidth={2} />
+          <button className="btn btn--subtle btn--icon" onClick={onClose} style={{ width: 48, height: 48 }}>
+            <X size={28} strokeWidth={2} />
           </button>
         </div>
 
@@ -39,21 +39,21 @@ export default function StepWizard({
             {steps.map((label, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'flex-start', flex: i < steps.length - 1 ? 1 : 'none' }}>
                 {/* Step item */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                   <div style={{
-                    width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                    width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13, fontWeight: 700,
+                    fontSize: 15, fontWeight: 700,
                     background: i < currentStep ? 'var(--accent)' : i === currentStep ? 'var(--accent)' : 'var(--bg-sub)',
                     border: `2.5px solid ${i <= currentStep ? 'var(--accent)' : 'var(--border)'}`,
                     color: i <= currentStep ? 'white' : 'var(--text-tertiary)',
                     boxShadow: i === currentStep ? '0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent)' : 'none',
                     transition: 'all var(--t-normal)',
                   }}>
-                    {i < currentStep ? <Check size={14} strokeWidth={3} /> : i + 1}
+                    {i < currentStep ? <Check size={17} strokeWidth={3} /> : i + 1}
                   </div>
                   <span style={{
-                    fontSize: 11.5, whiteSpace: 'nowrap', fontWeight: i === currentStep ? 700 : 400,
+                    fontSize: 13, whiteSpace: 'nowrap', fontWeight: i === currentStep ? 700 : 500,
                     color: i === currentStep ? 'var(--text-primary)'
                       : i < currentStep ? 'var(--accent)'
                       : 'var(--text-tertiary)',
@@ -91,13 +91,13 @@ export default function StepWizard({
           >
             {isFirst
               ? 'Cancelar'
-              : <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><ChevronLeft size={16} /> Anterior</span>
+              : <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><ChevronLeft size={20} /> Anterior</span>
             }
           </button>
           <button className="btn btn--primary" onClick={isLast ? onSave : onNext}>
             {isLast
               ? saveLabel
-              : <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>Siguiente <ChevronRight size={16} /></span>
+              : <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>Siguiente <ChevronRight size={20} /></span>
             }
           </button>
         </div>

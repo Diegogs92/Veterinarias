@@ -127,14 +127,14 @@ export default function UsersPage() {
       <Header
         title="Usuarios"
         subtitle={`${users.length} usuarios registrados`}
-        actions={
-          <button className="btn btn--primary" onClick={openNew}>
-            <Plus size={16} /> Nuevo usuario
-          </button>
-        }
       />
 
       <div className="page">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+          <button className="btn btn--primary" onClick={openNew}>
+            <Plus size={18} /> Nuevo usuario
+          </button>
+        </div>
         {loading ? (
           <div style={{ textAlign: 'center', padding: 48, color: 'var(--text-tertiary)' }}>Cargando...</div>
         ) : users.length === 0 ? (
@@ -142,7 +142,7 @@ export default function UsersPage() {
             icon={<UserCircle2 size={48} strokeWidth={1.25} />}
             title="Sin usuarios"
             text="Creá el primer usuario del sistema"
-            action={<button className="btn btn--primary" onClick={openNew}><Plus size={16} /> Nuevo usuario</button>}
+            action={<button className="btn btn--primary" onClick={openNew}><Plus size={18} /> Nuevo usuario</button>}
           />
         ) : (
           <div className="card card--no-hover">
@@ -205,7 +205,7 @@ export default function UsersPage() {
                               onClick={() => openEdit(u)}
                               title="Editar"
                             >
-                              <Pencil size={16} />
+                              <Pencil size={18} />
                             </button>
                             <button
                               className="btn btn--subtle btn--icon"
@@ -214,7 +214,7 @@ export default function UsersPage() {
                               style={{ color: 'var(--vet-rose)' }}
                               disabled={isSelf}
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={18} />
                             </button>
                           </div>
                         </td>

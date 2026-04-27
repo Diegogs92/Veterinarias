@@ -292,6 +292,7 @@ export function AppProvider({ children }) {
 
   // ── Debt helpers ──────────────────────────────────────────────────────────
   const syncDebt = (sourceType, sourceId, ownerId, totalAmount, paidAmount) => {
+    if (!ownerId) return // venta de mostrador / sin cliente: no se genera deuda
     const paid = paidAmount || 0
     const status = paid >= totalAmount ? 'paid' : paid > 0 ? 'partial' : 'pending'
     const now = new Date().toISOString()

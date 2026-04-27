@@ -61,7 +61,7 @@ export default function OwnerSelect({
       <label className="form-label">{label}{required && ' *'}</label>
       <div style={{ display: 'flex', gap: 6, position: 'relative' }}>
         <div style={{ flex: 1, position: 'relative' }}>
-          <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)', pointerEvents: 'none' }} />
+          <Search size={18} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)', pointerEvents: 'none' }} />
           {selected && !showDrop ? (
             <div
               className={`form-input${error ? ' form-input--error' : ''}`}
@@ -69,7 +69,7 @@ export default function OwnerSelect({
               onClick={() => { if (!disabled) { setShowDrop(true); setSearch(''); setTimeout(() => inputRef.current?.focus(), 0) } }}
             >
               <span style={{ fontWeight: 500 }}>{ownerLabel(selected)}</span>
-              {!disabled && <X size={14} strokeWidth={2.5} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} onClick={e => { e.stopPropagation(); handleClear() }} />}
+              {!disabled && <X size={18} strokeWidth={2.5} style={{ color: 'var(--text-tertiary)', flexShrink: 0, cursor: 'pointer' }} onClick={e => { e.stopPropagation(); handleClear() }} />}
             </div>
           ) : (
             <input
@@ -120,7 +120,7 @@ export default function OwnerSelect({
             onClick={() => onAddNew ? onAddNew() : setShowAdd(v => !v)}
             style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}
           >
-            <Plus size={13} strokeWidth={2.5} />
+            <Plus size={16} strokeWidth={2.5} />
             Nuevo
           </button>
         )}
@@ -135,46 +135,30 @@ export default function OwnerSelect({
           borderRadius: 'var(--r-md)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)' }}>Nuevo dueño</span>
-            <button type="button" className="btn btn--subtle btn--icon" onClick={close} style={{ width: 36, height: 36 }}>
-              <X size={20} strokeWidth={2} />
+            <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--accent)' }}>Nuevo dueño rápido</span>
+            <button type="button" className="btn btn--subtle btn--icon btn--sm" onClick={close}>
+              <X size={18} strokeWidth={2} />
             </button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: 12 }}>Nombre *</label>
-              <input
-                className={`form-input${errs.name ? ' form-input--error' : ''}`}
-                value={form.name} onChange={set('name')}
-                placeholder="Nombre" autoFocus style={{ fontSize: 13 }}
-              />
-              {errs.name && <span className="form-error" style={{ fontSize: 11 }}>{errs.name}</span>}
-            </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: 12 }}>Apellido</label>
-              <input className="form-input" value={form.apellido} onChange={set('apellido')} placeholder="Apellido" style={{ fontSize: 13 }} />
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: 12 }}>DNI</label>
-              <input className="form-input" value={form.dni} onChange={set('dni')} placeholder="12345678" style={{ fontSize: 13 }} />
-            </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label" style={{ fontSize: 12 }}>Teléfono *</label>
-              <input
-                className={`form-input${errs.phone ? ' form-input--error' : ''}`}
-                value={form.phone} onChange={set('phone')}
-                placeholder="11-1234-5678" style={{ fontSize: 13 }}
-              />
-              {errs.phone && <span className="form-error" style={{ fontSize: 11 }}>{errs.phone}</span>}
-            </div>
+          <div className="form-group" style={{ marginBottom: 10 }}>
+            <label className="form-label">Nombre y apellido *</label>
+            <input
+              className={`form-input${errs.name ? ' form-input--error' : ''}`}
+              value={form.name} onChange={set('name')}
+              placeholder="Ej: Juan Pérez" autoFocus
+            />
+            {errs.name && <span className="form-error">{errs.name}</span>}
           </div>
           <div className="form-group" style={{ marginBottom: 12 }}>
-            <label className="form-label" style={{ fontSize: 12 }}>Email</label>
-            <input className="form-input" type="email" value={form.email} onChange={set('email')} placeholder="correo@email.com" style={{ fontSize: 13 }} />
+            <label className="form-label">Teléfono *</label>
+            <input
+              className={`form-input${errs.phone ? ' form-input--error' : ''}`}
+              value={form.phone} onChange={set('phone')}
+              placeholder="11-1234-5678"
+            />
+            {errs.phone && <span className="form-error">{errs.phone}</span>}
           </div>
-          <button type="button" className="btn btn--primary btn--sm" onClick={handleAdd} style={{ width: '100%' }}>
+          <button type="button" className="btn btn--primary" onClick={handleAdd} style={{ width: '100%' }}>
             Agregar dueño
           </button>
         </div>

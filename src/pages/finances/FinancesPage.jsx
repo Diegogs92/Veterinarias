@@ -173,14 +173,15 @@ export default function FinancesPage() {
       <Header
         title="Caja / Finanzas"
         subtitle="Solo visible para veterinarios"
-        actions={
-          <button className="btn btn--danger" onClick={openNewExp}>
-            <Plus size={16} /> Registrar egreso
-          </button>
-        }
       />
 
       <div className="page">
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+          <button className="btn btn--danger" onClick={openNewExp}>
+            <Plus size={18} /> Registrar egreso
+          </button>
+        </div>
 
         {/* ── BLOCK 1: Income summary ─────────────────────────────────────── */}
         <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--text-secondary)' }}>
@@ -383,14 +384,14 @@ export default function FinancesPage() {
                       <td>
                         <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
                           <button className="btn btn--subtle btn--icon" onClick={() => openEditExp(m)}>
-                            <Pencil size={16} />
+                            <Pencil size={18} />
                           </button>
                           <button
                             className="btn btn--subtle btn--icon"
                             onClick={() => setDeletingExp(m)}
                             style={{ color: 'var(--vet-rose)' }}
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       </td>

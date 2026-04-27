@@ -1,13 +1,11 @@
 import { useEffect } from 'react'
-import { NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard, Users, Scissors, ShoppingCart, Hospital,
-  Banknote, Moon, Sun, LogOut, PackageSearch, ShieldCheck,
-  Stethoscope, Home, Syringe,
+  LayoutDashboard, PawPrint, Scissors, ShoppingCart, Hospital,
+  Banknote, PackageSearch, ShieldCheck,
+  Stethoscope, Home, Syringe, Activity,
 } from 'lucide-react'
-import { useAuth, ROLE_LABELS } from '../../context/AuthContext'
-import { useTheme } from '../../context/ThemeContext'
-import { initials, avatarColor } from '../../utils/helpers'
+import { useAuth } from '../../context/AuthContext'
 
 function DogLogo() {
   return (
@@ -25,9 +23,10 @@ function DogLogo() {
 
 const NAV = [
   { to: '/',            Icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/owners-pets', Icon: Users,           label: 'Dueños y Mascotas' },
+  { to: '/owners-pets', Icon: PawPrint,        label: 'Mascotas' },
   { to: '/consultas',   Icon: Stethoscope,     label: 'Consultas' },
-  { to: '/cirugias',   Icon: Syringe,         label: 'Cirugía' },
+  { to: '/cirugias',   Icon: Activity,        label: 'Cirugía' },
+  { to: '/vaccines',    Icon: Syringe,         label: 'Vacunas' },
   { to: '/grooming',    Icon: Scissors,        label: 'Peluquería' },
   { to: '/boarding',    Icon: Home,            label: 'Pensionados' },
   { to: '/internments', Icon: Hospital,        label: 'Internación' },
@@ -44,15 +43,11 @@ const NAV_ADMIN = [
 ]
 
 export default function Sidebar({ open, onClose }) {
-  const { currentUser, logout, isVet, canManageUsers } = useAuth()
-  const { theme, toggle } = useTheme()
-  const navigate = useNavigate()
+  const { isVet, canManageUsers } = useAuth()
   const location = useLocation()
 
   // Close sidebar on route change (mobile)
   useEffect(() => { onClose?.() }, [location.pathname])
-
-  const handleLogout = () => { logout(); navigate('/login') }
 
   return (
     <aside className={`sidebar${open ? ' sidebar--open' : ''}`}>
@@ -74,7 +69,7 @@ export default function Sidebar({ open, onClose }) {
             data-tooltip={label}
           >
             <span className="sidebar__item-icon">
-              <Icon size={16} strokeWidth={1.75} />
+              <Icon size={19} strokeWidth={1.85} />
             </span>
             <span className="sidebar__item-text">{label}</span>
           </NavLink>
@@ -91,7 +86,7 @@ export default function Sidebar({ open, onClose }) {
                 data-tooltip={label}
               >
                 <span className="sidebar__item-icon">
-                  <Icon size={16} strokeWidth={1.75} />
+                  <Icon size={19} strokeWidth={1.85} />
                 </span>
                 <span className="sidebar__item-text">{label}</span>
               </NavLink>
@@ -106,7 +101,7 @@ export default function Sidebar({ open, onClose }) {
                     data-tooltip={label}
                   >
                     <span className="sidebar__item-icon">
-                      <Icon size={16} strokeWidth={1.75} />
+                      <Icon size={19} strokeWidth={1.85} />
                     </span>
                     <span className="sidebar__item-text">{label}</span>
                   </NavLink>
@@ -117,38 +112,6 @@ export default function Sidebar({ open, onClose }) {
         )}
       </nav>
 
-      <div className="sidebar__footer">
-        <button
-          className="sidebar__item"
-          style={{ width: '100%', border: 'none', background: 'transparent', marginBottom: 4 }}
-          onClick={toggle}
-          data-tooltip={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
-        >
-          <span className="sidebar__item-icon">
-            {theme === 'dark'
-              ? <Sun size={16} strokeWidth={1.75} />
-              : <Moon size={16} strokeWidth={1.75} />
-            }
-          </span>
-          <span className="sidebar__item-text">{theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}</span>
-        </button>
-
-        <div className="sidebar__user" onClick={handleLogout} title="Cerrar sesión">
-          <div
-            className="sidebar__avatar"
-            style={{ background: avatarColor(currentUser?.name || '') }}
-          >
-            {initials(currentUser?.name || '')}
-          </div>
-          <div className="sidebar__user-info">
-            <div className="sidebar__user-name">{currentUser?.name}</div>
-            <div className="sidebar__user-role">
-              {ROLE_LABELS[currentUser?.role] || currentUser?.role}
-            </div>
-          </div>
-          <LogOut size={14} strokeWidth={1.75} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
-        </div>
-      </div>
     </aside>
   )
 }

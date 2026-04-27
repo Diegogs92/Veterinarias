@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Outlet, Navigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
-import Header from './Header'
 import { useAuth } from '../../context/AuthContext'
 import { useApp } from '../../context/AppContext'
 
@@ -54,8 +53,7 @@ export default function Layout() {
         <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
       )}
       <div className="main-content">
-        <Header onMenuClick={() => setSidebarOpen(o => !o)} />
-        <Outlet />
+        <Outlet context={{ openSidebar: () => setSidebarOpen(o => !o) }} />
       </div>
     </div>
   )

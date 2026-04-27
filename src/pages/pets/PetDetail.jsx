@@ -29,14 +29,14 @@ export default function PetDetail() {
       <Header
         title={pet.name}
         subtitle={`${speciesLabel(pet.species)}${pet.breed ? ` · ${pet.breed}` : ''}`}
-        actions={
+      />
+      <div className="page">
+        <div style={{ marginBottom: 16 }}>
           <button className="btn btn--ghost btn--sm" onClick={() => navigate('/owners-pets')}>
             <ArrowLeft size={14} strokeWidth={2} />
             Volver
           </button>
-        }
-      />
-      <div className="page">
+        </div>
 
         {/* Pet header card */}
         <div className="card card--no-hover" style={{ marginBottom: 20 }}>

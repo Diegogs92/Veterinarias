@@ -17,6 +17,7 @@ import GroomingPage from './pages/grooming/GroomingPage'
 import BoardingPage from './pages/boarding/BoardingPage'
 import ConsultasPage from './pages/consultas/ConsultasPage'
 import CirugiasPage from './pages/cirugias/CirugiasPage'
+import VaccinesPage from './pages/vaccines/VaccinesPage'
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
                 <Route path="/pets/:id"      element={<PetDetail />} />
                 <Route path="/consultas"     element={<ConsultasPage />} />
                 <Route path="/cirugias"     element={<CirugiasPage />} />
+                <Route path="/vaccines"      element={<VaccinesPage />} />
                 <Route path="/grooming"      element={<GroomingPage />} />
                 <Route path="/boarding"      element={<BoardingPage />} />
                 <Route path="/sales"         element={<SalesPage />} />

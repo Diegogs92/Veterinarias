@@ -88,7 +88,7 @@ export default function PetSelect({
             onClick={handleOpen}
             style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}
           >
-            <Plus size={13} strokeWidth={2.5} />
+            <Plus size={16} strokeWidth={2.5} />
             Nueva
           </button>
         )}
@@ -105,7 +105,7 @@ export default function PetSelect({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)' }}>Nueva mascota</span>
             <button type="button" className="btn btn--subtle btn--icon btn--sm" onClick={close}>
-              <X size={14} strokeWidth={2} />
+              <X size={18} strokeWidth={2} />
             </button>
           </div>
 

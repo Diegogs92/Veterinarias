@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Search, Plus, Pencil, Trash2, ShoppingCart, Banknote, TrendingUp, Clock } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, ShoppingCart, TrendingUp, Clock } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
 import Badge from '../../components/ui/Badge'
@@ -28,7 +28,8 @@ export default function SalesPage() {
       .filter(s => {
         const owner = owners.find(s.ownerId)
         const pet   = pets.find(s.petId)
-        const str   = `${owner?.name || ''} ${pet?.name || ''} ${s.items?.map(i => i.productName).join(' ') || ''}`.toLowerCase()
+        const ownerLabel = owner?.name || (s.ownerId ? '' : 'mostrador')
+        const str   = `${ownerLabel} ${pet?.name || ''} ${s.items?.map(i => i.productName).join(' ') || ''}`.toLowerCase()
         const matchSearch = !search || str.includes(search.toLowerCase())
         const matchPay    = !payFilter || s.paymentStatus === payFilter
         return matchSearch && matchPay
@@ -52,11 +53,10 @@ export default function SalesPage() {
       const created = sales.add(data)
       savedId = created.id
     }
-    // Sync debt
-    if (data.paymentStatus !== 'paid') {
-      syncDebt('sale', savedId, data.ownerId, data.total, data.paidAmount)
-    } else {
-      syncDebt('sale', savedId, data.ownerId, data.total, data.total)
+    // Sync debt — solo si hay cliente (las ventas de mostrador no generan deuda)
+    if (data.ownerId) {
+      const paid = data.paymentStatus === 'paid' ? data.total : data.paidAmount
+      syncDebt('sale', savedId, data.ownerId, data.total, paid)
     }
     setEditing(null)
     setFormOpen(false)
@@ -64,8 +64,9 @@ export default function SalesPage() {
 
   const handleDelete = () => {
     if (!deleting) return
-    // Mark debt as paid/removed
-    syncDebt('sale', deleting.id, deleting.ownerId, deleting.total || 0, deleting.total || 0)
+    if (deleting.ownerId) {
+      syncDebt('sale', deleting.id, deleting.ownerId, deleting.total || 0, deleting.total || 0)
+    }
     sales.remove(deleting.id)
     setDeleting(null)
   }
@@ -74,51 +75,32 @@ export default function SalesPage() {
     <>
       <Header
         title="Ventas"
-        subtitle={`${sales.items.length} ventas registradas`}
-        actions={
-          <button className="btn btn--primary" onClick={() => { setEditing(null); setFormOpen(true) }}>
-            <Plus size={16} /> Registrar venta
-          </button>
-        }
+        subtitle={`${sales.items.length} ventas · vendido ${formatCurrency(totalSold)}`}
       />
 
       <div className="page">
         {/* Stats */}
-        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', marginBottom: 32 }}>
-          <div className="stat-card">
-            <div className="stat-card__icon" style={{ color: 'var(--vet-teal)' }}>
-              <ShoppingCart size={32} strokeWidth={1.75} />
-            </div>
-            <div className="stat-card__label">Total vendido</div>
-            <div className="stat-card__value" style={{ color: 'var(--vet-teal)', fontSize: 22 }}>{formatCurrency(totalSold)}</div>
-          </div>
+        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', marginBottom: 24 }}>
           <div className="stat-card">
             <div className="stat-card__icon" style={{ color: 'var(--vet-emerald)' }}>
               <TrendingUp size={32} strokeWidth={1.75} />
             </div>
             <div className="stat-card__label">Cobrado</div>
-            <div className="stat-card__value" style={{ color: 'var(--vet-emerald)', fontSize: 22 }}>{formatCurrency(totalCobrado)}</div>
+            <div className="stat-card__value" style={{ color: 'var(--vet-emerald)', fontSize: 24 }}>{formatCurrency(totalCobrado)}</div>
           </div>
           <div className="stat-card">
             <div className="stat-card__icon" style={{ color: 'var(--vet-rose)' }}>
               <Clock size={32} strokeWidth={1.75} />
             </div>
             <div className="stat-card__label">Pendiente de cobro</div>
-            <div className="stat-card__value" style={{ color: 'var(--vet-rose)', fontSize: 22 }}>{formatCurrency(totalPending)}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-card__icon" style={{ color: 'var(--vet-amber)' }}>
-              <Banknote size={32} strokeWidth={1.75} />
-            </div>
-            <div className="stat-card__label">Transacciones</div>
-            <div className="stat-card__value" style={{ color: 'var(--vet-amber)' }}>{sales.items.length}</div>
+            <div className="stat-card__value" style={{ color: 'var(--vet-rose)', fontSize: 24 }}>{formatCurrency(totalPending)}</div>
           </div>
         </div>
 
         {/* Filters */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
           <div className="search-wrap" style={{ flex: 1, minWidth: 200 }}>
-            <Search size={14} className="search-icon" />
+            <Search size={18} className="search-icon" />
             <input
               className="form-input"
               style={{ paddingLeft: 36 }}
@@ -133,6 +115,9 @@ export default function SalesPage() {
             <button className={`tab${payFilter === 'partial' ? ' active' : ''}`} onClick={() => setPayFilter('partial')}>Parcial</button>
             <button className={`tab${payFilter === 'unpaid' ? ' active' : ''}`} onClick={() => setPayFilter('unpaid')}>Pendiente</button>
           </div>
+          <button className="btn btn--primary" style={{ marginLeft: 'auto' }} onClick={() => { setEditing(null); setFormOpen(true) }}>
+            <Plus size={18} /> Registrar venta
+          </button>
         </div>
 
         {/* Table */}
@@ -143,7 +128,7 @@ export default function SalesPage() {
             text={search || payFilter ? 'No hay ventas que coincidan' : 'Registrá la primera venta'}
             action={!search && !payFilter
               ? <button className="btn btn--primary" onClick={() => { setEditing(null); setFormOpen(true) }}>
-                  <Plus size={16} /> Registrar venta
+                  <Plus size={18} /> Registrar venta
                 </button>
               : null
             }
@@ -175,7 +160,9 @@ export default function SalesPage() {
                           {formatDate(sale.date)}
                         </td>
                         <td>
-                          <div style={{ fontWeight: 600 }}>{owner?.name || '—'}</div>
+                          <div style={{ fontWeight: 600, color: !sale.ownerId ? 'var(--text-tertiary)' : undefined, fontStyle: !sale.ownerId ? 'italic' : undefined }}>
+                            {owner?.name || (sale.ownerId ? '—' : 'Mostrador')}
+                          </div>
                           {pet && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{pet.name}</div>}
                         </td>
                         <td style={{ maxWidth: 200 }}>
@@ -204,7 +191,7 @@ export default function SalesPage() {
                               onClick={() => { setEditing(sale); setFormOpen(true) }}
                               title="Editar"
                             >
-                              <Pencil size={16} />
+                              <Pencil size={18} />
                             </button>
                             <button
                               className="btn btn--subtle btn--icon"
@@ -212,7 +199,7 @@ export default function SalesPage() {
                               title="Eliminar"
                               style={{ color: 'var(--vet-rose)' }}
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={18} />
                             </button>
                           </div>
                         </td>
@@ -247,8 +234,8 @@ export default function SalesPage() {
           }
         >
           <p style={{ fontSize: 15 }}>
-            ¿Eliminar la venta de <strong>{owners.find(deleting.ownerId)?.name || 'este cliente'}</strong>?
-            {deleting.paymentStatus !== 'paid' && (
+            ¿Eliminar la venta de <strong>{owners.find(deleting.ownerId)?.name || (deleting.ownerId ? 'este cliente' : 'mostrador')}</strong>?
+            {deleting.ownerId && deleting.paymentStatus !== 'paid' && (
               <span style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginTop: 8 }}>
                 La deuda asociada también será marcada como saldada.
               </span>

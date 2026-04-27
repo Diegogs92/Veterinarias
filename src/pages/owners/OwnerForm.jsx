@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { ChevronDown } from 'lucide-react'
 import Modal from '../../components/ui/Modal'
 
 const EMPTY = { name: '', apellido: '', dni: '', phone: '', email: '', address: '', discount: 0 }
@@ -6,9 +7,14 @@ const EMPTY = { name: '', apellido: '', dni: '', phone: '', email: '', address: 
 export default function OwnerForm({ isOpen, onClose, onSave, initial = null }) {
   const [form, setForm] = useState(initial || EMPTY)
   const [errors, setErrors] = useState({})
+  const [showMore, setShowMore] = useState(false)
 
   useEffect(() => {
-    if (isOpen) { setForm(initial || EMPTY); setErrors({}) }
+    if (isOpen) {
+      setForm(initial || EMPTY); setErrors({})
+      // Si edita y ya tiene datos secundarios, abrirlo
+      setShowMore(!!(initial && (initial.email || initial.address || initial.discount)))
+    }
   }, [isOpen, initial])
 
   const set = (field) => (e) => {
@@ -76,24 +82,44 @@ export default function OwnerForm({ isOpen, onClose, onSave, initial = null }) {
           {errors.phone && <span className="form-error">{errors.phone}</span>}
         </div>
       </div>
-      <div className="form-group">
-        <label className="form-label">Email</label>
-        <input className="form-input" type="email" value={form.email} onChange={set('email')} placeholder="correo@email.com" />
-      </div>
 
-      <div className="form-group">
-        <label className="form-label">Dirección</label>
-        <input className="form-input" value={form.address} onChange={set('address')} placeholder="Calle 123, Ciudad" />
-      </div>
+      <button
+        type="button"
+        onClick={() => setShowMore(v => !v)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6, width: '100%',
+          padding: '10px 0', background: 'transparent', border: 'none',
+          color: 'var(--accent)', fontWeight: 600, fontSize: 14,
+          borderTop: '1px solid var(--border)', borderBottom: showMore ? 'none' : '1px solid var(--border)',
+          marginBottom: showMore ? 12 : 0,
+        }}
+      >
+        <ChevronDown size={16} style={{ transform: showMore ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
+        {showMore ? 'Ocultar datos opcionales' : 'Agregar email, dirección o descuento'}
+      </button>
 
-      <div className="form-group" style={{ marginBottom: 0 }}>
-        <label className="form-label">Descuento especial (%)</label>
-        <input
-          className="form-input" type="number" min="0" max="100" step="1"
-          value={form.discount ?? 0} onFocus={e => e.target.select()} onChange={set('discount')} placeholder="0"
-        />
-        <span className="form-hint">Se aplica automáticamente en cada venta</span>
-      </div>
+      {showMore && (
+        <>
+          <div className="form-group">
+            <label className="form-label">Email</label>
+            <input className="form-input" type="email" value={form.email} onChange={set('email')} placeholder="correo@email.com" />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Dirección</label>
+            <input className="form-input" value={form.address} onChange={set('address')} placeholder="Calle 123, Ciudad" />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Descuento especial (%)</label>
+            <input
+              className="form-input" type="number" min="0" max="100" step="1"
+              value={form.discount ?? 0} onFocus={e => e.target.select()} onChange={set('discount')} placeholder="0"
+            />
+            <span className="form-hint">Se aplica automáticamente en cada venta</span>
+          </div>
+        </>
+      )}
     </Modal>
   )
 }

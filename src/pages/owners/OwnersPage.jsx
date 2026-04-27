@@ -38,16 +38,11 @@ export default function OwnersPage() {
       <Header
         title="Dueños"
         subtitle={`${owners.items.length} registrados`}
-        actions={
-          <button className="btn btn--primary" onClick={() => { setEditing(null); setFormOpen(true) }}>
-            + Nuevo dueño
-          </button>
-        }
       />
       <div className="page">
         <div className="page__header">
           <div className="search-wrap" style={{ flex: 1, maxWidth: 360 }}>
-            <span className="search-icon"><Search size={14} strokeWidth={2} /></span>
+            <span className="search-icon"><Search size={18} strokeWidth={2} /></span>
             <input
               className="form-input"
               placeholder="Buscar dueño..."
@@ -55,6 +50,9 @@ export default function OwnersPage() {
               onChange={e => setSearch(e.target.value)}
             />
           </div>
+          <button className="btn btn--primary" style={{ marginLeft: 'auto' }} onClick={() => { setEditing(null); setFormOpen(true) }}>
+            + Nuevo dueño
+          </button>
         </div>
 
         {filtered.length === 0 ? (
@@ -107,10 +105,10 @@ export default function OwnersPage() {
                       <td onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex', gap: 4 }}>
                           <button className="btn btn--subtle btn--icon" title="Editar" onClick={() => { setEditing(owner); setFormOpen(true) }}>
-                            <Pencil size={16} strokeWidth={2} />
+                            <Pencil size={18} strokeWidth={2} />
                           </button>
                           <button className="btn btn--subtle btn--icon" title="Eliminar" onClick={() => setDeleting(owner)}>
-                            <Trash2 size={16} strokeWidth={2} />
+                            <Trash2 size={18} strokeWidth={2} />
                           </button>
                         </div>
                       </td>

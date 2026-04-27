@@ -40,16 +40,11 @@ export default function CirugiasPage() {
       <Header
         title="Cirugía"
         subtitle={`${cirugias.items.length} cirugía${cirugias.items.length !== 1 ? 's' : ''} registrada${cirugias.items.length !== 1 ? 's' : ''}`}
-        actions={
-          <button className="btn btn--primary" onClick={() => { setEditing(null); setFormOpen(true) }}>
-            + Nueva cirugía
-          </button>
-        }
       />
       <div className="page">
         <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
           <div className="search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 360 }}>
-            <span className="search-icon"><Search size={14} strokeWidth={2} /></span>
+            <span className="search-icon"><Search size={18} strokeWidth={2} /></span>
             <input
               className="form-input"
               placeholder="Buscar mascota, dueño, diagnóstico..."
@@ -57,6 +52,9 @@ export default function CirugiasPage() {
               onChange={e => setSearch(e.target.value)}
             />
           </div>
+          <button className="btn btn--primary" style={{ marginLeft: 'auto' }} onClick={() => { setEditing(null); setFormOpen(true) }}>
+            + Nueva cirugía
+          </button>
         </div>
 
         {filtered.length === 0 ? (
@@ -118,10 +116,10 @@ export default function CirugiasPage() {
                         <td>
                           <div style={{ display: 'flex', gap: 4 }}>
                             <button className="btn btn--subtle btn--icon" onClick={() => { setEditing(c); setFormOpen(true) }}>
-                              <Pencil size={16} strokeWidth={2} />
+                              <Pencil size={18} strokeWidth={2} />
                             </button>
                             <button className="btn btn--subtle btn--icon" onClick={() => setDeleting(c)}>
-                              <Trash2 size={16} strokeWidth={2} />
+                              <Trash2 size={18} strokeWidth={2} />
                             </button>
                           </div>
                         </td>

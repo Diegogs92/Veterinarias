@@ -90,11 +90,6 @@ export default function InternmentsPage() {
       <Header
         title="Internación"
         subtitle={activeCount > 0 ? `${activeCount} paciente${activeCount !== 1 ? 's' : ''} internado${activeCount !== 1 ? 's' : ''}` : 'Sin pacientes activos'}
-        actions={
-          <button className="btn btn--primary" onClick={() => { setEditing(null); setFormOpen(true) }}>
-            + Nueva internación
-          </button>
-        }
       />
       <div className="page">
 
@@ -109,7 +104,7 @@ export default function InternmentsPage() {
 
         <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
           <div className="search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 360 }}>
-            <span className="search-icon"><Search size={14} strokeWidth={2} /></span>
+            <span className="search-icon"><Search size={18} strokeWidth={2} /></span>
             <input className="form-input" placeholder="Buscar mascota, dueño, motivo..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div className="tabs" style={{ flexShrink: 0 }}>
@@ -128,6 +123,9 @@ export default function InternmentsPage() {
               </button>
             ))}
           </div>
+          <button className="btn btn--primary" style={{ marginLeft: 'auto' }} onClick={() => { setEditing(null); setFormOpen(true) }}>
+            + Nueva internación
+          </button>
         </div>
 
         {filtered.length === 0 ? (
@@ -201,10 +199,10 @@ export default function InternmentsPage() {
                         </button>
                       )}
                       <button className="btn btn--subtle btn--icon" onClick={() => { setEditing(intern); setFormOpen(true) }}>
-                        <Pencil size={16} strokeWidth={2} />
+                        <Pencil size={18} strokeWidth={2} />
                       </button>
                       <button className="btn btn--subtle btn--icon" onClick={() => setDeleting(intern)}>
-                        <Trash2 size={16} strokeWidth={2} />
+                        <Trash2 size={18} strokeWidth={2} />
                       </button>
                     </div>
                   </div>

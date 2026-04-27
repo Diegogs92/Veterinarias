@@ -1,6 +1,24 @@
 import { useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, Pencil, Trash2, Users, PawPrint } from 'lucide-react'
+
+function WhatsAppIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0 0 20.464 3.488"/>
+    </svg>
+  )
+}
+
+// Convierte un teléfono libre a formato wa.me (E.164 sin '+').
+// Asume Argentina por defecto (+54 9 = móvil).
+function toWhatsAppNumber(raw) {
+  let d = (raw || '').replace(/\D/g, '')
+  if (!d) return ''
+  if (d.startsWith('54')) d = d.slice(2)
+  d = d.replace(/^0/, '').replace(/^15/, '')
+  return `549${d}`
+}
 import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
 import EmptyState from '../../components/ui/EmptyState'
@@ -23,7 +41,7 @@ export default function OwnersPetsPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const tab = searchParams.get('tab') || 'owners'
+  const tab = searchParams.get('tab') || 'pets'
   const ownerFilter = searchParams.get('owner') || ''
 
   const setTab = (t) => {
@@ -97,30 +115,25 @@ export default function OwnersPetsPage() {
   return (
     <>
       <Header
-        title="Dueños y Mascotas"
+        title="Mascotas"
         subtitle={tab === 'owners'
           ? `${owners.items.length} dueños registrados`
           : ownerName
             ? `Mascotas de ${ownerName}`
             : `${pets.items.length} mascotas registradas`
         }
-        actions={
-          tab === 'owners'
-            ? <button className="btn btn--primary" onClick={() => { setEditingOwner(null); setOwnerFormOpen(true) }}>+ Nuevo dueño</button>
-            : <button className="btn btn--primary" onClick={() => { setEditingPet(null); setPetFormOpen(true) }}>+ Nueva mascota</button>
-        }
       />
 
       <div className="page">
         <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
           <div className="tabs">
-            <button className={`tab${tab === 'owners' ? ' active' : ''}`} onClick={() => setTab('owners')}>
-              <Users size={14} strokeWidth={2} style={{ marginRight: 5 }} />
-              Dueños
-            </button>
             <button className={`tab${tab === 'pets' ? ' active' : ''}`} onClick={() => setTab('pets')}>
-              <PawPrint size={14} strokeWidth={2} style={{ marginRight: 5 }} />
+              <PawPrint size={17} strokeWidth={2} style={{ marginRight: 6 }} />
               Mascotas
+            </button>
+            <button className={`tab${tab === 'owners' ? ' active' : ''}`} onClick={() => setTab('owners')}>
+              <Users size={17} strokeWidth={2} style={{ marginRight: 6 }} />
+              Dueños
             </button>
           </div>
           {ownerFilter && tab === 'pets' && (
@@ -128,6 +141,10 @@ export default function OwnersPetsPage() {
               ✕ Filtro: {ownerName}
             </button>
           )}
+          {tab === 'owners'
+            ? <button className="btn btn--primary" style={{ marginLeft: 'auto' }} onClick={() => { setEditingOwner(null); setOwnerFormOpen(true) }}>+ Nuevo dueño</button>
+            : <button className="btn btn--primary" style={{ marginLeft: 'auto' }} onClick={() => { setEditingPet(null); setPetFormOpen(true) }}>+ Nueva mascota</button>
+          }
         </div>
 
         {/* ── OWNERS TAB ── */}
@@ -135,7 +152,7 @@ export default function OwnersPetsPage() {
           <>
             <div className="page__header" style={{ marginBottom: 16 }}>
               <div className="search-wrap" style={{ flex: 1, maxWidth: 360 }}>
-                <span className="search-icon"><Search size={14} strokeWidth={2} /></span>
+                <span className="search-icon"><Search size={18} strokeWidth={2} /></span>
                 <input
                   className="form-input"
                   placeholder="Buscar dueño..."
@@ -180,7 +197,26 @@ export default function OwnersPetsPage() {
                             </div>
                           </td>
                           <td style={{ color: 'var(--text-secondary)' }}>{owner.apellido || '—'}</td>
-                          <td style={{ color: 'var(--text-secondary)' }}>{owner.phone}</td>
+                          <td style={{ color: 'var(--text-secondary)' }}>
+                            {owner.phone
+                              ? (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                                  <span>{owner.phone}</span>
+                                  <a
+                                    href={`https://wa.me/${toWhatsAppNumber(owner.phone)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title="Enviar WhatsApp"
+                                    onClick={e => e.stopPropagation()}
+                                    style={{ color: '#25D366', display: 'inline-flex', alignItems: 'center' }}
+                                  >
+                                    <WhatsAppIcon size={20} />
+                                  </a>
+                                </div>
+                              )
+                              : '—'
+                            }
+                          </td>
                           <td style={{ color: 'var(--text-secondary)' }}>{owner.email || '—'}</td>
                           <td style={{ color: 'var(--text-secondary)', maxWidth: 180 }} className="truncate">{owner.address || '—'}</td>
                           <td>
@@ -197,10 +233,10 @@ export default function OwnersPetsPage() {
                           <td onClick={e => e.stopPropagation()}>
                             <div style={{ display: 'flex', gap: 4 }}>
                               <button className="btn btn--subtle btn--icon" title="Editar" onClick={() => { setEditingOwner(owner); setOwnerFormOpen(true) }}>
-                                <Pencil size={16} strokeWidth={2} />
+                                <Pencil size={18} strokeWidth={2} />
                               </button>
                               <button className="btn btn--subtle btn--icon" title="Eliminar" onClick={() => setDeletingOwner(owner)}>
-                                <Trash2 size={16} strokeWidth={2} />
+                                <Trash2 size={18} strokeWidth={2} />
                               </button>
                             </div>
                           </td>
@@ -219,7 +255,7 @@ export default function OwnersPetsPage() {
           <>
             <div className="page__header" style={{ flexWrap: 'wrap', marginBottom: 16 }}>
               <div className="search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 360 }}>
-                <span className="search-icon"><Search size={14} strokeWidth={2} /></span>
+                <span className="search-icon"><Search size={18} strokeWidth={2} /></span>
                 <input
                   className="form-input"
                   placeholder="Buscar mascota o dueño..."
@@ -252,47 +288,74 @@ export default function OwnersPetsPage() {
                 )}
               />
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
                 {filteredPets.map(pet => {
                   const owner = owners.find(pet.ownerId)
+                  const hasPhoto = !!pet.photo
+                  const textColor   = hasPhoto ? 'white' : undefined
+                  const subColor    = hasPhoto ? 'rgba(255,255,255,0.92)' : 'var(--text-secondary)'
+                  const subSubColor = hasPhoto ? 'rgba(255,255,255,0.78)' : 'var(--text-tertiary)'
+                  const textShadow  = hasPhoto ? '0 1px 3px rgba(0,0,0,0.6)'  : undefined
+                  const glassBtn    = hasPhoto
+                    ? { background: 'rgba(255,255,255,0.20)', borderColor: 'rgba(255,255,255,0.35)', color: 'white', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }
+                    : undefined
                   return (
-                    <div key={pet.id} className="pet-card" onClick={() => navigate(`/pets/${pet.id}`)}>
-                      <div className="pet-avatar">
-                        {pet.photo
-                          ? <img src={pet.photo} alt={pet.name} />
-                          : (
-                            <div style={{
-                              width: '100%', height: '100%',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              color: 'var(--text-secondary)',
-                            }}>
-                              <SpeciesIcon species={pet.species} size={28} strokeWidth={1.5} />
-                            </div>
-                          )
-                        }
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 700, fontSize: 15 }}>{pet.name}</div>
-                        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 1 }}>
+                    <div
+                      key={pet.id}
+                      className="pet-card"
+                      onClick={() => navigate(`/pets/${pet.id}`)}
+                      style={{ position: 'relative', overflow: 'hidden', minHeight: 140, padding: 16, alignItems: 'stretch' }}
+                    >
+                      {hasPhoto ? (
+                        <>
+                          {/* Foto a tamaño completo */}
+                          <div style={{
+                            position: 'absolute', inset: 0,
+                            backgroundImage: `url(${pet.photo})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                          }} />
+                          {/* Velo oscuro para contraste */}
+                          <div style={{
+                            position: 'absolute', inset: 0,
+                            background: 'linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0.75) 100%)',
+                          }} />
+                        </>
+                      ) : (
+                        <div style={{
+                          position: 'absolute', inset: 0,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: 'var(--text-tertiary)',
+                        }}>
+                          <SpeciesIcon species={pet.species} size={64} strokeWidth={1.25} />
+                        </div>
+                      )}
+
+                      <div style={{ position: 'relative', zIndex: 1, flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                        <div style={{ fontWeight: 700, fontSize: 18, color: textColor, textShadow }}>{pet.name}</div>
+                        <div style={{ fontSize: 13.5, color: subColor, marginTop: 2, textShadow }}>
                           {speciesLabel(pet.species)}{pet.breed ? ` · ${pet.breed}` : ''}
                         </div>
-                        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>
+                        <div style={{ fontSize: 12.5, color: subSubColor, marginTop: 4, textShadow }}>
                           {owner ? `${owner.name}${owner.apellido ? ` ${owner.apellido}` : ''}` : '—'}
                           {pet.birthDate && ` · ${calcAge(pet.birthDate)}`}
                         </div>
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+
+                      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
                         <button
                           className="btn btn--subtle btn--icon"
+                          style={glassBtn}
                           onClick={e => { e.stopPropagation(); setEditingPet(pet); setPetFormOpen(true) }}
                         >
-                          <Pencil size={16} strokeWidth={2} />
+                          <Pencil size={18} strokeWidth={2} />
                         </button>
                         <button
                           className="btn btn--subtle btn--icon"
+                          style={glassBtn}
                           onClick={e => { e.stopPropagation(); setDeletingPet(pet) }}
                         >
-                          <Trash2 size={16} strokeWidth={2} />
+                          <Trash2 size={18} strokeWidth={2} />
                         </button>
                       </div>
                     </div>

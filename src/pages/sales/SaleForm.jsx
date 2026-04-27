@@ -5,7 +5,7 @@ import OwnerSelect from '../../components/ui/OwnerSelect'
 import PetSelect from '../../components/ui/PetSelect'
 import { useApp } from '../../context/AppContext'
 import { todayStr, formatCurrency } from '../../utils/helpers'
-import { Trash2, Search, ScanLine, Plus, Minus, CircleCheck, CircleX, Clock, AlertTriangle, Package } from 'lucide-react'
+import { Trash2, Search, ScanLine, Plus, Minus, CircleCheck, CircleX, Clock, AlertTriangle, Package, Store } from 'lucide-react'
 
 const EMPTY = { ownerId: '', petId: '', items: [], discount: 0, paidAmount: 0, date: todayStr() }
 const STEPS  = ['Cliente', 'Productos', 'Pago']
@@ -27,6 +27,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
   const [form, setForm]         = useState(EMPTY)
   const [errors, setErrors]     = useState({})
   const [step, setStep]         = useState(0)
+  const [walkIn, setWalkIn]     = useState(false)
   const [productSearch, setProductSearch] = useState('')
   const [showDropdown, setShowDropdown]   = useState(false)
   const [scannerOpen, setScannerOpen]     = useState(false)
@@ -36,6 +37,8 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
     if (isOpen) {
       setStep(0); setErrors({}); setProductSearch(''); setShowDropdown(false)
       setForm(initial ? { ...initial, paidAmount: initial.paidAmount ?? 0 } : EMPTY)
+      // Default a venta sin dueño (mostrador). Solo se desactiva si edita una venta con cliente.
+      setWalkIn(initial ? !initial.ownerId : true)
     }
   }, [isOpen, initial])
 
@@ -51,6 +54,14 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
   const handleOwnerChange = (ownerId) => {
     const owner = owners.items.find(o => o.id === ownerId)
     setForm(f => ({ ...f, ownerId, petId: '', discount: owner?.discount ?? 0 }))
+    setErrors(er => ({ ...er, ownerId: '' }))
+    if (ownerId) setWalkIn(false)
+  }
+
+  const toggleWalkIn = () => {
+    const next = !walkIn
+    setWalkIn(next)
+    if (next) setForm(f => ({ ...f, ownerId: '', petId: '', discount: 0 }))
     setErrors(er => ({ ...er, ownerId: '' }))
   }
 
@@ -89,18 +100,24 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
 
   const validateStep = (s) => {
     const errs = {}
-    if (s === 0 && !form.ownerId)          errs.ownerId = 'Requerido'
-    if (s === 1 && form.items.length === 0) errs.items   = 'Agregá al menos un producto'
-    if (s === 2 && !form.date)             errs.date    = 'Requerido'
+    if (s === 0 && !form.ownerId && !walkIn) errs.ownerId = 'Elegí un cliente o marcá "Sin cliente"'
+    if (s === 1 && form.items.length === 0)  errs.items   = 'Agregá al menos un producto'
+    if (s === 2 && !form.date)               errs.date    = 'Requerido'
     return errs
   }
 
   const handleNext = () => { const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }; setStep(s => s + 1) }
   const handleSave = () => {
     const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }
-    const paidAmount = parseFloat(form.paidAmount) || 0
+    const paidAmount = walkIn ? total : (parseFloat(form.paidAmount) || 0)
     const paymentStatus = deriveStatus(paidAmount, total)
-    onSave({ ...form, discount: parseFloat(form.discount) || 0, subtotal, total, paidAmount, paymentStatus })
+    onSave({
+      ...form,
+      ownerId: walkIn ? null : form.ownerId,
+      petId:   walkIn ? null : form.petId,
+      discount: parseFloat(form.discount) || 0,
+      subtotal, total, paidAmount, paymentStatus,
+    })
   }
 
   return (
@@ -115,7 +132,23 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
       {/* ── Paso 1: Cliente ── */}
       {step === 0 && (
         <>
-          <OwnerSelect value={form.ownerId} onChange={handleOwnerChange} error={errors.ownerId} required />
+          <button
+            type="button"
+            className={`btn ${walkIn ? 'btn--primary' : 'btn--subtle'} btn--lg`}
+            onClick={() => { if (!walkIn) toggleWalkIn() }}
+            style={{ width: '100%' }}
+          >
+            <Store size={20} strokeWidth={2.2} />
+            Venta sin dueño
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '14px 0', color: 'var(--text-tertiary)', fontSize: 13 }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+            <span>o asignar a un cliente</span>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          </div>
+
+          <OwnerSelect value={form.ownerId} onChange={handleOwnerChange} error={errors.ownerId} />
           <PetSelect
             value={form.petId} onChange={id => setForm(f => ({ ...f, petId: id }))}
             ownerId={form.ownerId} disabled={!form.ownerId} label="Mascota" placeholder="Sin mascota"
@@ -130,7 +163,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
             <label className="form-label">Agregar productos</label>
             <div style={{ display: 'flex', gap: 8 }}>
               <div className="search-wrap" style={{ flex: 1 }}>
-                <Search size={14} className="search-icon" />
+                <Search size={18} className="search-icon" />
                 <input
                   className="form-input" style={{ paddingLeft: 36 }}
                   placeholder="Buscar por nombre o código de barras..."
@@ -206,7 +239,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                   </div>
                   <div style={{ fontWeight: 700, color: 'var(--accent)', minWidth: 80, textAlign: 'right', fontSize: 15 }}>{formatCurrency(item.subtotal)}</div>
                   <button type="button" className="btn btn--subtle btn--icon" onClick={() => removeItem(idx)} style={{ width: 34, height: 34, color: 'var(--danger)' }}>
-                    <Trash2 size={16} />
+                    <Trash2 size={18} />
                   </button>
                 </div>
                 )
@@ -222,15 +255,17 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
       {/* ── Paso 3: Pago ── */}
       {step === 2 && (
         <>
-          <div className="form-row form-row--2">
-            <div className="form-group">
-              <label className="form-label">Descuento (%)</label>
-              <input className="form-input" type="number" min="0" max="100" step="1"
-                value={form.discount} onFocus={e => e.target.select()} onChange={e => setForm(f => ({ ...f, discount: e.target.value }))} placeholder="0" />
-              {form.ownerId && (
-                <span className="form-hint">Descuento del cliente: {owners.items.find(o => o.id === form.ownerId)?.discount ?? 0}%</span>
-              )}
-            </div>
+          <div className={walkIn ? 'form-group' : 'form-row form-row--2'}>
+            {!walkIn && (
+              <div className="form-group">
+                <label className="form-label">Descuento (%)</label>
+                <input className="form-input" type="number" min="0" max="100" step="1"
+                  value={form.discount} onFocus={e => e.target.select()} onChange={e => setForm(f => ({ ...f, discount: e.target.value }))} placeholder="0" />
+                {form.ownerId && (
+                  <span className="form-hint">Descuento del cliente: {owners.items.find(o => o.id === form.ownerId)?.discount ?? 0}%</span>
+                )}
+              </div>
+            )}
             <div className="form-group">
               <label className="form-label">Fecha *</label>
               <input className={`form-input${errors.date ? ' form-input--error' : ''}`} type="date" value={form.date}
@@ -240,7 +275,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
           </div>
 
           {/* Deuda pendiente del cliente */}
-          {ownerDebt > 0 && (
+          {!walkIn && ownerDebt > 0 && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '10px 14px', borderRadius: 'var(--r-md)', marginBottom: 12,
@@ -269,16 +304,20 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">Monto pagado</label>
+            <label className="form-label">{walkIn ? 'Monto cobrado' : 'Monto pagado'}</label>
             <div style={{ position: 'relative' }}>
               <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontWeight: 600, pointerEvents: 'none' }}>$</span>
               <input className="form-input" type="number" min="0" step="100"
-                value={form.paidAmount}
+                value={walkIn ? total : form.paidAmount}
+                disabled={walkIn}
                 onFocus={e => e.target.select()}
                 onChange={e => setForm(f => ({ ...f, paidAmount: e.target.value }))}
                 placeholder="0" style={{ paddingLeft: 26, fontSize: 17 }} />
             </div>
-            {(() => {
+            {walkIn && (
+              <span className="form-hint">Venta de mostrador: se cobra el total al contado.</span>
+            )}
+            {!walkIn && (() => {
               const status = deriveStatus(form.paidAmount, total)
               const cfg = STATUS_CFG[status]
               const paid = parseFloat(form.paidAmount) || 0
@@ -301,7 +340,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                 </div>
               )
             })()}
-            {(() => {
+            {!walkIn && (() => {
               const paid = parseFloat(form.paidAmount) || 0
               return paid > total && total > 0 ? (
                 <div style={{
