@@ -3,13 +3,7 @@ import Modal from '../../components/ui/Modal'
 import { useApp } from '../../context/AppContext'
 import { todayStr } from '../../utils/helpers'
 
-const VACCINE_OPTIONS = [
-  'Quíntuple', 'Séxtuple', 'Séptuple', 'Rabia', 'Parvovirus',
-  'Coronavirus', 'Leptospirosis', 'Bordetella', 'Triple viral felina',
-  'Leucemia felina', 'Rinotraqueítis felina', 'Otra',
-]
-
-const EMPTY = { petId: '', vaccineName: '', date: todayStr(), nextDue: '', notes: '' }
+const EMPTY = { petId: '', vaccineName: '', catalogId: '', date: todayStr(), nextDue: '', notes: '' }
 
 function addOneYear(dateStr) {
   if (!dateStr) return ''
@@ -19,8 +13,8 @@ function addOneYear(dateStr) {
 }
 
 export default function VaccineForm({ isOpen, onClose, onSave, initial = null }) {
-  const { pets, owners } = useApp()
-  const [form, setForm] = useState(EMPTY)
+  const { pets, owners, vaccineCatalog } = useApp()
+  const [form, setForm]   = useState(EMPTY)
   const [errors, setErrors] = useState({})
 
   useEffect(() => {
@@ -40,6 +34,13 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
     setErrors(er => ({ ...er, [field]: '' }))
   }
 
+  const handleCatalogSelect = (e) => {
+    const id = e.target.value
+    const entry = vaccineCatalog.items.find(v => v.id === id)
+    setForm(f => ({ ...f, catalogId: id, vaccineName: entry ? entry.name : '' }))
+    setErrors(er => ({ ...er, vaccineName: '' }))
+  }
+
   const validate = () => {
     const errs = {}
     if (!form.petId) errs.petId = 'Requerido'
@@ -56,17 +57,18 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
   }
 
   const sortedPets = [...pets.items].sort((a, b) => a.name.localeCompare(b.name))
+  const catalogOptions = [...vaccineCatalog.items].sort((a, b) => a.name.localeCompare(b.name))
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={initial ? 'Editar vacuna' : 'Registrar vacuna'}
+      title={initial?.petId ? 'Editar registro de vacuna' : 'Registrar vacuna'}
       footer={
         <>
           <button className="btn btn--ghost" onClick={onClose}>Cancelar</button>
           <button className="btn btn--primary" onClick={handleSave}>
-            {initial ? 'Guardar cambios' : 'Registrar'}
+            {initial?.petId ? 'Guardar cambios' : 'Registrar'}
           </button>
         </>
       }
@@ -93,27 +95,26 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
 
       <div className="form-group">
         <label className="form-label">Vacuna *</label>
-        <select
-          className={`form-input${errors.vaccineName ? ' form-input--error' : ''}`}
-          value={VACCINE_OPTIONS.includes(form.vaccineName) ? form.vaccineName : (form.vaccineName ? 'Otra' : '')}
-          onChange={e => {
-            const v = e.target.value
-            setForm(f => ({ ...f, vaccineName: v === 'Otra' ? '' : v }))
-            setErrors(er => ({ ...er, vaccineName: '' }))
-          }}
-        >
-          <option value="">Seleccionar vacuna...</option>
-          {VACCINE_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
-        </select>
-        {(!VACCINE_OPTIONS.includes(form.vaccineName) || form.vaccineName === '') && (
-          <input
-            className={`form-input${errors.vaccineName ? ' form-input--error' : ''}`}
-            style={{ marginTop: 8 }}
-            value={VACCINE_OPTIONS.includes(form.vaccineName) ? '' : form.vaccineName}
-            onChange={set('vaccineName')}
-            placeholder="Nombre de la vacuna"
-          />
+        {catalogOptions.length > 0 && (
+          <select
+            className="form-input"
+            value={form.catalogId || ''}
+            onChange={handleCatalogSelect}
+            style={{ marginBottom: 8 }}
+          >
+            <option value="">Seleccionar del catálogo...</option>
+            {catalogOptions.map(v => (
+              <option key={v.id} value={v.id}>{v.name}</option>
+            ))}
+            <option value="__custom">Otra / personalizada</option>
+          </select>
         )}
+        <input
+          className={`form-input${errors.vaccineName ? ' form-input--error' : ''}`}
+          value={form.vaccineName}
+          onChange={set('vaccineName')}
+          placeholder="Nombre de la vacuna"
+        />
         {errors.vaccineName && <span className="form-error">{errors.vaccineName}</span>}
       </div>
 

@@ -1,16 +1,19 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, AlertTriangle, Info } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, Info, Syringe, Plus } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
 import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import SpeciesIcon from '../../components/ui/SpeciesIcon'
+import VaccineForm from '../vaccines/VaccineForm'
 import { speciesLabel, calcAge, formatDate } from '../../utils/helpers'
 
 export default function PetDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { pets, owners } = useApp()
+  const { pets, owners, petVaccines } = useApp()
+  const [vaccineForm, setVaccineForm] = useState({ open: false, editing: null })
 
   const pet = pets.find(id)
   if (!pet) return (
@@ -80,6 +83,67 @@ export default function PetDetail() {
           </div>
         </div>
 
+        {/* Vaccines */}
+        {(() => {
+          const myVaccines = petVaccines.items
+            .filter(v => v.petId === id)
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+          return (
+            <div className="card card--no-hover" style={{ marginBottom: 20 }}>
+              <div className="card__header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span className="card__title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Syringe size={15} strokeWidth={2} /> Vacunas
+                </span>
+                <button
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => setVaccineForm({ open: true, editing: null })}
+                >
+                  <Plus size={14} /> Registrar
+                </button>
+              </div>
+              <div className="card__body" style={{ padding: myVaccines.length === 0 ? 0 : undefined }}>
+                {myVaccines.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-tertiary)', fontSize: 14 }}>
+                    Sin vacunas registradas
+                  </div>
+                ) : (
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Vacuna</th>
+                          <th>Fecha</th>
+                          <th>Próximo venc.</th>
+                          <th>Notas</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {myVaccines.map(v => {
+                          const isOverdue = v.nextDue && new Date(v.nextDue) < new Date()
+                          return (
+                            <tr key={v.id}>
+                              <td style={{ fontWeight: 600 }}>{v.vaccineName}</td>
+                              <td>{v.date ? formatDate(v.date) : '—'}</td>
+                              <td>
+                                {v.nextDue ? (
+                                  <span style={{ color: isOverdue ? 'var(--danger)' : 'inherit', fontWeight: isOverdue ? 600 : 400 }}>
+                                    {isOverdue && '⚠ '}{formatDate(v.nextDue)}
+                                  </span>
+                                ) : '—'}
+                              </td>
+                              <td style={{ color: 'var(--text-secondary)' }}>{v.notes || '—'}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })()}
+
         {/* Info */}
         <div className="card card--no-hover">
           <div className="card__header">
@@ -120,6 +184,16 @@ export default function PetDetail() {
         </div>
 
       </div>
+
+      <VaccineForm
+        isOpen={vaccineForm.open}
+        onClose={() => setVaccineForm({ open: false, editing: null })}
+        initial={vaccineForm.editing ?? { petId: id }}
+        onSave={(data) => {
+          if (vaccineForm.editing) petVaccines.update(vaccineForm.editing.id, data)
+          else petVaccines.add(data)
+        }}
+      />
     </>
   )
 }

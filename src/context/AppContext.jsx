@@ -79,25 +79,48 @@ export function AppProvider({ children }) {
   const boarding          = useSupaCrud('boarding')
   const consultas         = useSupaCrud('consultas')
   const cirugias          = useSupaCrud('cirugias')
+  const vaccineCatalog    = useSupaCrud('vaccine_catalog')
+  const petVaccines       = useSupaCrud('pet_vaccines')
 
   // ── Stable setters refs (nunca cambian, evitan stale closures) ───────────
-  const setOwners   = useRef(owners.setItems)
-  const setPets     = useRef(pets.setItems)
-  const setSales    = useRef(_sales.setItems)
-  const setCash     = useRef(cash.setItems)
-  const setIntern   = useRef(internments.setItems)
-  const setProdCats = useRef(productCategories.setItems)
-  const setProds    = useRef(products.setItems)
-  const setDebts    = useRef(debts.setItems)
-  const setDebtPays = useRef(debtPayments.setItems)
-  const setGrooming = useRef(grooming.setItems)
-  const setBoarding = useRef(boarding.setItems)
-  const setConsultas= useRef(consultas.setItems)
-  const setCirugias = useRef(cirugias.setItems)
+  const setOwners      = useRef(owners.setItems)
+  const setPets        = useRef(pets.setItems)
+  const setSales       = useRef(_sales.setItems)
+  const setCash        = useRef(cash.setItems)
+  const setIntern      = useRef(internments.setItems)
+  const setProdCats    = useRef(productCategories.setItems)
+  const setProds       = useRef(products.setItems)
+  const setDebts       = useRef(debts.setItems)
+  const setDebtPays    = useRef(debtPayments.setItems)
+  const setGrooming    = useRef(grooming.setItems)
+  const setBoarding    = useRef(boarding.setItems)
+  const setConsultas   = useRef(consultas.setItems)
+  const setCirugias    = useRef(cirugias.setItems)
+  const setVaccCatalog = useRef(vaccineCatalog.setItems)
+  const setPetVacc     = useRef(petVaccines.setItems)
+
+  // ── Default vaccine catalog seeds ─────────────────────────────────────────
+  const vaccineSeeds = () => {
+    const now = new Date().toISOString()
+    return [
+      { id: crypto.randomUUID(), name: 'Séxtuple / Quíntuple', species: 'dog', age_label: '45 días',   description: 'Primera dosis. Parvovirus, Distemper, Hepatitis, Parainfluenza, Leptospirosis.', tone: 'first',    created_at: now },
+      { id: crypto.randomUUID(), name: 'Séxtuple — refuerzo',  species: 'dog', age_label: '60 días',   description: 'Segunda dosis de la múltiple.',                                              tone: 'first',    created_at: now },
+      { id: crypto.randomUUID(), name: 'Séxtuple — refuerzo final', species: 'dog', age_label: '75-90 días', description: 'Tercera dosis de la múltiple.',                                       tone: 'first',    created_at: now },
+      { id: crypto.randomUUID(), name: 'Antirrábica',           species: 'dog', age_label: '120 días',  description: 'Primera dosis de antirrábica (a partir de los 4 meses).',                   tone: 'first',    created_at: now },
+      { id: crypto.randomUUID(), name: 'Refuerzo Séxtuple + Antirrábica', species: 'dog', age_label: 'Anual', description: 'Refuerzo anual de por vida.',                                        tone: 'annual',   created_at: now },
+      { id: crypto.randomUUID(), name: 'Bordetella',            species: 'dog', age_label: 'Opcional',  description: 'Recomendada si frecuenta guarderías, peluquerías o paseos grupales.',       tone: 'optional', created_at: now },
+      { id: crypto.randomUUID(), name: 'Leishmaniasis',         species: 'dog', age_label: 'Opcional',  description: 'En zonas endémicas. Consultar con el veterinario.',                         tone: 'optional', created_at: now },
+      { id: crypto.randomUUID(), name: 'Triple felina',         species: 'cat', age_label: '60 días',   description: 'Panleucopenia, Rinotraqueítis y Calicivirus. Primera dosis.',               tone: 'first',    created_at: now },
+      { id: crypto.randomUUID(), name: 'Triple felina — refuerzo', species: 'cat', age_label: '90 días', description: 'Segunda dosis de la triple.',                                              tone: 'first',    created_at: now },
+      { id: crypto.randomUUID(), name: 'Antirrábica',           species: 'cat', age_label: '120 días',  description: 'Primera dosis de antirrábica (a partir de los 4 meses).',                   tone: 'first',    created_at: now },
+      { id: crypto.randomUUID(), name: 'Refuerzo Triple + Antirrábica', species: 'cat', age_label: 'Anual', description: 'Refuerzo anual de por vida.',                                          tone: 'annual',   created_at: now },
+      { id: crypto.randomUUID(), name: 'Leucemia felina (FeLV)', species: 'cat', age_label: 'Opcional', description: 'Recomendada en gatos con acceso al exterior. Dos dosis iniciales.',         tone: 'optional', created_at: now },
+    ]
+  }
 
   // ── Data fetcher ─────────────────────────────────────────────────────────
   const fetchAll = async () => {
-    const [o, p, s, cm, im, pc, pr, d, dp, gr, bo, co, ci] = await Promise.all([
+    const [o, p, s, cm, im, pc, pr, d, dp, gr, bo, co, ci, vc, pv] = await Promise.all([
       supabase.from('owners').select('*'),
       supabase.from('pets').select('*'),
       supabase.from('sales').select('*, sale_items(*)'),
@@ -111,6 +134,8 @@ export function AppProvider({ children }) {
       supabase.from('boarding').select('*'),
       supabase.from('consultas').select('*'),
       supabase.from('cirugias').select('*'),
+      supabase.from('vaccine_catalog').select('*').order('created_at'),
+      supabase.from('pet_vaccines').select('*').order('date', { ascending: false }),
     ])
     if (o.data)  setOwners.current(convRows(o.data))
     if (p.data)  setPets.current(convRows(p.data))
@@ -125,6 +150,19 @@ export function AppProvider({ children }) {
     if (bo.data) setBoarding.current(convRows(bo.data))
     if (co.data) setConsultas.current(convRows(co.data))
     if (ci.data) setCirugias.current(convRows(ci.data))
+    if (!vc.error && vc.data) {
+      const cats = convRows(vc.data)
+      setVaccCatalog.current(cats)
+      if (cats.length === 0) {
+        const seeds = vaccineSeeds()
+        const { error } = await supabase.from('vaccine_catalog').insert(seeds)
+        if (!error) {
+          const { data: seeded } = await supabase.from('vaccine_catalog').select('*').order('created_at')
+          if (seeded) setVaccCatalog.current(convRows(seeded))
+        }
+      }
+    }
+    if (!pv.error && pv.data) setPetVacc.current(convRows(pv.data))
   }
 
   // Ref que apunta siempre a la versión más reciente de fetchAll
@@ -177,6 +215,8 @@ export function AppProvider({ children }) {
       boarding:           () => supabase.from('boarding').select('*').then(({ data }) => data && setBoarding.current(convRows(data))),
       consultas:          () => supabase.from('consultas').select('*').then(({ data }) => data && setConsultas.current(convRows(data))),
       cirugias:           () => supabase.from('cirugias').select('*').then(({ data }) => data && setCirugias.current(convRows(data))),
+      vaccine_catalog:    () => supabase.from('vaccine_catalog').select('*').order('created_at').then(({ data }) => data && setVaccCatalog.current(convRows(data))),
+      pet_vaccines:       () => supabase.from('pet_vaccines').select('*').order('date', { ascending: false }).then(({ data }) => data && setPetVacc.current(convRows(data))),
     }
 
     const channel = supabase.channel('realtime-all')
@@ -369,6 +409,7 @@ export function AppProvider({ children }) {
       productCategories, products,
       debts, debtPayments,
       grooming, boarding, consultas, cirugias,
+      vaccineCatalog, petVaccines,
       addDailyNote, removeDailyNote,
       syncDebt, registerDebtPayment,
     }}>
