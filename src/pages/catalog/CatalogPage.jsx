@@ -109,9 +109,15 @@ export default function CatalogPage() {
             <input
               className="form-input"
               style={{ paddingLeft: 36 }}
-              placeholder={tab === 'products' ? 'Buscar por nombre o código...' : 'Buscar categoría...'}
+              placeholder={tab === 'products' ? 'Buscar por nombre o código de barras...' : 'Buscar categoría...'}
               value={search}
               onChange={e => setSearch(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && search.trim() && tab === 'products') {
+                  const match = products.items.find(p => p.barcode === search.trim())
+                  if (match) setSearch(match.name)
+                }
+              }}
             />
           </div>
           {tab === 'products' && (
