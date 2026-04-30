@@ -59,6 +59,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
       return { ...f, items: [...f.items, { productId: product.id, productName: product.name, quantity: 1, unitPrice: product.price, subtotal: product.price }] }
     })
     setErrors(er => ({ ...er, items: '' }))
+    setProductSearch('')
   }
 
   const handleBarcodeScan = (code) => {
@@ -136,7 +137,6 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                     onKeyDown={e => {
                       if (e.key === 'Enter' && productSearch.trim()) {
                         handleBarcodeScan(productSearch.trim())
-                        setProductSearch('')
                       }
                     }}
                     autoFocus
