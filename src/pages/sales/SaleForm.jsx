@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import BarcodeScanner from '../../components/ui/BarcodeScanner'
 import { useApp } from '../../context/AppContext'
 import { todayStr, formatCurrency } from '../../utils/helpers'
-import { Trash2, Search, ScanLine, Plus, Minus, CircleCheck, CircleX, Clock, AlertTriangle, Package, X } from 'lucide-react'
+import { Trash2, Search, ScanLine, Plus, Minus, CircleCheck, CircleX, Clock, AlertTriangle, Package, X, ShoppingCart, LayoutGrid } from 'lucide-react'
 
 const EMPTY = { items: [], paidAmount: 0 }
 
@@ -22,13 +22,14 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
   const { products } = useApp()
   const [form, setForm]       = useState(EMPTY)
   const [errors, setErrors]   = useState({})
+  const [mobileTab, setMobileTab] = useState('catalog')
   const [productSearch, setProductSearch] = useState('')
   const [scannerOpen, setScannerOpen]     = useState(false)
   const [scanFeedback, setScanFeedback]   = useState(null)
 
   useEffect(() => {
     if (isOpen) {
-      setErrors({}); setProductSearch('')
+      setErrors({}); setProductSearch(''); setMobileTab('catalog')
       setForm(initial ? { items: initial.items, paidAmount: initial.paidAmount ?? 0 } : EMPTY)
     }
   }, [isOpen, initial])
@@ -87,11 +88,12 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
   const paid   = parseFloat(form.paidAmount) || 0
   const status = deriveStatus(form.paidAmount, total)
   const cfg    = STATUS_CFG[status]
+  const itemCount = form.items.length
 
   return (
     <>
     <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="modal modal--lg" style={{ maxWidth: 860, width: '95vw', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="modal modal--lg" style={{ maxWidth: 860, width: '95vw', maxHeight: '92dvh', display: 'flex', flexDirection: 'column' }}>
 
         {/* Header */}
         <div className="modal__header">
@@ -101,11 +103,38 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
           </button>
         </div>
 
-        {/* Body: dos columnas */}
-        <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        {/* Tabs — solo visibles en móvil via CSS */}
+        <div className="pos-tabs">
+          <button
+            className={`pos-tab${mobileTab === 'catalog' ? ' active' : ''}`}
+            onClick={() => setMobileTab('catalog')}
+          >
+            <LayoutGrid size={16} strokeWidth={2} />
+            Catálogo
+          </button>
+          <button
+            className={`pos-tab${mobileTab === 'cart' ? ' active' : ''}`}
+            onClick={() => setMobileTab('cart')}
+          >
+            <ShoppingCart size={16} strokeWidth={2} />
+            Carrito
+            {itemCount > 0 && (
+              <span style={{
+                background: 'var(--accent)', color: 'white',
+                borderRadius: 999, fontSize: 11, fontWeight: 700,
+                padding: '1px 6px', lineHeight: 1.5,
+              }}>
+                {itemCount}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Body: dos columnas en desktop, una columna en móvil */}
+        <div className="pos-body">
 
           {/* ── Columna izquierda: catálogo ── */}
-          <div style={{ flex: 1, minWidth: 0, borderRight: '1px solid var(--border-2)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div className={`pos-col pos-col--catalog${mobileTab !== 'catalog' ? ' pos-col--hidden' : ''}`}>
             <div style={{ padding: '16px 20px 12px' }}>
               <div style={{ display: 'flex', gap: 8 }}>
                 <div className="search-wrap" style={{ flex: 1 }}>
@@ -163,7 +192,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
           </div>
 
           {/* ── Columna derecha: carrito + pago ── */}
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div className={`pos-col pos-col--cart${mobileTab !== 'cart' ? ' pos-col--hidden' : ''}`}>
 
             {/* Lista de items */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '12px 0' }}>

@@ -859,6 +859,70 @@ tbody tr:hover td { background: var(--bg-sub); }
   animation: skele 1.2s linear infinite;
 }
 
+/* === SALE POS MODAL === */
+.pos-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.pos-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.pos-col--catalog {
+  flex: 1;
+  min-width: 0;
+  border-right: 1px solid var(--border-2);
+}
+.pos-col--cart {
+  flex: 1;
+  min-width: 0;
+}
+.pos-tabs {
+  display: none;
+}
+@media (max-width: 600px) {
+  .pos-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-2);
+  }
+  .pos-tab {
+    flex: 1;
+    padding: 12px 8px;
+    background: none;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color var(--t-fast), border-color var(--t-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .pos-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .pos-body {
+    flex-direction: column;
+  }
+  .pos-col--catalog {
+    border-right: none;
+    border-bottom: 1px solid var(--border-2);
+  }
+  .pos-col--hidden {
+    display: none;
+  }
+  .pos-col--cart {
+    flex: none;
+  }
+}
+
 /* === TOAST === */
 .toast-wrap {
   position: fixed; bottom: 20px; right: 20px;
