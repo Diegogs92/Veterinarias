@@ -133,6 +133,12 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                     placeholder="Buscar producto o código de barras..."
                     value={productSearch}
                     onChange={e => setProductSearch(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && productSearch.trim()) {
+                        handleBarcodeScan(productSearch.trim())
+                        setProductSearch('')
+                      }
+                    }}
                     autoFocus
                   />
                 </div>
