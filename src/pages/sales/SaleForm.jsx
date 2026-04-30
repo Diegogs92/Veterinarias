@@ -2,26 +2,21 @@ import { useState, useEffect, useMemo } from 'react'
 import BarcodeScanner from '../../components/ui/BarcodeScanner'
 import { useApp } from '../../context/AppContext'
 import { todayStr, formatCurrency } from '../../utils/helpers'
-import { Trash2, Search, ScanLine, Plus, Minus, CircleCheck, CircleX, Clock, AlertTriangle, Package, X, ShoppingCart, LayoutGrid } from 'lucide-react'
+import { Trash2, Search, ScanLine, Plus, Minus, Package, X, ShoppingCart, LayoutGrid, Banknote, CreditCard, Wallet, ArrowRightLeft } from 'lucide-react'
 
-const EMPTY = { items: [], paidAmount: 0 }
+const EMPTY = { items: [], paymentMethod: 'efectivo' }
 
-const deriveStatus = (paid, total) => {
-  const p = parseFloat(paid) || 0
-  if (p <= 0)       return 'unpaid'
-  if (p >= total)   return 'paid'
-  return 'partial'
-}
-const STATUS_CFG = {
-  paid:    { label: 'Pagado total',  Icon: CircleCheck, bg: 'var(--ok-3)',     color: 'var(--ok)',     border: 'var(--ok)' },
-  unpaid:  { label: 'No pagado',     Icon: CircleX,     bg: 'var(--danger-3)', color: 'var(--danger)', border: 'var(--danger)' },
-  partial: { label: 'Pago parcial',  Icon: Clock,       bg: 'var(--warn-3)',   color: 'var(--warn)',   border: 'var(--warn)' },
-}
+const PAYMENT_METHODS = [
+  { value: 'efectivo',         label: 'Efectivo',           Icon: Banknote },
+  { value: 'tarjeta_credito',  label: 'Tarjeta de crédito', Icon: CreditCard },
+  { value: 'tarjeta_debito',   label: 'Tarjeta de débito',  Icon: Wallet },
+  { value: 'transferencia',    label: 'Transferencia',      Icon: ArrowRightLeft },
+]
 
 export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
   const { products } = useApp()
-  const [form, setForm]       = useState(EMPTY)
-  const [errors, setErrors]   = useState({})
+  const [form, setForm]           = useState(EMPTY)
+  const [errors, setErrors]       = useState({})
   const [mobileTab, setMobileTab] = useState('catalog')
   const [productSearch, setProductSearch] = useState('')
   const [scannerOpen, setScannerOpen]     = useState(false)
@@ -30,7 +25,10 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
   useEffect(() => {
     if (isOpen) {
       setErrors({}); setProductSearch(''); setMobileTab('catalog')
-      setForm(initial ? { items: initial.items, paidAmount: initial.paidAmount ?? 0 } : EMPTY)
+      setForm(initial
+        ? { items: initial.items, paymentMethod: initial.paymentMethod || 'efectivo' }
+        : EMPTY
+      )
     }
   }, [isOpen, initial])
 
@@ -78,16 +76,17 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
 
   const handleSave = () => {
     if (form.items.length === 0) { setErrors({ items: 'Agregá al menos un producto' }); return }
-    const paidAmount = parseFloat(form.paidAmount) || 0
-    const paymentStatus = deriveStatus(paidAmount, total)
-    onSave({ ...form, discount: 0, subtotal, total, paidAmount, paymentStatus, date: todayStr() })
+    onSave({
+      ...form,
+      discount: 0, subtotal, total,
+      paidAmount: total,
+      paymentStatus: 'paid',
+      date: todayStr(),
+    })
   }
 
   if (!isOpen) return null
 
-  const paid   = parseFloat(form.paidAmount) || 0
-  const status = deriveStatus(form.paidAmount, total)
-  const cfg    = STATUS_CFG[status]
   const itemCount = form.items.length
 
   return (
@@ -103,37 +102,27 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
           </button>
         </div>
 
-        {/* Tabs — solo visibles en móvil via CSS */}
+        {/* Tabs móvil */}
         <div className="pos-tabs">
-          <button
-            className={`pos-tab${mobileTab === 'catalog' ? ' active' : ''}`}
-            onClick={() => setMobileTab('catalog')}
-          >
+          <button className={`pos-tab${mobileTab === 'catalog' ? ' active' : ''}`} onClick={() => setMobileTab('catalog')}>
             <LayoutGrid size={16} strokeWidth={2} />
             Catálogo
           </button>
-          <button
-            className={`pos-tab${mobileTab === 'cart' ? ' active' : ''}`}
-            onClick={() => setMobileTab('cart')}
-          >
+          <button className={`pos-tab${mobileTab === 'cart' ? ' active' : ''}`} onClick={() => setMobileTab('cart')}>
             <ShoppingCart size={16} strokeWidth={2} />
             Carrito
             {itemCount > 0 && (
-              <span style={{
-                background: 'var(--accent)', color: 'white',
-                borderRadius: 999, fontSize: 11, fontWeight: 700,
-                padding: '1px 6px', lineHeight: 1.5,
-              }}>
+              <span style={{ background: 'var(--accent)', color: 'white', borderRadius: 999, fontSize: 11, fontWeight: 700, padding: '1px 6px', lineHeight: 1.5 }}>
                 {itemCount}
               </span>
             )}
           </button>
         </div>
 
-        {/* Body: dos columnas en desktop, una columna en móvil */}
+        {/* Body */}
         <div className="pos-body">
 
-          {/* ── Columna izquierda: catálogo ── */}
+          {/* ── Catálogo ── */}
           <div className={`pos-col pos-col--catalog${mobileTab !== 'catalog' ? ' pos-col--hidden' : ''}`}>
             <div style={{ padding: '16px 20px 12px' }}>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -191,10 +180,10 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
             </div>
           </div>
 
-          {/* ── Columna derecha: carrito + pago ── */}
+          {/* ── Carrito + pago ── */}
           <div className={`pos-col pos-col--cart${mobileTab !== 'cart' ? ' pos-col--hidden' : ''}`}>
 
-            {/* Lista de items */}
+            {/* Items */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '12px 0' }}>
               {form.items.length === 0
                 ? <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 14 }}>
@@ -213,18 +202,12 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                         <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{formatCurrency(item.unitPrice)} c/u</div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <button type="button" className="btn btn--subtle btn--icon" onClick={() => updateQty(idx, item.quantity - 1)} style={{ width: 28, height: 28 }}>
-                          <Minus size={13} />
-                        </button>
+                        <button type="button" className="btn btn--subtle btn--icon" onClick={() => updateQty(idx, item.quantity - 1)} style={{ width: 28, height: 28 }}><Minus size={13} /></button>
                         <span style={{ minWidth: 24, textAlign: 'center', fontWeight: 700, fontSize: 14 }}>{item.quantity}</span>
-                        <button type="button" className="btn btn--subtle btn--icon" onClick={() => updateQty(idx, item.quantity + 1)} style={{ width: 28, height: 28 }}>
-                          <Plus size={13} />
-                        </button>
+                        <button type="button" className="btn btn--subtle btn--icon" onClick={() => updateQty(idx, item.quantity + 1)} style={{ width: 28, height: 28 }}><Plus size={13} /></button>
                       </div>
                       <div style={{ fontWeight: 700, color: 'var(--accent)', minWidth: 64, textAlign: 'right', fontSize: 13 }}>{formatCurrency(item.subtotal)}</div>
-                      <button type="button" className="btn btn--subtle btn--icon" onClick={() => removeItem(idx)} style={{ width: 28, height: 28, color: 'var(--danger)', flexShrink: 0 }}>
-                        <Trash2 size={14} />
-                      </button>
+                      <button type="button" className="btn btn--subtle btn--icon" onClick={() => removeItem(idx)} style={{ width: 28, height: 28, color: 'var(--danger)', flexShrink: 0 }}><Trash2 size={14} /></button>
                     </div>
                   )
                 })
@@ -233,52 +216,46 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
             </div>
 
             {/* Panel de pago */}
-            <div style={{ borderTop: '1px solid var(--border-2)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 20, color: 'var(--accent)' }}>
+            <div style={{ borderTop: '1px solid var(--border-2)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+              {/* Total */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 22, color: 'var(--accent)' }}>
                 <span>Total</span><span>{formatCurrency(total)}</span>
               </div>
 
+              {/* Medio de pago */}
               <div>
-                <label className="form-label" style={{ marginBottom: 6 }}>Monto cobrado</label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontWeight: 600, pointerEvents: 'none' }}>$</span>
-                  <input className="form-input" type="number" min="0" step="100"
-                    value={form.paidAmount}
-                    onFocus={e => e.target.select()}
-                    onChange={e => setForm(f => ({ ...f, paidAmount: e.target.value }))}
-                    placeholder="0" style={{ paddingLeft: 24, fontSize: 16 }} />
+                <label className="form-label" style={{ marginBottom: 8 }}>Medio de pago</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {PAYMENT_METHODS.map(({ value, label, Icon }) => {
+                    const active = form.paymentMethod === value
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, paymentMethod: value }))}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          padding: '10px 12px', borderRadius: 'var(--r-md)', cursor: 'pointer',
+                          border: `2px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+                          background: active ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'var(--bg-sub)',
+                          color: active ? 'var(--accent)' : 'var(--text-secondary)',
+                          fontWeight: active ? 700 : 500,
+                          fontSize: 13, transition: 'all var(--t-fast)',
+                        }}
+                      >
+                        <Icon size={16} strokeWidth={2} style={{ flexShrink: 0 }} />
+                        {label}
+                      </button>
+                    )
+                  })}
                 </div>
-                <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    padding: '5px 12px', borderRadius: 999, fontWeight: 700, fontSize: 13,
-                    background: cfg.bg, color: cfg.color, border: `1.5px solid ${cfg.border}`,
-                    transition: 'all 0.2s',
-                  }}>
-                    <cfg.Icon size={14} strokeWidth={2.5} />
-                    {cfg.label}
-                  </div>
-                  {status === 'partial' && total > 0 && (
-                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                      Saldo: <strong style={{ color: 'var(--danger)' }}>{formatCurrency(total - paid)}</strong>
-                    </span>
-                  )}
-                </div>
-                {paid > total && total > 0 && (
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 6, marginTop: 8,
-                    padding: '7px 10px', borderRadius: 'var(--r-md)',
-                    background: 'var(--warn-3)', border: '1px solid var(--warn)', color: 'var(--warn)',
-                    fontSize: 12, fontWeight: 600,
-                  }}>
-                    <AlertTriangle size={13} strokeWidth={2.5} />
-                    Supera el total en {formatCurrency(paid - total)}
-                  </div>
-                )}
               </div>
 
+              {/* Acciones */}
               <div style={{ display: 'flex', gap: 8 }}>
-                <button className="btn" onClick={onClose} style={{ flex: 1, background: 'var(--danger-3)', color: 'var(--danger)', border: '1px solid transparent' }}
+                <button className="btn" onClick={onClose}
+                  style={{ flex: 1, background: 'var(--danger-3)', color: 'var(--danger)', border: '1px solid transparent' }}
                   onMouseEnter={e => { e.currentTarget.style.background = 'var(--danger)'; e.currentTarget.style.color = 'white' }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'var(--danger-3)'; e.currentTarget.style.color = 'var(--danger)' }}
                 >
