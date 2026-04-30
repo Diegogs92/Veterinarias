@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { Search, Plus, Pencil, Trash2, ShoppingCart, TrendingUp, Clock } from 'lucide-react'
+import { useState, useMemo, useCallback } from 'react'
+import { Search, Plus, Pencil, Trash2, ShoppingCart, TrendingUp, Clock, CircleCheck } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
 import Badge from '../../components/ui/Badge'
@@ -9,64 +9,54 @@ import SaleForm from './SaleForm'
 import { formatDate, formatCurrency } from '../../utils/helpers'
 
 const PAYMENT_BADGE = {
-  paid:    { color: 'green', label: 'Pagado' },
-  unpaid:  { color: 'red',   label: 'Pendiente' },
+  paid:    { color: 'green',  label: 'Pagado' },
+  unpaid:  { color: 'red',    label: 'Pendiente' },
   partial: { color: 'orange', label: 'Parcial' },
 }
 
 export default function SalesPage() {
-  const { sales, owners, pets, syncDebt, debts } = useApp()
-  const [search, setSearch]           = useState('')
-  const [payFilter, setPayFilter]     = useState('')
-  const [formOpen, setFormOpen]       = useState(false)
-  const [editing, setEditing]         = useState(null)
-  const [deleting, setDeleting]       = useState(null)
+  const { sales } = useApp()
+  const [search, setSearch]       = useState('')
+  const [payFilter, setPayFilter] = useState('')
+  const [formOpen, setFormOpen]   = useState(false)
+  const [editing, setEditing]     = useState(null)
+  const [deleting, setDeleting]   = useState(null)
+  const [toast, setToast]         = useState(false)
 
-  // ── Filtered ───────────────────────────────────────────────────────────────
+  const showToast = useCallback(() => {
+    setToast(true)
+    setTimeout(() => setToast(false), 3000)
+  }, [])
+
   const filtered = useMemo(() =>
     sales.items
       .filter(s => {
-        const owner = owners.find(s.ownerId)
-        const pet   = pets.find(s.petId)
-        const ownerLabel = owner?.name || (s.ownerId ? '' : 'mostrador')
-        const str   = `${ownerLabel} ${pet?.name || ''} ${s.items?.map(i => i.productName).join(' ') || ''}`.toLowerCase()
+        const str = (s.items?.map(i => i.productName).join(' ') || '').toLowerCase()
         const matchSearch = !search || str.includes(search.toLowerCase())
         const matchPay    = !payFilter || s.paymentStatus === payFilter
         return matchSearch && matchPay
       })
       .sort((a, b) => new Date(b.date) - new Date(a.date)),
-    [sales.items, search, payFilter, owners, pets]
+    [sales.items, search, payFilter]
   )
 
-  // ── Stats ──────────────────────────────────────────────────────────────────
   const totalSold    = sales.items.reduce((s, v) => s + (v.total || 0), 0)
   const totalCobrado = sales.items.reduce((s, v) => s + (v.paidAmount || 0), 0)
   const totalPending = totalSold - totalCobrado
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleSave = (data) => {
-    let savedId
     if (editing) {
       sales.update(editing.id, data)
-      savedId = editing.id
     } else {
-      const created = sales.add(data)
-      savedId = created.id
-    }
-    // Sync debt — solo si hay cliente (las ventas de mostrador no generan deuda)
-    if (data.ownerId) {
-      const paid = data.paymentStatus === 'paid' ? data.total : data.paidAmount
-      syncDebt('sale', savedId, data.ownerId, data.total, paid)
+      sales.add(data)
     }
     setEditing(null)
     setFormOpen(false)
+    if (!editing) showToast()
   }
 
   const handleDelete = () => {
     if (!deleting) return
-    if (deleting.ownerId) {
-      syncDebt('sale', deleting.id, deleting.ownerId, deleting.total || 0, deleting.total || 0)
-    }
     sales.remove(deleting.id)
     setDeleting(null)
   }
@@ -104,7 +94,7 @@ export default function SalesPage() {
             <input
               className="form-input"
               style={{ paddingLeft: 36 }}
-              placeholder="Buscar por dueño, mascota o producto..."
+              placeholder="Buscar por producto..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -140,7 +130,6 @@ export default function SalesPage() {
                 <thead>
                   <tr>
                     <th>Fecha</th>
-                    <th>Cliente / Mascota</th>
                     <th>Productos</th>
                     <th style={{ textAlign: 'right' }}>Total</th>
                     <th>Estado</th>
@@ -149,9 +138,7 @@ export default function SalesPage() {
                 </thead>
                 <tbody>
                   {filtered.map(sale => {
-                    const owner = owners.find(sale.ownerId)
-                    const pet   = pets.find(sale.petId)
-                    const badge = PAYMENT_BADGE[sale.paymentStatus] || PAYMENT_BADGE.unpaid
+                    const badge     = PAYMENT_BADGE[sale.paymentStatus] || PAYMENT_BADGE.unpaid
                     const itemCount = sale.items?.length || 0
                     const firstItem = sale.items?.[0]?.productName || '—'
                     return (
@@ -159,18 +146,10 @@ export default function SalesPage() {
                         <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                           {formatDate(sale.date)}
                         </td>
-                        <td>
-                          <div style={{ fontWeight: 600, color: !sale.ownerId ? 'var(--text-tertiary)' : undefined, fontStyle: !sale.ownerId ? 'italic' : undefined }}>
-                            {owner?.name || (sale.ownerId ? '—' : 'Mostrador')}
-                          </div>
-                          {pet && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{pet.name}</div>}
-                        </td>
-                        <td style={{ maxWidth: 200 }}>
+                        <td style={{ maxWidth: 260 }}>
                           <div style={{ fontSize: 13 }} className="truncate">{firstItem}</div>
                           {itemCount > 1 && (
-                            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
-                              +{itemCount - 1} más
-                            </div>
+                            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>+{itemCount - 1} más</div>
                           )}
                         </td>
                         <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap' }}>
@@ -220,6 +199,15 @@ export default function SalesPage() {
         initial={editing}
       />
 
+      {toast && (
+        <div className="toast-wrap">
+          <div className="toast toast--ok" style={{ background: 'var(--ok)', borderLeft: 'none' }}>
+            <CircleCheck size={20} strokeWidth={2.5} style={{ color: 'white', flexShrink: 0 }} />
+            <span style={{ fontWeight: 600, fontSize: 14, color: 'white' }}>Venta realizada con éxito</span>
+          </div>
+        </div>
+      )}
+
       {deleting && (
         <Modal
           isOpen
@@ -233,14 +221,7 @@ export default function SalesPage() {
             </>
           }
         >
-          <p style={{ fontSize: 15 }}>
-            ¿Eliminar la venta de <strong>{owners.find(deleting.ownerId)?.name || (deleting.ownerId ? 'este cliente' : 'mostrador')}</strong>?
-            {deleting.ownerId && deleting.paymentStatus !== 'paid' && (
-              <span style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginTop: 8 }}>
-                La deuda asociada también será marcada como saldada.
-              </span>
-            )}
-          </p>
+          <p style={{ fontSize: 15 }}>¿Eliminar esta venta?</p>
         </Modal>
       )}
     </>

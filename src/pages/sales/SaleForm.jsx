@@ -1,14 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
-import StepWizard from '../../components/ui/StepWizard'
 import BarcodeScanner from '../../components/ui/BarcodeScanner'
-import OwnerSelect from '../../components/ui/OwnerSelect'
-import PetSelect from '../../components/ui/PetSelect'
 import { useApp } from '../../context/AppContext'
 import { todayStr, formatCurrency } from '../../utils/helpers'
-import { Trash2, Search, ScanLine, Plus, Minus, CircleCheck, CircleX, Clock, AlertTriangle, Package, Store } from 'lucide-react'
+import { Trash2, Search, ScanLine, Plus, Minus, CircleCheck, CircleX, Clock, AlertTriangle, Package, X } from 'lucide-react'
 
-const EMPTY = { ownerId: '', petId: '', items: [], discount: 0, paidAmount: 0, date: todayStr() }
-const STEPS  = ['Cliente', 'Productos', 'Pago']
+const EMPTY = { items: [], paidAmount: 0 }
 
 const deriveStatus = (paid, total) => {
   const p = parseFloat(paid) || 0
@@ -23,52 +19,34 @@ const STATUS_CFG = {
 }
 
 export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
-  const { owners, pets, products, debts } = useApp()
-  const [form, setForm]         = useState(EMPTY)
-  const [errors, setErrors]     = useState({})
-  const [step, setStep]         = useState(0)
-  const [walkIn, setWalkIn]     = useState(false)
+  const { products } = useApp()
+  const [form, setForm]       = useState(EMPTY)
+  const [errors, setErrors]   = useState({})
   const [productSearch, setProductSearch] = useState('')
-  const [showDropdown, setShowDropdown]   = useState(false)
   const [scannerOpen, setScannerOpen]     = useState(false)
   const [scanFeedback, setScanFeedback]   = useState(null)
 
   useEffect(() => {
     if (isOpen) {
-      setStep(0); setErrors({}); setProductSearch(''); setShowDropdown(false)
-      setForm(initial ? { ...initial, paidAmount: initial.paidAmount ?? 0 } : EMPTY)
-      // Default a venta sin dueño (mostrador). Solo se desactiva si edita una venta con cliente.
-      setWalkIn(initial ? !initial.ownerId : true)
+      setErrors({}); setProductSearch('')
+      setForm(initial ? { items: initial.items, paidAmount: initial.paidAmount ?? 0 } : EMPTY)
     }
   }, [isOpen, initial])
 
-  const subtotal       = useMemo(() => form.items.reduce((s, i) => s + i.subtotal, 0), [form.items])
-  const discountAmount = useMemo(() => Math.round(subtotal * (parseFloat(form.discount) || 0) / 100), [subtotal, form.discount])
-  const total          = subtotal - discountAmount
-  const ownerDebt      = useMemo(() => debts.items
-    .filter(d => d.ownerId === form.ownerId && d.status !== 'paid')
-    .reduce((sum, d) => sum + ((d.totalAmount || 0) - (d.paidAmount || 0)), 0),
-    [debts.items, form.ownerId]
-  )
+  useEffect(() => {
+    if (!isOpen) return
+    const fn = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', fn)
+    return () => document.removeEventListener('keydown', fn)
+  }, [isOpen, onClose])
 
-  const handleOwnerChange = (ownerId) => {
-    const owner = owners.items.find(o => o.id === ownerId)
-    setForm(f => ({ ...f, ownerId, petId: '', discount: owner?.discount ?? 0 }))
-    setErrors(er => ({ ...er, ownerId: '' }))
-    if (ownerId) setWalkIn(false)
-  }
+  const subtotal = useMemo(() => form.items.reduce((s, i) => s + i.subtotal, 0), [form.items])
+  const total    = subtotal
 
-  const toggleWalkIn = () => {
-    const next = !walkIn
-    setWalkIn(next)
-    if (next) setForm(f => ({ ...f, ownerId: '', petId: '', discount: 0 }))
-    setErrors(er => ({ ...er, ownerId: '' }))
-  }
-
-  const searchedProducts = useMemo(() => {
+  const filteredProducts = useMemo(() => {
     const q = productSearch.toLowerCase()
-    if (!q) return products.items.filter(p => p.inStock).slice(0, 8)
-    return products.items.filter(p => p.inStock && (p.name.toLowerCase().includes(q) || (p.barcode || '').includes(q))).slice(0, 8)
+    if (!q) return products.items.filter(p => p.inStock)
+    return products.items.filter(p => p.inStock && (p.name.toLowerCase().includes(q) || (p.barcode || '').includes(q)))
   }, [products.items, productSearch])
 
   const addProduct = (product) => {
@@ -81,7 +59,6 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
       }
       return { ...f, items: [...f.items, { productId: product.id, productName: product.name, quantity: 1, unitPrice: product.price, subtotal: product.price }] }
     })
-    setProductSearch(''); setShowDropdown(false)
     setErrors(er => ({ ...er, items: '' }))
   }
 
@@ -92,272 +69,201 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
     setTimeout(() => setScanFeedback(null), 3000)
   }
 
-  const removeItem  = (idx) => setForm(f => ({ ...f, items: f.items.filter((_, i) => i !== idx) }))
-  const updateQty   = (idx, qty) => {
+  const removeItem = (idx) => setForm(f => ({ ...f, items: f.items.filter((_, i) => i !== idx) }))
+  const updateQty  = (idx, qty) => {
     const q = Math.max(1, parseInt(qty) || 1)
     setForm(f => { const items = [...f.items]; items[idx] = { ...items[idx], quantity: q, subtotal: q * items[idx].unitPrice }; return { ...f, items } })
   }
 
-  const validateStep = (s) => {
-    const errs = {}
-    if (s === 0 && !form.ownerId && !walkIn) errs.ownerId = 'Elegí un cliente o marcá "Sin cliente"'
-    if (s === 1 && form.items.length === 0)  errs.items   = 'Agregá al menos un producto'
-    if (s === 2 && !form.date)               errs.date    = 'Requerido'
-    return errs
+  const handleSave = () => {
+    if (form.items.length === 0) { setErrors({ items: 'Agregá al menos un producto' }); return }
+    const paidAmount = parseFloat(form.paidAmount) || 0
+    const paymentStatus = deriveStatus(paidAmount, total)
+    onSave({ ...form, discount: 0, subtotal, total, paidAmount, paymentStatus, date: todayStr() })
   }
 
-  const handleNext = () => { const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }; setStep(s => s + 1) }
-  const handleSave = () => {
-    const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }
-    const paidAmount = walkIn ? total : (parseFloat(form.paidAmount) || 0)
-    const paymentStatus = deriveStatus(paidAmount, total)
-    onSave({
-      ...form,
-      ownerId: walkIn ? null : form.ownerId,
-      petId:   walkIn ? null : form.petId,
-      discount: parseFloat(form.discount) || 0,
-      subtotal, total, paidAmount, paymentStatus,
-    })
-  }
+  if (!isOpen) return null
+
+  const paid   = parseFloat(form.paidAmount) || 0
+  const status = deriveStatus(form.paidAmount, total)
+  const cfg    = STATUS_CFG[status]
 
   return (
     <>
-    <StepWizard
-      isOpen={isOpen} onClose={onClose}
-      title={initial ? 'Editar venta' : 'Registrar venta'}
-      steps={STEPS} currentStep={step}
-      onNext={handleNext} onPrev={() => setStep(s => s - 1)} onSave={handleSave}
-      saveLabel={initial ? 'Guardar cambios' : 'Registrar venta'}
-    >
-      {/* ── Paso 1: Cliente ── */}
-      {step === 0 && (
-        <>
-          <button
-            type="button"
-            className={`btn ${walkIn ? 'btn--primary' : 'btn--subtle'} btn--lg`}
-            onClick={() => { if (!walkIn) toggleWalkIn() }}
-            style={{ width: '100%' }}
-          >
-            <Store size={20} strokeWidth={2.2} />
-            Venta sin dueño
-          </button>
+    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="modal modal--lg" style={{ maxWidth: 860, width: '95vw', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '14px 0', color: 'var(--text-tertiary)', fontSize: 13 }}>
-            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-            <span>o asignar a un cliente</span>
-            <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        {/* Header */}
+        <div className="modal__header">
+          <div className="modal__title">{initial ? 'Editar venta' : 'Registrar venta'}</div>
+          <button className="btn btn--subtle btn--icon" onClick={onClose} style={{ width: 48, height: 48 }}>
+            <X size={28} strokeWidth={2} />
+          </button>
+        </div>
+
+        {/* Body: dos columnas */}
+        <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+
+          {/* ── Columna izquierda: catálogo ── */}
+          <div style={{ flex: 1, minWidth: 0, borderRight: '1px solid var(--border-2)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <div style={{ padding: '16px 20px 12px' }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div className="search-wrap" style={{ flex: 1 }}>
+                  <Search size={18} className="search-icon" />
+                  <input
+                    className="form-input" style={{ paddingLeft: 36 }}
+                    placeholder="Buscar producto o código de barras..."
+                    value={productSearch}
+                    onChange={e => setProductSearch(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                <button type="button" className="btn btn--subtle btn--icon" onClick={() => setScannerOpen(true)} title="Escanear código de barras" style={{ flexShrink: 0 }}>
+                  <ScanLine size={18} strokeWidth={2} />
+                </button>
+              </div>
+              {scanFeedback && (
+                <div style={{
+                  marginTop: 8, padding: '7px 12px', borderRadius: 6, fontSize: 13, fontWeight: 500,
+                  background: scanFeedback.found ? 'var(--ok-3)' : 'var(--danger-3)',
+                  color: scanFeedback.found ? 'var(--ok)' : 'var(--danger)',
+                  border: `1px solid ${scanFeedback.found ? 'var(--ok)' : 'var(--danger)'}`,
+                }}>
+                  {scanFeedback.found ? `✓ Agregado: ${scanFeedback.name}` : `No encontrado: ${scanFeedback.name}`}
+                </div>
+              )}
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto', padding: '0 12px 12px' }}>
+              {filteredProducts.length === 0
+                ? <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 14 }}>No hay productos disponibles</div>
+                : filteredProducts.map(p => (
+                  <button key={p.id} type="button" onClick={() => addProduct(p)} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    width: '100%', padding: '9px 10px', background: 'none', border: 'none',
+                    borderRadius: 8, cursor: 'pointer', textAlign: 'left', color: 'var(--text-primary)',
+                    transition: 'background var(--t-fast)',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-sub)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                  >
+                    {p.photoUrl
+                      ? <img src={p.photoUrl} alt={p.name} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 7, border: '1px solid var(--border)', flexShrink: 0 }} />
+                      : <div style={{ width: 40, height: 40, borderRadius: 7, background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', flexShrink: 0 }}><Package size={17} strokeWidth={1.5} /></div>
+                    }
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 500, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                      {p.barcode && <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>{p.barcode}</div>}
+                    </div>
+                    <div style={{ fontWeight: 700, color: 'var(--accent)', flexShrink: 0 }}>{formatCurrency(p.price)}</div>
+                  </button>
+                ))
+              }
+            </div>
           </div>
 
-          <OwnerSelect value={form.ownerId} onChange={handleOwnerChange} error={errors.ownerId} />
-          <PetSelect
-            value={form.petId} onChange={id => setForm(f => ({ ...f, petId: id }))}
-            ownerId={form.ownerId} disabled={!form.ownerId} label="Mascota" placeholder="Sin mascota"
-          />
-        </>
-      )}
+          {/* ── Columna derecha: carrito + pago ── */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
-      {/* ── Paso 2: Productos ── */}
-      {step === 1 && (
-        <>
-          <div className="form-group">
-            <label className="form-label">Agregar productos</label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <div className="search-wrap" style={{ flex: 1 }}>
-                <Search size={18} className="search-icon" />
-                <input
-                  className="form-input" style={{ paddingLeft: 36 }}
-                  placeholder="Buscar por nombre o código de barras..."
-                  value={productSearch}
-                  onChange={e => { setProductSearch(e.target.value); setShowDropdown(true) }}
-                  onFocus={() => setShowDropdown(true)}
-                  onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-                />
-              </div>
-              <button type="button" className="btn btn--subtle btn--icon" onClick={() => setScannerOpen(true)} title="Escanear código de barras" style={{ flexShrink: 0 }}>
-                <ScanLine size={18} strokeWidth={2} />
-              </button>
-            </div>
-            {errors.items && <span className="form-error">{errors.items}</span>}
-            {scanFeedback && (
-              <div style={{
-                marginTop: 6, padding: '8px 12px', borderRadius: 6, fontSize: 13, fontWeight: 500,
-                background: scanFeedback.found ? 'var(--ok-3)' : 'var(--danger-3)',
-                color: scanFeedback.found ? 'var(--ok)' : 'var(--danger)',
-                border: `1px solid ${scanFeedback.found ? 'var(--ok)' : 'var(--danger)'}`,
-              }}>
-                {scanFeedback.found ? `✓ Agregado: ${scanFeedback.name}` : `No encontrado: ${scanFeedback.name}`}
-              </div>
-            )}
-            {showDropdown && (
-              <div style={{ background: 'var(--bg-modal)', border: '1px solid var(--border)', borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: 'auto' }}>
-                {searchedProducts.length === 0
-                  ? <div style={{ padding: '12px 16px', color: 'var(--text-tertiary)', fontSize: 13 }}>No hay productos disponibles</div>
-                  : searchedProducts.map(p => (
-                    <button key={p.id} type="button" onMouseDown={() => addProduct(p)} style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      width: '100%', padding: '8px 12px', background: 'none', border: 'none',
-                      cursor: 'pointer', textAlign: 'left', borderBottom: '1px solid var(--border)', color: 'var(--text-primary)',
-                    }}>
-                      {p.photoUrl
-                        ? <img src={p.photoUrl} alt={p.name} style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border)', flexShrink: 0 }} />
-                        : <div style={{ width: 36, height: 36, borderRadius: 6, background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', flexShrink: 0 }}><Package size={16} strokeWidth={1.5} /></div>
+            {/* Lista de items */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '12px 0' }}>
+              {form.items.length === 0
+                ? <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 14 }}>
+                    Seleccioná productos del catálogo
+                  </div>
+                : form.items.map((item, idx) => {
+                  const photo = products.items.find(p => p.id === item.productId)?.photoUrl
+                  return (
+                    <div key={item.productId} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderBottom: '1px solid var(--border-2)' }}>
+                      {photo
+                        ? <img src={photo} alt={item.productName} style={{ width: 34, height: 34, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--border)', flexShrink: 0 }} />
+                        : <div style={{ width: 34, height: 34, borderRadius: 6, background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', flexShrink: 0 }}><Package size={15} strokeWidth={1.5} /></div>
                       }
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 500, fontSize: 14 }}>{p.name}</div>
-                        {p.barcode && <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>{p.barcode}</div>}
+                        <div style={{ fontWeight: 500, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.productName}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{formatCurrency(item.unitPrice)} c/u</div>
                       </div>
-                      <div style={{ fontWeight: 700, color: 'var(--accent)', flexShrink: 0, marginLeft: 4 }}>{formatCurrency(p.price)}</div>
-                    </button>
-                  ))
-                }
-              </div>
-            )}
-          </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <button type="button" className="btn btn--subtle btn--icon" onClick={() => updateQty(idx, item.quantity - 1)} style={{ width: 28, height: 28 }}>
+                          <Minus size={13} />
+                        </button>
+                        <span style={{ minWidth: 24, textAlign: 'center', fontWeight: 700, fontSize: 14 }}>{item.quantity}</span>
+                        <button type="button" className="btn btn--subtle btn--icon" onClick={() => updateQty(idx, item.quantity + 1)} style={{ width: 28, height: 28 }}>
+                          <Plus size={13} />
+                        </button>
+                      </div>
+                      <div style={{ fontWeight: 700, color: 'var(--accent)', minWidth: 64, textAlign: 'right', fontSize: 13 }}>{formatCurrency(item.subtotal)}</div>
+                      <button type="button" className="btn btn--subtle btn--icon" onClick={() => removeItem(idx)} style={{ width: 28, height: 28, color: 'var(--danger)', flexShrink: 0 }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )
+                })
+              }
+              {errors.items && <div style={{ padding: '8px 16px', color: 'var(--danger)', fontSize: 13 }}>{errors.items}</div>}
+            </div>
 
-          {form.items.length > 0 && (
-            <div className="card card--no-hover" style={{ padding: 0 }}>
-              {form.items.map((item, idx) => {
-                const productPhoto = products.items.find(p => p.id === item.productId)?.photoUrl
-                return (
-                <div key={item.productId} style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 14px', borderBottom: '1px solid var(--border-2)',
-                }}>
-                  {productPhoto
-                    ? <img src={productPhoto} alt={item.productName} style={{ width: 38, height: 38, objectFit: 'cover', borderRadius: 7, border: '1px solid var(--border)', flexShrink: 0 }} />
-                    : <div style={{ width: 38, height: 38, borderRadius: 7, background: 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', flexShrink: 0 }}><Package size={17} strokeWidth={1.5} /></div>
-                  }
-                  <div style={{ flex: 1, fontWeight: 500, fontSize: 14 }}>{item.productName}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <button type="button" className="btn btn--subtle btn--icon" onClick={() => updateQty(idx, item.quantity - 1)} style={{ width: 34, height: 34 }}>
-                      <Minus size={15} />
-                    </button>
-                    <span style={{ minWidth: 28, textAlign: 'center', fontWeight: 700, fontSize: 15 }}>{item.quantity}</span>
-                    <button type="button" className="btn btn--subtle btn--icon" onClick={() => updateQty(idx, item.quantity + 1)} style={{ width: 34, height: 34 }}>
-                      <Plus size={15} />
-                    </button>
-                  </div>
-                  <div style={{ fontWeight: 700, color: 'var(--accent)', minWidth: 80, textAlign: 'right', fontSize: 15 }}>{formatCurrency(item.subtotal)}</div>
-                  <button type="button" className="btn btn--subtle btn--icon" onClick={() => removeItem(idx)} style={{ width: 34, height: 34, color: 'var(--danger)' }}>
-                    <Trash2 size={18} />
-                  </button>
+            {/* Panel de pago */}
+            <div style={{ borderTop: '1px solid var(--border-2)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 20, color: 'var(--accent)' }}>
+                <span>Total</span><span>{formatCurrency(total)}</span>
+              </div>
+
+              <div>
+                <label className="form-label" style={{ marginBottom: 6 }}>Monto cobrado</label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontWeight: 600, pointerEvents: 'none' }}>$</span>
+                  <input className="form-input" type="number" min="0" step="100"
+                    value={form.paidAmount}
+                    onFocus={e => e.target.select()}
+                    onChange={e => setForm(f => ({ ...f, paidAmount: e.target.value }))}
+                    placeholder="0" style={{ paddingLeft: 24, fontSize: 16 }} />
                 </div>
-                )
-              })}
-              <div style={{ padding: '10px 14px', display: 'flex', justifyContent: 'flex-end' }}>
-                <span style={{ fontWeight: 700, fontSize: 15 }}>Total: {formatCurrency(subtotal)}</span>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ── Paso 3: Pago ── */}
-      {step === 2 && (
-        <>
-          <div className={walkIn ? 'form-group' : 'form-row form-row--2'}>
-            {!walkIn && (
-              <div className="form-group">
-                <label className="form-label">Descuento (%)</label>
-                <input className="form-input" type="number" min="0" max="100" step="1"
-                  value={form.discount} onFocus={e => e.target.select()} onChange={e => setForm(f => ({ ...f, discount: e.target.value }))} placeholder="0" />
-                {form.ownerId && (
-                  <span className="form-hint">Descuento del cliente: {owners.items.find(o => o.id === form.ownerId)?.discount ?? 0}%</span>
-                )}
-              </div>
-            )}
-            <div className="form-group">
-              <label className="form-label">Fecha *</label>
-              <input className={`form-input${errors.date ? ' form-input--error' : ''}`} type="date" value={form.date}
-                onChange={e => { setForm(f => ({ ...f, date: e.target.value })); setErrors(er => ({ ...er, date: '' })) }} />
-              {errors.date && <span className="form-error">{errors.date}</span>}
-            </div>
-          </div>
-
-          {/* Deuda pendiente del cliente */}
-          {!walkIn && ownerDebt > 0 && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '10px 14px', borderRadius: 'var(--r-md)', marginBottom: 12,
-              background: 'var(--warn-3)', border: '1.5px solid var(--warn)', color: 'var(--warn)',
-            }}>
-              <AlertTriangle size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-              <span style={{ fontSize: 13.5, fontWeight: 600 }}>
-                Este cliente tiene una deuda pendiente de <strong>{formatCurrency(ownerDebt)}</strong>
-              </span>
-            </div>
-          )}
-
-          {/* Resumen */}
-          <div style={{ background: 'var(--bg-sub)', borderRadius: 'var(--r-md)', padding: '14px 16px', marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>
-              <span>Subtotal</span><span>{formatCurrency(subtotal)}</span>
-            </div>
-            {discountAmount > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--danger)', marginBottom: 4 }}>
-                <span>Descuento ({form.discount}%)</span><span>− {formatCurrency(discountAmount)}</span>
-              </div>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 18, borderTop: '1px solid var(--border)', paddingTop: 8, color: 'var(--accent)' }}>
-              <span>Total</span><span>{formatCurrency(total)}</span>
-            </div>
-          </div>
-
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label className="form-label">{walkIn ? 'Monto cobrado' : 'Monto pagado'}</label>
-            <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontWeight: 600, pointerEvents: 'none' }}>$</span>
-              <input className="form-input" type="number" min="0" step="100"
-                value={walkIn ? total : form.paidAmount}
-                disabled={walkIn}
-                onFocus={e => e.target.select()}
-                onChange={e => setForm(f => ({ ...f, paidAmount: e.target.value }))}
-                placeholder="0" style={{ paddingLeft: 26, fontSize: 17 }} />
-            </div>
-            {walkIn && (
-              <span className="form-hint">Venta de mostrador: se cobra el total al contado.</span>
-            )}
-            {!walkIn && (() => {
-              const status = deriveStatus(form.paidAmount, total)
-              const cfg = STATUS_CFG[status]
-              const paid = parseFloat(form.paidAmount) || 0
-              return (
-                <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 7,
-                    padding: '6px 14px', borderRadius: 999, fontWeight: 700, fontSize: 13.5,
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '5px 12px', borderRadius: 999, fontWeight: 700, fontSize: 13,
                     background: cfg.bg, color: cfg.color, border: `1.5px solid ${cfg.border}`,
                     transition: 'all 0.2s',
                   }}>
-                    <cfg.Icon size={16} strokeWidth={2.5} />
+                    <cfg.Icon size={14} strokeWidth={2.5} />
                     {cfg.label}
                   </div>
                   {status === 'partial' && total > 0 && (
-                    <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                       Saldo: <strong style={{ color: 'var(--danger)' }}>{formatCurrency(total - paid)}</strong>
                     </span>
                   )}
                 </div>
-              )
-            })()}
-            {!walkIn && (() => {
-              const paid = parseFloat(form.paidAmount) || 0
-              return paid > total && total > 0 ? (
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 8, marginTop: 8,
-                  padding: '8px 12px', borderRadius: 'var(--r-md)',
-                  background: 'var(--warn-3)', border: '1px solid var(--warn)', color: 'var(--warn)',
-                  fontSize: 13, fontWeight: 600,
-                }}>
-                  <AlertTriangle size={15} strokeWidth={2.5} />
-                  El monto supera el total en {formatCurrency(paid - total)}
-                </div>
-              ) : null
-            })()}
+                {paid > total && total > 0 && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 6, marginTop: 8,
+                    padding: '7px 10px', borderRadius: 'var(--r-md)',
+                    background: 'var(--warn-3)', border: '1px solid var(--warn)', color: 'var(--warn)',
+                    fontSize: 12, fontWeight: 600,
+                  }}>
+                    <AlertTriangle size={13} strokeWidth={2.5} />
+                    Supera el total en {formatCurrency(paid - total)}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn" onClick={onClose} style={{ flex: 1, background: 'var(--danger-3)', color: 'var(--danger)', border: '1px solid transparent' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--danger)'; e.currentTarget.style.color = 'white' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--danger-3)'; e.currentTarget.style.color = 'var(--danger)' }}
+                >
+                  Cancelar
+                </button>
+                <button className="btn btn--primary" onClick={handleSave} style={{ flex: 2 }}>
+                  {initial ? 'Guardar cambios' : 'Registrar venta'}
+                </button>
+              </div>
+            </div>
           </div>
-        </>
-      )}
-    </StepWizard>
+        </div>
+      </div>
+    </div>
 
     <BarcodeScanner isOpen={scannerOpen} onClose={() => setScannerOpen(false)} onScan={handleBarcodeScan} title="Escanear producto" />
     </>
