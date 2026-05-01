@@ -324,10 +324,13 @@ export default function OwnersPetsPage() {
                       ) : (
                         <div style={{
                           position: 'absolute', inset: 0,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+                          paddingTop: 10,
                           color: 'var(--text-tertiary)',
+                          opacity: 0.45,
+                          pointerEvents: 'none',
                         }}>
-                          <SpeciesIcon species={pet.species} size={64} strokeWidth={1.25} />
+                          <SpeciesIcon species={pet.species} size={44} strokeWidth={1.25} />
                         </div>
                       )}
 

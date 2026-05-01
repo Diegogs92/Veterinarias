@@ -7,10 +7,10 @@ import { Trash2, Search, ScanLine, Plus, Minus, Package, X, ShoppingCart, Layout
 const EMPTY = { items: [], paymentMethod: 'efectivo' }
 
 const PAYMENT_METHODS = [
-  { value: 'efectivo',         label: 'Efectivo',           Icon: Banknote },
-  { value: 'tarjeta_credito',  label: 'Tarjeta de crédito', Icon: CreditCard },
-  { value: 'tarjeta_debito',   label: 'Tarjeta de débito',  Icon: Wallet },
-  { value: 'transferencia',    label: 'Transferencia',      Icon: ArrowRightLeft },
+  { value: 'efectivo',         label: 'Efectivo',           Icon: Banknote,        surcharge: 0    },
+  { value: 'tarjeta_credito',  label: 'Tarjeta de crédito', Icon: CreditCard,      surcharge: 0.20 },
+  { value: 'tarjeta_debito',   label: 'Tarjeta de débito',  Icon: Wallet,          surcharge: 0.05 },
+  { value: 'transferencia',    label: 'Transferencia',      Icon: ArrowRightLeft,  surcharge: 0    },
 ]
 
 export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
@@ -39,8 +39,10 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
     return () => document.removeEventListener('keydown', fn)
   }, [isOpen, onClose])
 
-  const subtotal = useMemo(() => form.items.reduce((s, i) => s + i.subtotal, 0), [form.items])
-  const total    = subtotal
+  const subtotal  = useMemo(() => form.items.reduce((s, i) => s + i.subtotal, 0), [form.items])
+  const surcharge = PAYMENT_METHODS.find(m => m.value === form.paymentMethod)?.surcharge ?? 0
+  const surchargeAmount = Math.round(subtotal * surcharge)
+  const total     = subtotal + surchargeAmount
 
   const filteredProducts = useMemo(() => {
     const q = productSearch.toLowerCase()
@@ -79,7 +81,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
     if (form.items.length === 0) { setErrors({ items: 'Agregá al menos un producto' }); return }
     onSave({
       ...form,
-      discount: 0, subtotal, total,
+      discount: 0, subtotal, surchargeAmount, total,
       paidAmount: total,
       paymentStatus: 'paid',
       date: todayStr(),
@@ -225,8 +227,20 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
             <div style={{ borderTop: '1px solid var(--border-2)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
               {/* Total */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 22, color: 'var(--accent)' }}>
-                <span>Total</span><span>{formatCurrency(total)}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {surchargeAmount > 0 && (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)' }}>
+                      <span>Subtotal</span><span>{formatCurrency(subtotal)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--warn)', fontWeight: 600 }}>
+                      <span>Recargo ({surcharge * 100}%)</span><span>+ {formatCurrency(surchargeAmount)}</span>
+                    </div>
+                  </>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 22, color: 'var(--accent)', borderTop: surchargeAmount > 0 ? '1px solid var(--border-2)' : 'none', paddingTop: surchargeAmount > 0 ? 6 : 0 }}>
+                  <span>Total</span><span>{formatCurrency(total)}</span>
+                </div>
               </div>
 
               {/* Medio de pago */}

@@ -10,6 +10,17 @@ import SpeciesIcon from '../../components/ui/SpeciesIcon'
 import ConsultaForm from './ConsultaForm'
 import { formatDate, formatCurrency } from '../../utils/helpers'
 
+function calcAge(birthDate) {
+  if (!birthDate) return null
+  const months = Math.floor((new Date() - new Date(birthDate)) / (1000 * 60 * 60 * 24 * 30.44))
+  if (months < 1)  return 'Menos de 1 mes'
+  if (months < 12) return `${months} mes${months > 1 ? 'es' : ''}`
+  const y = Math.floor(months / 12), m = months % 12
+  return m === 0 ? `${y} año${y > 1 ? 's' : ''}` : `${y} año${y > 1 ? 's' : ''} y ${m} mes${m > 1 ? 'es' : ''}`
+}
+
+const SEX_LABEL = { male: 'Macho', female: 'Hembra' }
+
 export default function ConsultasPage() {
   const { consultas, pets, owners, syncDebt } = useApp()
   const navigate = useNavigate()
@@ -127,7 +138,31 @@ export default function ConsultasPage() {
                         <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>·</span>
                         <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{owner?.name || '—'}</span>
                       </div>
-                      <div style={{ fontSize: 14, marginTop: 2 }}>{c.reason}</div>
+                      {pet && (
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                          {SEX_LABEL[pet.sex] && (
+                            <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: 'var(--bg-sub)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+                              {SEX_LABEL[pet.sex]}
+                            </span>
+                          )}
+                          {pet.sex && pet.sex !== 'unknown' && (
+                            <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: 'var(--bg-sub)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+                              {pet.castrated ? 'Castrado/a' : 'Entero/a'}
+                            </span>
+                          )}
+                          {pet.weight && (
+                            <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: 'var(--bg-sub)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+                              {pet.weight} kg
+                            </span>
+                          )}
+                          {calcAge(pet.birthDate) && (
+                            <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: 'var(--bg-sub)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+                              {calcAge(pet.birthDate)}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <div style={{ fontSize: 14, marginTop: 4 }}>{c.reason}</div>
                       {c.diagnosis && !isExpanded && (
                         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 1 }} className="truncate">
                           Dx: {c.diagnosis}

@@ -6,7 +6,7 @@ import OwnerSelect from '../../components/ui/OwnerSelect'
 import OwnerForm from '../owners/OwnerForm'
 import { useApp } from '../../context/AppContext'
 
-const EMPTY = { name: '', species: 'perro', breed: '', birthDate: '', weight: '', ownerId: '', photo: '', allergies: '', observations: '' }
+const EMPTY = { name: '', species: 'perro', breed: '', birthDate: '', weight: '', sex: 'unknown', castrated: false, ownerId: '', photo: '', allergies: '', observations: '' }
 
 const SPECIES = [
   { value: 'perro',   label: '🐕 Perro'   },
@@ -172,6 +172,27 @@ export default function PetForm({ isOpen, onClose, onSave, initial = null, defau
             <div className="form-group">
               <label className="form-label">Peso (kg)</label>
               <input className="form-input" type="number" step="0.1" min="0" value={form.weight} onFocus={e => e.target.select()} onChange={set('weight')} placeholder="0.0" />
+            </div>
+          </div>
+
+          <div className="form-row form-row--2">
+            <div className="form-group">
+              <label className="form-label">Sexo</label>
+              <div className="toggle-group">
+                {[{ value: 'male', label: 'Macho' }, { value: 'female', label: 'Hembra' }, { value: 'unknown', label: 'Sin definir' }].map(s => (
+                  <button key={s.value} type="button" className={`toggle-btn${form.sex === s.value ? ' on' : ''}`}
+                    onClick={() => setForm(f => ({ ...f, sex: s.value }))}>{s.label}</button>
+                ))}
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Estado reproductivo</label>
+              <div className="toggle-group">
+                <button type="button" className={`toggle-btn${!form.castrated ? ' on' : ''}`}
+                  onClick={() => setForm(f => ({ ...f, castrated: false }))}>Entero/a</button>
+                <button type="button" className={`toggle-btn${form.castrated ? ' on' : ''}`}
+                  onClick={() => setForm(f => ({ ...f, castrated: true }))}>Castrado/a</button>
+              </div>
             </div>
           </div>
 

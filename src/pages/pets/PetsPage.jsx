@@ -103,16 +103,12 @@ export default function PetsPage() {
                   onClick={() => navigate(`/pets/${pet.id}`)}
                 >
                   <div className="pet-avatar">
-                    {pet.photo
-                      ? <img src={pet.photo} alt={pet.name} />
+                    {pet.photoUrl
+                      ? <img src={pet.photoUrl} alt={pet.name} />
                       : (
-                        <div style={{
-                          width: '100%', height: '100%',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: 'var(--text-secondary)',
-                        }}>
-                          <SpeciesIcon species={pet.species} size={28} strokeWidth={1.5} />
-                        </div>
+                        <span style={{ fontWeight: 800, fontSize: 18, color: 'var(--text-secondary)', userSelect: 'none' }}>
+                          {pet.name?.[0]?.toUpperCase()}
+                        </span>
                       )
                     }
                   </div>
