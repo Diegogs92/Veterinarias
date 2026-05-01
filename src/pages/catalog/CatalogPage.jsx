@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Package, Plus, Pencil, Trash2, Search, CheckCircle, XCircle } from 'lucide-react'
+import { Package, Plus, Pencil, Trash2, Search, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
 import Badge from '../../components/ui/Badge'
@@ -60,8 +60,9 @@ export default function CatalogPage() {
     setDeleting(null)
   }
 
-  const inStock  = products.items.filter(p => p.inStock).length
-  const noStock  = products.items.filter(p => !p.inStock).length
+  const inStock   = products.items.filter(p => p.inStock).length
+  const noStock   = products.items.filter(p => !p.inStock).length
+  const lowStock  = products.items.filter(p => p.stock != null && p.stock > 0 && p.stock <= 5).length
 
   return (
     <>
@@ -88,6 +89,15 @@ export default function CatalogPage() {
             <div className="stat-card__label">Sin stock</div>
             <div className="stat-card__value" style={{ color: 'var(--vet-rose)' }}>{noStock}</div>
           </div>
+          {lowStock > 0 && (
+            <div className="stat-card">
+              <div className="stat-card__icon" style={{ color: 'var(--warn)' }}>
+                <AlertTriangle size={32} strokeWidth={1.75} />
+              </div>
+              <div className="stat-card__label">Stock bajo (≤ 5)</div>
+              <div className="stat-card__value" style={{ color: 'var(--warn)' }}>{lowStock}</div>
+            </div>
+          )}
         </div>
 
         {/* Tabs */}
@@ -195,9 +205,15 @@ export default function CatalogPage() {
                           {formatCurrency(p.price)}
                         </td>
                         <td>
-                          {p.inStock
-                            ? <Badge color="green" dot>Disponible</Badge>
-                            : <Badge color="red" dot>Sin stock</Badge>
+                          {p.stock != null
+                            ? p.stock === 0
+                              ? <Badge color="red" dot>Sin stock (0)</Badge>
+                              : p.stock <= 5
+                                ? <Badge color="orange" dot>{p.stock} und.</Badge>
+                                : <Badge color="green" dot>{p.stock} und.</Badge>
+                            : p.inStock
+                              ? <Badge color="green" dot>Disponible</Badge>
+                              : <Badge color="red" dot>Sin stock</Badge>
                           }
                         </td>
                         <td>

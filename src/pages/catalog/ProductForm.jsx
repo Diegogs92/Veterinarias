@@ -5,7 +5,7 @@ import { ScanLine, ImagePlus, X } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { supabase } from '../../lib/supabase'
 
-const EMPTY = { name: '', categoryId: '', price: '', inStock: true, barcode: '', photoUrl: '' }
+const EMPTY = { name: '', categoryId: '', price: '', inStock: true, barcode: '', photoUrl: '', stock: '' }
 const BUCKET = 'product-photos'
 
 export default function ProductForm({ isOpen, onClose, onSave, initial = null }) {
@@ -21,7 +21,13 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
   useEffect(() => {
     if (isOpen) {
       setForm(initial
-        ? { ...EMPTY, ...initial, price: String(Math.round(initial.price)), barcode: initial.barcode ?? '', photoUrl: initial.photoUrl ?? '' }
+        ? {
+            ...EMPTY, ...initial,
+            price: String(Math.round(initial.price)),
+            barcode: initial.barcode ?? '',
+            photoUrl: initial.photoUrl ?? '',
+            stock: initial.stock != null ? String(initial.stock) : '',
+          }
         : EMPTY
       )
       setErrors({})
@@ -34,6 +40,16 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
     setForm(f => ({ ...f, [field]: value }))
     setErrors(er => ({ ...er, [field]: '' }))
+  }
+
+  const handleStockChange = (e) => {
+    const raw = e.target.value
+    if (raw === '') {
+      setForm(f => ({ ...f, stock: '' }))
+    } else {
+      const val = Math.max(0, parseInt(raw, 10) || 0)
+      setForm(f => ({ ...f, stock: String(val), inStock: val > 0 }))
+    }
   }
 
   const handlePhotoChange = (e) => {
@@ -77,11 +93,15 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
       photoUrl = data.publicUrl
     }
 
-    onSave({ ...form, price: parseInt(form.price, 10), photoUrl })
+    const stockVal = form.stock === '' ? null : parseInt(form.stock, 10)
+    const inStock  = stockVal != null ? stockVal > 0 : form.inStock
+
+    onSave({ ...form, price: parseInt(form.price, 10), photoUrl, stock: stockVal, inStock })
     onClose()
   }
 
   const displayPhoto = photoPreview || form.photoUrl
+  const tracksStock  = form.stock !== ''
 
   return (
     <>
@@ -183,46 +203,64 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
         </div>
       </div>
 
-      <div className="form-group">
-        <label className="form-label">Código de barras</label>
-        <div style={{ display: 'flex', gap: 8 }}>
+      <div className="form-row form-row--2">
+        <div className="form-group">
+          <label className="form-label">Código de barras</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              className="form-input"
+              value={form.barcode} onChange={set('barcode')}
+              placeholder="7790001234"
+              style={{ flex: 1 }}
+            />
+            <button
+              type="button"
+              className="btn btn--subtle btn--icon"
+              onClick={() => setScannerOpen(true)}
+              title="Escanear con cámara"
+              style={{ flexShrink: 0 }}
+            >
+              <ScanLine size={18} strokeWidth={2} />
+            </button>
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Stock (unidades)</label>
           <input
             className="form-input"
-            value={form.barcode} onChange={set('barcode')}
-            placeholder="7790001234"
-            style={{ flex: 1 }}
+            type="number" min="0" step="1"
+            value={form.stock}
+            onFocus={e => e.target.select()}
+            onChange={handleStockChange}
+            placeholder="Sin control"
           />
-          <button
-            type="button"
-            className="btn btn--subtle btn--icon"
-            onClick={() => setScannerOpen(true)}
-            title="Escanear con cámara"
-            style={{ flexShrink: 0 }}
-          >
-            <ScanLine size={18} strokeWidth={2} />
-          </button>
+          <span style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4, display: 'block' }}>
+            Dejá vacío si no llevás control de unidades
+          </span>
         </div>
       </div>
 
-      <div className="form-group" style={{ marginBottom: 0 }}>
-        <label className="form-label">Disponibilidad</label>
-        <div className="toggle-group">
-          <button
-            type="button"
-            className={`toggle-btn${form.inStock ? ' on--ok' : ''}`}
-            onClick={() => setForm(f => ({ ...f, inStock: true }))}
-          >
-            ✅ En stock
-          </button>
-          <button
-            type="button"
-            className={`toggle-btn${!form.inStock ? ' on--danger' : ''}`}
-            onClick={() => setForm(f => ({ ...f, inStock: false }))}
-          >
-            ✗ Sin stock
-          </button>
+      {!tracksStock && (
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label className="form-label">Disponibilidad</label>
+          <div className="toggle-group">
+            <button
+              type="button"
+              className={`toggle-btn${form.inStock ? ' on--ok' : ''}`}
+              onClick={() => setForm(f => ({ ...f, inStock: true }))}
+            >
+              ✅ En stock
+            </button>
+            <button
+              type="button"
+              className={`toggle-btn${!form.inStock ? ' on--danger' : ''}`}
+              onClick={() => setForm(f => ({ ...f, inStock: false }))}
+            >
+              ✗ Sin stock
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </Modal>
 
     <BarcodeScanner

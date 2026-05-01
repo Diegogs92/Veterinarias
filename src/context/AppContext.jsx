@@ -228,6 +228,30 @@ export function AppProvider({ children }) {
     return () => { supabase.removeChannel(channel) }
   }, [currentUser?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Stock helpers ─────────────────────────────────────────────────────────
+  const applyStockDelta = (saleItems, sign) => {
+    // sign = -1 para descontar (venta nueva), +1 para restaurar (eliminar/editar)
+    const delta = {}
+    for (const item of saleItems) {
+      if (item.productId) delta[item.productId] = (delta[item.productId] || 0) + item.quantity * sign
+    }
+    if (!Object.keys(delta).length) return
+    products.setItems(prev => {
+      const next = [...prev]
+      for (const [prodId, qty] of Object.entries(delta)) {
+        const idx = next.findIndex(p => p.id === prodId)
+        if (idx === -1 || next[idx].stock == null) continue
+        const newStock = Math.max(0, next[idx].stock + qty)
+        next[idx] = { ...next[idx], stock: newStock, inStock: newStock > 0 }
+        supabase.from('products')
+          .update({ stock: newStock, in_stock: newStock > 0 })
+          .eq('id', prodId)
+          .then(({ error }) => { if (error) console.error('[products] stock delta:', error.message) })
+      }
+      return next
+    })
+  }
+
   // ── Sales — special CRUD (items go to sale_items table) ───────────────────
   const addSale = (data) => {
     const { items: saleItems = [], ...saleData } = data
@@ -236,12 +260,14 @@ export function AppProvider({ children }) {
     const sale = { ...saleData, id, createdAt: now }
 
     _sales.setItems(prev => [...prev, { ...sale, items: saleItems }])
+    applyStockDelta(saleItems, -1)
 
     ;(async () => {
       const { error } = await supabase.from('sales').insert(objToSnake(sale, ['updatedAt']))
       if (error) {
         console.error('[sales] insert:', error.message, objToSnake(sale, ['updatedAt']))
         setSales.current(prev => prev.filter(s => s.id !== id))
+        applyStockDelta(saleItems, +1) // revertir
         alert(`❌ Error al guardar la venta:\n${error.message}`)
         return
       }
@@ -263,10 +289,16 @@ export function AppProvider({ children }) {
   const updateSale = (id, data) => {
     const { items: saleItems, ...saleData } = data
     const now = new Date().toISOString()
+    const oldItems = _sales.items.find(s => s.id === id)?.items || []
 
     _sales.setItems(prev => prev.map(s =>
       s.id === id ? { ...s, ...saleData, items: saleItems ?? s.items, updatedAt: now } : s
     ))
+
+    if (saleItems !== undefined) {
+      applyStockDelta(oldItems, +1)   // restaurar stock viejo
+      applyStockDelta(saleItems, -1)  // descontar stock nuevo
+    }
 
     ;(async () => {
       const { error } = await supabase.from('sales')
@@ -288,7 +320,9 @@ export function AppProvider({ children }) {
   }
 
   const removeSale = (id) => {
+    const sale = _sales.items.find(s => s.id === id)
     _sales.setItems(prev => prev.filter(s => s.id !== id))
+    if (sale?.items?.length) applyStockDelta(sale.items, +1) // restaurar stock
     supabase.from('sales').delete().eq('id', id)
       .then(({ error }) => { if (error) console.error('[sales] delete:', error.message) })
   }
