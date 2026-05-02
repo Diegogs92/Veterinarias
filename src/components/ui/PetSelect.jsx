@@ -104,8 +104,8 @@ export default function PetSelect({
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--accent)' }}>Nueva mascota</span>
-            <button type="button" className="btn btn--subtle btn--icon btn--sm" onClick={close}>
-              <X size={18} strokeWidth={2} />
+            <button type="button" className="btn btn--subtle btn--icon" onClick={close}>
+              <X size={22} strokeWidth={2} />
             </button>
           </div>
 
