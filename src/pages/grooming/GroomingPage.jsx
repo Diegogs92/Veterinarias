@@ -143,13 +143,14 @@ export default function GroomingPage() {
             action={<button className="btn btn--primary" onClick={() => setFormOpen(true)}>+ Nuevo turno</button>}
           />
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16 }}>
             <div className="card card--no-hover card--table">
               <div className="table-wrap">
                 <table>
                   <thead>
                     <tr>
                       <th>Mascota</th>
+                      <th>Dueño</th>
                       <th>Precio</th>
                       <th>Estado</th>
                       <th style={{ width: 80 }}></th>
@@ -158,6 +159,7 @@ export default function GroomingPage() {
                   <tbody>
                     {filtered.map(g => {
                       const pet   = pets.find(g.petId)
+                      const owner = pet?.ownerId ? owners.find(pet.ownerId) : null
                       return (
                         <tr
                           key={g.id}
@@ -176,6 +178,21 @@ export default function GroomingPage() {
                               </div>
                               <span style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</span>
                             </div>
+                          </td>
+                          <td>
+                            {owner ? (
+                              <div>
+                                <div style={{ fontWeight: 600, fontSize: 14 }}>{owner.name}</div>
+                                {owner.phone && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{owner.phone}</span>
+                                    <a href={whatsappUrl(owner.phone)} target="_blank" rel="noopener noreferrer" style={{ color: '#25D366' }} onClick={e => e.stopPropagation()}>
+                                      <WhatsAppIcon size={13} />
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            ) : <span style={{ color: 'var(--text-tertiary)' }}>—</span>}
                           </td>
                           <td style={{ fontWeight: 700, color: 'var(--vet-teal)', fontSize: 14 }}>
                             {g.price > 0 ? formatCurrency(g.price) : '—'}
