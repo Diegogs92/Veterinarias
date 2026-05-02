@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import StepWizard from '../../components/ui/StepWizard'
-import OwnerSelect from '../../components/ui/OwnerSelect'
 import PetSelect from '../../components/ui/PetSelect'
 import { useApp } from '../../context/AppContext'
 import { todayStr, formatCurrency } from '../../utils/helpers'
@@ -23,9 +22,8 @@ const EMPTY = {
 const STEPS = ['Paciente', 'Consulta', 'Pago']
 
 const PAYMENT_OPTS = [
-  { value: 'pending', label: 'Pendiente', tone: 'warn'   },
-  { value: 'partial', label: 'Parcial',   tone: 'warn'   },
-  { value: 'paid',    label: 'Pagado',    tone: 'ok'     },
+  { value: 'pending', label: 'No pagado', tone: 'warn' },
+  { value: 'paid',    label: 'Pagado',    tone: 'ok'   },
 ]
 
 export default function ConsultaForm({ isOpen, onClose, onSave, initial = null }) {
@@ -84,7 +82,7 @@ export default function ConsultaForm({ isOpen, onClose, onSave, initial = null }
   const handleSave = () => {
     const errs = validateStep(step)
     if (Object.keys(errs).length) { setErrors(errs); return }
-    onSave({ ...form, price: total })
+    onSave({ ...form, price: total, petId: form.petId || null, ownerId: form.ownerId || null })
     onClose()
   }
 
@@ -98,14 +96,7 @@ export default function ConsultaForm({ isOpen, onClose, onSave, initial = null }
     >
       {/* ── Paso 1: Paciente ── */}
       {step === 0 && (
-        <>
-          <PetSelect value={form.petId} onChange={handlePetChange} error={errors.petId} required />
-          <OwnerSelect
-            value={form.ownerId}
-            onChange={id => setForm(f => ({ ...f, ownerId: id }))}
-            disabled={!!form.petId} label="Dueño"
-          />
-        </>
+        <PetSelect value={form.petId} onChange={handlePetChange} error={errors.petId} required />
       )}
 
       {/* ── Paso 2: Consulta ── */}
