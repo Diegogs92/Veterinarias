@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Hospital, Scissors, Syringe, ShoppingCart,
   PawPrint, Stethoscope, Home, PackageSearch, Banknote, ShieldCheck,
-  Calendar, Activity,
+  Calendar, Activity, Sunrise, Sunset,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
@@ -124,16 +124,22 @@ export default function Dashboard() {
               <div className="stat-card__sub">{formatCurrency(stats.salesTodayAmount)}</div>
             )}
             {(stats.turnoManiana.count > 0 || stats.turnoTarde.count > 0) && (
-              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 3, width: '100%', fontSize: 12 }}>
+              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4, width: '100%', fontSize: 12 }}>
                 {stats.turnoManiana.count > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-                    <span>☀️ Mañana ({stats.turnoManiana.count})</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Sunrise size={13} strokeWidth={2} />
+                      Turno Mañana ({stats.turnoManiana.count})
+                    </span>
                     <span style={{ fontWeight: 600 }}>{formatCurrency(stats.turnoManiana.amount)}</span>
                   </div>
                 )}
                 {stats.turnoTarde.count > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-                    <span>🌆 Tarde ({stats.turnoTarde.count})</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Sunset size={13} strokeWidth={2} />
+                      Turno Tarde ({stats.turnoTarde.count})
+                    </span>
                     <span style={{ fontWeight: 600 }}>{formatCurrency(stats.turnoTarde.amount)}</span>
                   </div>
                 )}
