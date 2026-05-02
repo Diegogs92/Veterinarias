@@ -41,23 +41,31 @@ const PAYMENT_METHODS = [
 
 export default function GroomingPage() {
   const { grooming, pets, owners } = useApp()
-  const [search, setSearch]     = useState('')
-  const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing]   = useState(null)
-  const [deleting, setDeleting] = useState(null)
-  const [paying, setPaying]     = useState(null)
+  const [search, setSearch]         = useState('')
+  const [filterService, setFilterService] = useState('')
+  const [filterPago, setFilterPago]   = useState('')
+  const [filterFecha, setFilterFecha] = useState('')
+  const [formOpen, setFormOpen]     = useState(false)
+  const [editing, setEditing]       = useState(null)
+  const [deleting, setDeleting]     = useState(null)
+  const [paying, setPaying]         = useState(null)
 
-  const filtered = useMemo(() =>
-    grooming.items
+  const filtered = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    return grooming.items
       .filter(g => {
         const pet   = pets.find(g.petId)
         const owner = owners.find(g.ownerId)
-        const str   = `${pet?.name || ''} ${owner?.name || ''} ${(g.services || []).join(' ')} ${g.observations || ''}`.toLowerCase()
-        return str.includes(search.toLowerCase())
+        const str   = `${pet?.name || ''} ${owner?.name || ''}`.toLowerCase()
+        if (search && !str.includes(search.toLowerCase())) return false
+        if (filterService && !(g.services || []).includes(filterService)) return false
+        if (filterPago === 'pagado' && !g.paid) return false
+        if (filterPago === 'pendiente' && g.paid) return false
+        if (filterFecha === 'hoy' && g.date !== today) return false
+        return true
       })
-      .sort((a, b) => new Date(b.date) - new Date(a.date)),
-    [grooming.items, search, pets, owners]
-  )
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+  }, [grooming.items, search, filterService, filterPago, filterFecha, pets, owners])
 
   const handleSave     = (data) => { if (editing) grooming.update(editing.id, data); else grooming.add(data); setEditing(null) }
   const handleDelete   = () => { grooming.remove(deleting.id); setDeleting(null) }
@@ -76,12 +84,12 @@ export default function GroomingPage() {
         subtitle={`${grooming.items.length} servicio${grooming.items.length !== 1 ? 's' : ''} registrado${grooming.items.length !== 1 ? 's' : ''}`}
       />
       <div className="page">
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <div className="search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 360 }}>
             <span className="search-icon"><Search size={18} strokeWidth={2} /></span>
             <input
               className="form-input"
-              placeholder="Buscar mascota, dueño, servicio..."
+              placeholder="Buscar mascota o dueño..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -89,6 +97,22 @@ export default function GroomingPage() {
           <button className="btn btn--primary" style={{ marginLeft: 'auto' }} onClick={() => { setEditing(null); setFormOpen(true) }}>
             + Nuevo turno
           </button>
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="tabs">
+            <button className={`tab${filterFecha === '' ? ' active' : ''}`} onClick={() => setFilterFecha('')}>Todas las fechas</button>
+            <button className={`tab${filterFecha === 'hoy' ? ' active' : ''}`} onClick={() => setFilterFecha('hoy')}>Hoy</button>
+          </div>
+          <div className="tabs">
+            <button className={`tab${filterService === '' ? ' active' : ''}`} onClick={() => setFilterService('')}>Todos los servicios</button>
+            <button className={`tab${filterService === 'Baño' ? ' active' : ''}`} onClick={() => setFilterService('Baño')}>Baño</button>
+            <button className={`tab${filterService === 'Baño + corte completo' ? ' active' : ''}`} onClick={() => setFilterService('Baño + corte completo')}>Baño + corte completo</button>
+          </div>
+          <div className="tabs">
+            <button className={`tab${filterPago === '' ? ' active' : ''}`} onClick={() => setFilterPago('')}>Todos</button>
+            <button className={`tab${filterPago === 'pagado' ? ' active' : ''}`} onClick={() => setFilterPago('pagado')}>Pagado</button>
+            <button className={`tab${filterPago === 'pendiente' ? ' active' : ''}`} onClick={() => setFilterPago('pendiente')}>Pendiente</button>
+          </div>
         </div>
 
         {filtered.length === 0 ? (
@@ -106,8 +130,6 @@ export default function GroomingPage() {
                   <tr>
                     <th>Mascota</th>
                     <th>Dueño</th>
-                    <th>Fecha</th>
-                    <th>Servicios</th>
                     <th>Precio</th>
                     <th>Pago</th>
                     <th></th>
@@ -151,23 +173,6 @@ export default function GroomingPage() {
                               </>
                             )}
                           </div>
-                        </td>
-                        <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{formatDate(g.date)}</td>
-                        <td>
-                          {(g.services || []).length === 0
-                            ? <span style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>—</span>
-                            : (
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                                {g.services.map(s => (
-                                  <span key={s} style={{
-                                    fontSize: 11, padding: '2px 7px',
-                                    background: 'var(--bg-input)',
-                                    borderRadius: 'var(--r-full)',
-                                  }}>{s}</span>
-                                ))}
-                              </div>
-                            )
-                          }
                         </td>
                         <td style={{ fontWeight: 600, color: 'var(--vet-teal)' }}>
                           {g.price > 0 ? formatCurrency(g.price) : '—'}
