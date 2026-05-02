@@ -15,6 +15,22 @@ import SpeciesIcon from '../../components/ui/SpeciesIcon'
 import GroomingForm from './GroomingForm'
 import { formatDate, formatCurrency } from '../../utils/helpers'
 
+function PendingBtn({ onClick }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color var(--t-fast)', color: hovered ? 'var(--ok)' : 'var(--warn)' }}
+    >
+      <Clock size={15} strokeWidth={2} />
+      {hovered ? 'Cobrar' : 'Pendiente'}
+    </button>
+  )
+}
+
 const PAYMENT_METHODS = [
   { value: 'efectivo',        label: 'Efectivo',         surcharge: 0    },
   { value: 'tarjeta_credito', label: 'Tarjeta crédito',  surcharge: 0.20 },
@@ -159,7 +175,7 @@ export default function GroomingPage() {
                         <td>
                           {g.paid
                             ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontSize: 13, fontWeight: 600 }}><CheckCircle2 size={15} strokeWidth={2} />Pagado</span>
-                            : <button type="button" onClick={() => setPaying(g)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--warn)', fontSize: 13, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}><Clock size={15} strokeWidth={2} />Pendiente</button>
+                            : <PendingBtn onClick={() => setPaying(g)} />
                           }
                         </td>
                         <td>
