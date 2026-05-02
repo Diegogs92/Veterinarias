@@ -267,7 +267,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
               <div>
                 <label className="form-label" style={{ marginBottom: 8 }}>Medio de pago</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {PAYMENT_METHODS.map(({ value, label, Icon }) => {
+                  {PAYMENT_METHODS.map(({ value, label, Icon, surcharge: sc }) => {
                     const active = form.paymentMethod === value
                     return (
                       <button
@@ -285,7 +285,8 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                         }}
                       >
                         <Icon size={16} strokeWidth={2} style={{ flexShrink: 0 }} />
-                        {label}
+                        <span style={{ flex: 1, textAlign: 'left' }}>{label}</span>
+                        {sc > 0 && <span style={{ fontSize: 11, opacity: 0.75 }}>+{sc * 100}%</span>}
                       </button>
                     )
                   })}

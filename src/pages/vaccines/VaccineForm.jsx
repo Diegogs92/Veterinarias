@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react'
 import Modal from '../../components/ui/Modal'
 import { useApp } from '../../context/AppContext'
-import { todayStr } from '../../utils/helpers'
+import { todayStr, formatCurrency } from '../../utils/helpers'
+import { Banknote, CreditCard, Wallet, ArrowRightLeft } from 'lucide-react'
 
 const EMPTY = { petId: '', vaccineName: '', catalogId: '', date: todayStr(), nextDue: '', notes: '', paymentMethod: 'efectivo', price: '' }
 
 const PAYMENT_METHODS = [
-  { value: 'efectivo',        label: 'Efectivo' },
-  { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
-  { value: 'tarjeta_debito',  label: 'Tarjeta débito' },
-  { value: 'transferencia',   label: 'Transferencia' },
+  { value: 'efectivo',        label: 'Efectivo',           Icon: Banknote,       surcharge: 0    },
+  { value: 'tarjeta_credito', label: 'Tarjeta crédito',    Icon: CreditCard,     surcharge: 0.20 },
+  { value: 'tarjeta_debito',  label: 'Tarjeta débito',     Icon: Wallet,         surcharge: 0.05 },
+  { value: 'transferencia',   label: 'Transferencia',      Icon: ArrowRightLeft, surcharge: 0    },
 ]
 
 function addOneYear(dateStr) {
@@ -56,20 +57,26 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
     return errs
   }
 
+  const basePrice       = parseFloat(form.price) || 0
+  const surcharge       = PAYMENT_METHODS.find(m => m.value === form.paymentMethod)?.surcharge ?? 0
+  const surchargeAmount = Math.round(basePrice * surcharge)
+  const total           = basePrice + surchargeAmount
+
   const handleSave = () => {
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
-    onSave({ ...form, nextDue: form.nextDue || null, price: parseFloat(form.price) || 0 })
+    onSave({ ...form, nextDue: form.nextDue || null, price: total })
     onClose()
   }
 
-  const sortedPets = [...pets.items].sort((a, b) => a.name.localeCompare(b.name))
+  const sortedPets     = [...pets.items].sort((a, b) => a.name.localeCompare(b.name))
   const catalogOptions = [...vaccineCatalog.items].sort((a, b) => a.name.localeCompare(b.name))
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      size="lg"
       title={initial?.petId ? 'Editar registro de vacuna' : 'Registrar vacuna'}
       footer={
         <>
@@ -80,55 +87,59 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
         </>
       }
     >
-      <div className="form-group">
-        <label className="form-label">Mascota *</label>
-        <select
-          className={`form-input${errors.petId ? ' form-input--error' : ''}`}
-          value={form.petId}
-          onChange={set('petId')}
-        >
-          <option value="">Seleccionar mascota...</option>
-          {sortedPets.map(p => {
-            const owner = owners.find(p.ownerId)
-            return (
-              <option key={p.id} value={p.id}>
-                {p.name}{owner ? ` — ${owner.name}${owner.apellido ? ` ${owner.apellido}` : ''}` : ''}
-              </option>
-            )
-          })}
-        </select>
-        {errors.petId && <span className="form-error">{errors.petId}</span>}
-      </div>
-
-      <div className="form-group">
-        <label className="form-label">Vacuna *</label>
-        {catalogOptions.length > 0 && (
-          <select
-            className={`form-input${errors.vaccineName ? ' form-input--error' : ''}`}
-            value={form.catalogId || ''}
-            onChange={handleCatalogSelect}
-          >
-            <option value="">Seleccionar del catálogo...</option>
-            {catalogOptions.map(v => (
-              <option key={v.id} value={v.id}>{v.name}</option>
-            ))}
-            <option value="__custom">Otra / personalizada</option>
-          </select>
-        )}
-        {(form.catalogId === '__custom' || catalogOptions.length === 0) && (
-          <input
-            className={`form-input${errors.vaccineName ? ' form-input--error' : ''}`}
-            value={form.vaccineName}
-            onChange={set('vaccineName')}
-            placeholder="Nombre de la vacuna"
-            style={{ marginTop: catalogOptions.length > 0 ? 8 : 0 }}
-            autoFocus
-          />
-        )}
-        {errors.vaccineName && <span className="form-error">{errors.vaccineName}</span>}
-      </div>
-
+      {/* Fila 1: Mascota + Vacuna */}
       <div className="form-row form-row--2">
+        <div className="form-group">
+          <label className="form-label">Mascota *</label>
+          <select
+            className={`form-input${errors.petId ? ' form-input--error' : ''}`}
+            value={form.petId}
+            onChange={set('petId')}
+          >
+            <option value="">Seleccionar mascota...</option>
+            {sortedPets.map(p => {
+              const owner = owners.find(p.ownerId)
+              return (
+                <option key={p.id} value={p.id}>
+                  {p.name}{owner ? ` — ${owner.name}${owner.apellido ? ` ${owner.apellido}` : ''}` : ''}
+                </option>
+              )
+            })}
+          </select>
+          {errors.petId && <span className="form-error">{errors.petId}</span>}
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Vacuna *</label>
+          {catalogOptions.length > 0 && (
+            <select
+              className={`form-input${errors.vaccineName ? ' form-input--error' : ''}`}
+              value={form.catalogId || ''}
+              onChange={handleCatalogSelect}
+            >
+              <option value="">Seleccionar del catálogo...</option>
+              {catalogOptions.map(v => (
+                <option key={v.id} value={v.id}>{v.name}</option>
+              ))}
+              <option value="__custom">Otra / personalizada</option>
+            </select>
+          )}
+          {(form.catalogId === '__custom' || catalogOptions.length === 0) && (
+            <input
+              className={`form-input${errors.vaccineName ? ' form-input--error' : ''}`}
+              value={form.vaccineName}
+              onChange={set('vaccineName')}
+              placeholder="Nombre de la vacuna"
+              style={{ marginTop: catalogOptions.length > 0 ? 8 : 0 }}
+              autoFocus
+            />
+          )}
+          {errors.vaccineName && <span className="form-error">{errors.vaccineName}</span>}
+        </div>
+      </div>
+
+      {/* Fila 2: Fecha + Vencimiento + Monto */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
         <div className="form-group">
           <label className="form-label">Fecha aplicada *</label>
           <input
@@ -143,11 +154,8 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
             className="form-input"
             type="date" value={form.nextDue} onChange={set('nextDue')}
           />
-          <span className="form-hint">Se calcula automáticamente como +1 año</span>
+          <span className="form-hint">+1 año automático</span>
         </div>
-      </div>
-
-      <div className="form-row form-row--2">
         <div className="form-group">
           <label className="form-label">Monto (ARS)</label>
           <div style={{ position: 'relative' }}>
@@ -163,16 +171,57 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
             />
           </div>
         </div>
-        <div className="form-group">
-          <label className="form-label">Medio de pago</label>
-          <select className="form-input" value={form.paymentMethod} onChange={set('paymentMethod')}>
-            {PAYMENT_METHODS.map(m => (
-              <option key={m.value} value={m.value}>{m.label}</option>
-            ))}
-          </select>
+      </div>
+
+      {/* Fila 3: Medio de pago (4 botones en 1 fila) */}
+      <div className="form-group">
+        <label className="form-label">Medio de pago</label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+          {PAYMENT_METHODS.map(({ value, label, Icon, surcharge: sc }) => {
+            const active = form.paymentMethod === value
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setForm(f => ({ ...f, paymentMethod: value }))}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: 5, padding: '10px 8px',
+                  borderRadius: 'var(--r-md)', cursor: 'pointer',
+                  border: `2px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+                  background: active ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'var(--bg-sub)',
+                  color: active ? 'var(--accent)' : 'var(--text-secondary)',
+                  fontWeight: active ? 700 : 500,
+                  fontSize: 12, transition: 'all var(--t-fast)',
+                }}
+              >
+                <Icon size={18} strokeWidth={2} />
+                <span style={{ textAlign: 'center', lineHeight: 1.2 }}>{label}</span>
+                {sc > 0 && <span style={{ fontSize: 10, opacity: 0.8, fontWeight: 600 }}>+{sc * 100}%</span>}
+              </button>
+            )
+          })}
         </div>
       </div>
 
+      {/* Recargo */}
+      {surchargeAmount > 0 && (
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '8px 14px', borderRadius: 'var(--r-md)', background: 'var(--bg-sub)', border: '1px solid var(--border)', marginTop: -4 }}>
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--text-secondary)' }}>
+            <span>Subtotal</span><span>{formatCurrency(basePrice)}</span>
+          </div>
+          <div style={{ width: 1, height: 20, background: 'var(--border)' }} />
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', fontSize: 13, color: 'var(--warn)', fontWeight: 600 }}>
+            <span>Recargo ({surcharge * 100}%)</span><span>+{formatCurrency(surchargeAmount)}</span>
+          </div>
+          <div style={{ width: 1, height: 20, background: 'var(--border)' }} />
+          <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 14, color: 'var(--accent)' }}>
+            <span>Total</span><span>{formatCurrency(total)}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Observaciones */}
       <div className="form-group" style={{ marginBottom: 0 }}>
         <label className="form-label">Observaciones</label>
         <textarea
@@ -180,7 +229,7 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
           value={form.notes}
           onChange={set('notes')}
           placeholder="Lote, veterinario, reacciones..."
-          rows={3}
+          rows={2}
         />
       </div>
     </Modal>
