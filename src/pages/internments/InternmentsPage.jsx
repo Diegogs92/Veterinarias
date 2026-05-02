@@ -1,20 +1,17 @@
 import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Search, Pencil, Trash2, Hospital, AlertCircle, ClipboardList, Check, X } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, Hospital, AlertCircle, ClipboardList, Check, X } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
-import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import Modal from '../../components/ui/Modal'
-import SpeciesIcon from '../../components/ui/SpeciesIcon'
 import InternmentForm from './InternmentForm'
 import { formatDate, formatDateTime, todayStr } from '../../utils/helpers'
 
 const STATUS = {
-  active:     { label: 'Internado',  color: 'orange' },
-  critical:   { label: 'Crítico',    color: 'red' },
-  improving:  { label: 'Mejorando',  color: 'blue' },
-  discharged: { label: 'Alta',       color: 'green' },
+  active:     { label: 'Internado',  color: 'var(--warn)'   },
+  critical:   { label: 'Crítico',    color: 'var(--danger)' },
+  improving:  { label: 'Mejorando',  color: 'var(--blue)'   },
+  discharged: { label: 'Alta',       color: 'var(--ok)'     },
 }
 
 function daysInterned(admissionDate, dischargeDate) {
@@ -27,15 +24,14 @@ function daysInterned(admissionDate, dischargeDate) {
 
 export default function InternmentsPage() {
   const { internments, pets, owners, addDailyNote, removeDailyNote } = useApp()
-  const navigate = useNavigate()
   const [statusFilter, setStatusFilter] = useState('active')
-  const [search, setSearch] = useState('')
-  const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState(null)
-  const [deleting, setDeleting] = useState(null)
-  const [expanded, setExpanded] = useState(null)
-  const [newNote, setNewNote] = useState('')
+  const [search, setSearch]             = useState('')
+  const [formOpen, setFormOpen]         = useState(false)
+  const [editing, setEditing]           = useState(null)
+  const [deleting, setDeleting]         = useState(null)
   const [dischargeTarget, setDischargeTarget] = useState(null)
+  const [notesTarget, setNotesTarget]   = useState(null)
+  const [newNote, setNewNote]           = useState('')
 
   const activeCount = useMemo(() =>
     internments.items.filter(i => i.status !== 'discharged').length,
@@ -45,9 +41,9 @@ export default function InternmentsPage() {
   const filtered = useMemo(() =>
     internments.items
       .filter(i => {
-        const pet = pets.find(i.petId)
+        const pet   = pets.find(i.petId)
         const owner = owners.find(i.ownerId)
-        const str = `${pet?.name || ''} ${owner?.name || ''} ${i.reason} ${i.diagnosis || ''}`.toLowerCase()
+        const str   = `${pet?.name || ''} ${owner?.name || ''} ${i.reason} ${i.diagnosis || ''}`.toLowerCase()
         return (
           str.includes(search.toLowerCase()) &&
           (statusFilter === 'all' || (statusFilter === 'active' ? i.status !== 'discharged' : i.status === statusFilter))
@@ -61,29 +57,17 @@ export default function InternmentsPage() {
     [internments.items, statusFilter, search, pets, owners]
   )
 
-  const handleSave = (data) => {
-    if (editing) internments.update(editing.id, data)
-    else internments.add(data)
-    setEditing(null)
-  }
-
-  const handleDischarge = () => {
-    internments.update(dischargeTarget.id, { status: 'discharged', dischargeDate: todayStr() })
-    setDischargeTarget(null)
-    if (expanded === dischargeTarget.id) setExpanded(null)
-  }
-
-  const handleAddNote = (internmentId) => {
+  const handleSave      = (data) => { if (editing) internments.update(editing.id, data); else internments.add(data); setEditing(null) }
+  const handleDischarge = () => { internments.update(dischargeTarget.id, { status: 'discharged', dischargeDate: todayStr() }); setDischargeTarget(null) }
+  const handleDelete    = () => { internments.remove(deleting.id); setDeleting(null) }
+  const handleAddNote   = (id) => {
     if (!newNote.trim()) return
-    addDailyNote(internmentId, newNote.trim())
+    addDailyNote(id, newNote.trim())
     setNewNote('')
   }
 
-  const handleDelete = () => {
-    internments.remove(deleting.id)
-    setDeleting(null)
-    if (expanded === deleting.id) setExpanded(null)
-  }
+  const notesIntern = notesTarget ? internments.items.find(i => i.id === notesTarget.id) : null
+  const notes = (notesIntern?.dailyNotes || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date))
 
   return (
     <>
@@ -92,7 +76,6 @@ export default function InternmentsPage() {
         subtitle={activeCount > 0 ? `${activeCount} paciente${activeCount !== 1 ? 's' : ''} internado${activeCount !== 1 ? 's' : ''}` : 'Sin pacientes activos'}
       />
       <div className="page">
-
         {internments.items.some(i => i.status === 'critical') && (
           <div className="alert alert--danger" style={{ marginBottom: 16 }}>
             <AlertCircle size={16} strokeWidth={2} style={{ flexShrink: 0 }} />
@@ -102,12 +85,23 @@ export default function InternmentsPage() {
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-          <div className="search-wrap" style={{ flex: 1, minWidth: 200, maxWidth: 360 }}>
-            <span className="search-icon"><Search size={18} strokeWidth={2} /></span>
-            <input className="form-input" placeholder="Buscar mascota, dueño, motivo..." value={search} onChange={e => setSearch(e.target.value)} />
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="search-wrap" style={{ flex: 1, minWidth: 200 }}>
+            <Search size={18} className="search-icon" />
+            <input
+              className="form-input"
+              style={{ paddingLeft: 36 }}
+              placeholder="Buscar mascota, dueño, motivo..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
           </div>
-          <div className="tabs" style={{ flexShrink: 0 }}>
+          <button className="btn btn--primary" style={{ marginLeft: 'auto' }} onClick={() => { setEditing(null); setFormOpen(true) }}>
+            <Plus size={18} /> Nueva internación
+          </button>
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          <div className="tabs">
             {[
               { value: 'active',     label: 'Activos' },
               { value: 'discharged', label: 'Con alta' },
@@ -123,167 +117,88 @@ export default function InternmentsPage() {
               </button>
             ))}
           </div>
-          <button className="btn btn--primary" style={{ marginLeft: 'auto' }} onClick={() => { setEditing(null); setFormOpen(true) }}>
-            + Nueva internación
-          </button>
         </div>
 
         {filtered.length === 0 ? (
           <EmptyState
-            icon={<Hospital size={48} strokeWidth={1.25} />}
+            icon={<Hospital size={40} strokeWidth={1.5} />}
             title="Sin internaciones"
             text={statusFilter === 'active' ? 'No hay pacientes internados actualmente.' : 'No hay registros con estos filtros.'}
             action={statusFilter === 'active' && (
-              <button className="btn btn--primary" onClick={() => setFormOpen(true)}>+ Nueva internación</button>
+              <button className="btn btn--primary" onClick={() => setFormOpen(true)}><Plus size={18} /> Nueva internación</button>
             )}
           />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {filtered.map(intern => {
-              const pet = pets.find(intern.petId)
-              const owner = owners.find(intern.ownerId)
-              const st = STATUS[intern.status] || STATUS.active
-              const isCritical = intern.status === 'critical'
-              const isExpanded = expanded === intern.id
-              const notes = (intern.dailyNotes || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date))
-
-              return (
-                <div key={intern.id} className="card card--no-hover">
-                  <div
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', cursor: 'pointer',
-                      borderLeft: `3px solid ${isCritical ? 'var(--red)' : intern.status === 'discharged' ? 'var(--green)' : 'var(--orange)'}`,
-                    }}
-                    onClick={() => setExpanded(isExpanded ? null : intern.id)}
-                  >
-                    <div style={{
-                      width: 48, height: 48, borderRadius: 'var(--r-md)', flexShrink: 0,
-                      background: isCritical ? 'rgba(255,59,48,0.12)' : intern.status === 'discharged' ? 'rgba(52,199,89,0.12)' : 'rgba(255,159,10,0.12)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: isCritical ? 'var(--red)' : intern.status === 'discharged' ? 'var(--green)' : 'var(--orange)',
-                    }}>
-                      <SpeciesIcon species={pet?.species} size={24} strokeWidth={1.5} />
-                    </div>
-
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        <span style={{ fontWeight: 700, fontSize: 15 }}>{pet?.name || '—'}</span>
-                        <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>·</span>
-                        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{owner?.name || '—'}</span>
-                        {intern.cage && (
-                          <>
-                            <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>·</span>
-                            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{intern.cage}</span>
-                          </>
-                        )}
-                      </div>
-                      <div style={{ fontSize: 14, marginTop: 3 }} className="truncate">{intern.reason}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>
-                        Ingreso: {formatDate(intern.admissionDate)} {intern.admissionTime && `· ${intern.admissionTime}`}
-                        {' · '}{daysInterned(intern.admissionDate, intern.dischargeDate)}
-                        {intern.dischargeDate && ` · Alta: ${formatDate(intern.dischargeDate)}`}
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
-                      <Badge color={st.color} dot>{st.label}</Badge>
-                      <div style={{ fontSize: 12, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <ClipboardList size={12} strokeWidth={2} /> {notes.length} nota{notes.length !== 1 ? 's' : ''}
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: 4, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                      {intern.status !== 'discharged' && (
-                        <button className="btn btn--success btn--sm" onClick={() => setDischargeTarget(intern)}>
-                          <Check size={13} strokeWidth={2.5} /> Alta
-                        </button>
-                      )}
-                      <button className="btn btn--subtle btn--icon" onClick={() => { setEditing(intern); setFormOpen(true) }}>
-                        <Pencil size={18} strokeWidth={2} />
-                      </button>
-                      <button className="btn btn--subtle btn--icon" onClick={() => setDeleting(intern)}>
-                        <Trash2 size={18} strokeWidth={2} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {isExpanded && (
-                    <div style={{ borderTop: '1px solid var(--border)', padding: '16px 20px' }}>
-                      <div className="detail-grid" style={{ marginBottom: 20 }}>
-                        {intern.diagnosis  && <div className="detail-item"><div className="detail-item__label">Diagnóstico</div><div className="detail-item__value" style={{ fontSize: 14 }}>{intern.diagnosis}</div></div>}
-                        {intern.treatment  && <div className="detail-item"><div className="detail-item__label">Tratamiento</div><div className="detail-item__value" style={{ fontSize: 14 }}>{intern.treatment}</div></div>}
-                        {intern.medication && <div className="detail-item" style={{ gridColumn: '1/-1' }}><div className="detail-item__label">Medicación</div><div className="detail-item__value" style={{ fontSize: 14 }}>{intern.medication}</div></div>}
-                      </div>
-
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                          <div style={{ fontWeight: 600, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <ClipboardList size={15} strokeWidth={2} style={{ color: 'var(--blue)' }} />
-                            Evolución diaria
-                          </div>
-                          <button className="btn btn--subtle btn--sm" onClick={() => navigate(`/pets/${intern.petId}`)}>
-                            Ver ficha de {pet?.name}
-                          </button>
-                        </div>
-
-                        {intern.status !== 'discharged' && (
-                          <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-                            <input
-                              className="form-input"
-                              style={{ flex: 1 }}
-                              placeholder="Agregar nota de evolución..."
-                              value={newNote}
-                              onChange={e => setNewNote(e.target.value)}
-                              onKeyDown={e => { if (e.key === 'Enter') handleAddNote(intern.id) }}
-                            />
-                            <button className="btn btn--primary btn--sm" onClick={() => handleAddNote(intern.id)} disabled={!newNote.trim()}>
-                              Agregar
+          <div className="card card--no-hover">
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mascota</th>
+                    <th>Dueño</th>
+                    <th>Motivo</th>
+                    <th>Ingreso</th>
+                    <th>Tiempo</th>
+                    <th>Estado</th>
+                    <th style={{ width: 140 }}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(intern => {
+                    const pet   = pets.find(intern.petId)
+                    const owner = owners.find(intern.ownerId)
+                    const st    = STATUS[intern.status] || STATUS.active
+                    const noteCount = (intern.dailyNotes || []).length
+                    return (
+                      <tr key={intern.id}>
+                        <td style={{ fontWeight: 600 }}>{pet?.name || '—'}</td>
+                        <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{owner?.name || '—'}</td>
+                        <td style={{ maxWidth: 200 }}>
+                          <div style={{ fontSize: 13 }} className="truncate">{intern.reason || '—'}</div>
+                        </td>
+                        <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                          {formatDate(intern.admissionDate)}
+                        </td>
+                        <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                          {daysInterned(intern.admissionDate, intern.dischargeDate)}
+                        </td>
+                        <td style={{ whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: st.color }}>{st.label}</span>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                            <button
+                              className="btn btn--subtle btn--icon"
+                              onClick={() => { setNotesTarget(intern); setNewNote('') }}
+                              title="Notas de evolución"
+                              style={{ position: 'relative' }}
+                            >
+                              <ClipboardList size={18} />
+                              {noteCount > 0 && (
+                                <span style={{ position: 'absolute', top: 2, right: 2, background: 'var(--blue)', color: 'white', borderRadius: '50%', width: 14, height: 14, fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                                  {noteCount}
+                                </span>
+                              )}
+                            </button>
+                            {intern.status !== 'discharged' && (
+                              <button className="btn btn--subtle btn--sm" onClick={() => setDischargeTarget(intern)} title="Dar de alta">
+                                <Check size={14} strokeWidth={2.5} /> Alta
+                              </button>
+                            )}
+                            <button className="btn btn--subtle btn--icon" onClick={() => { setEditing(intern); setFormOpen(true) }} title="Editar">
+                              <Pencil size={18} />
+                            </button>
+                            <button className="btn btn--subtle btn--icon" onClick={() => setDeleting(intern)} title="Eliminar" style={{ color: 'var(--vet-rose)' }}>
+                              <Trash2 size={18} />
                             </button>
                           </div>
-                        )}
-
-                        {notes.length === 0 ? (
-                          <p style={{ fontSize: 13, color: 'var(--text-tertiary)', textAlign: 'center', padding: '12px 0' }}>
-                            Sin notas de evolución todavía.
-                          </p>
-                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            {notes.map(note => (
-                              <div
-                                key={note.id}
-                                style={{
-                                  display: 'flex', gap: 12, alignItems: 'flex-start',
-                                  padding: '10px 14px',
-                                  background: 'var(--bg-input)',
-                                  borderRadius: 'var(--r-sm)',
-                                  borderLeft: '3px solid var(--blue)',
-                                }}
-                              >
-                                <div style={{ flex: 1 }}>
-                                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 4 }}>
-                                    {formatDateTime(note.date)}
-                                  </div>
-                                  <div style={{ fontSize: 14 }}>{note.note}</div>
-                                </div>
-                                {intern.status !== 'discharged' && (
-                                  <button
-                                    className="btn btn--subtle btn--icon"
-                                    style={{ flexShrink: 0 }}
-                                    onClick={() => removeDailyNote(intern.id, note.id)}
-                                  >
-                                    <X size={13} strokeWidth={2} />
-                                  </button>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
@@ -294,6 +209,50 @@ export default function InternmentsPage() {
         onSave={handleSave}
         initial={editing}
       />
+
+      {/* Notas de evolución */}
+      <Modal
+        isOpen={!!notesTarget}
+        onClose={() => setNotesTarget(null)}
+        title={`Evolución — ${pets.find(notesTarget?.petId)?.name || ''}`}
+      >
+        {notesTarget?.status !== 'discharged' && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <input
+              className="form-input"
+              style={{ flex: 1 }}
+              placeholder="Agregar nota de evolución..."
+              value={newNote}
+              onChange={e => setNewNote(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleAddNote(notesTarget.id) }}
+            />
+            <button className="btn btn--primary btn--sm" onClick={() => handleAddNote(notesTarget.id)} disabled={!newNote.trim()}>
+              Agregar
+            </button>
+          </div>
+        )}
+        {notes.length === 0 ? (
+          <p style={{ fontSize: 13, color: 'var(--text-tertiary)', textAlign: 'center', padding: '12px 0' }}>
+            Sin notas de evolución todavía.
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {notes.map(note => (
+              <div key={note.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '10px 14px', background: 'var(--bg-input)', borderRadius: 'var(--r-sm)', borderLeft: '3px solid var(--blue)' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 4 }}>{formatDateTime(note.date)}</div>
+                  <div style={{ fontSize: 14 }}>{note.note}</div>
+                </div>
+                {notesTarget?.status !== 'discharged' && (
+                  <button className="btn btn--subtle btn--icon" style={{ flexShrink: 0 }} onClick={() => removeDailyNote(notesTarget.id, note.id)}>
+                    <X size={13} strokeWidth={2} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
 
       <Modal
         isOpen={!!dischargeTarget}
