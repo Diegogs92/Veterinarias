@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Search, Pencil, Trash2, Scissors } from 'lucide-react'
+import { Search, Pencil, Trash2, Scissors, CheckCircle2, Clock } from 'lucide-react'
 
 const WhatsAppIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -78,6 +78,7 @@ export default function GroomingPage() {
                     <th>Fecha</th>
                     <th>Servicios</th>
                     <th>Precio</th>
+                    <th>Pago</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -139,6 +140,12 @@ export default function GroomingPage() {
                         </td>
                         <td style={{ fontWeight: 600, color: 'var(--vet-teal)' }}>
                           {g.price > 0 ? formatCurrency(g.price) : '—'}
+                        </td>
+                        <td>
+                          {g.paid
+                            ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontSize: 13, fontWeight: 600 }}><CheckCircle2 size={15} strokeWidth={2} />Pagado</span>
+                            : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--warn)', fontSize: 13, fontWeight: 600 }}><Clock size={15} strokeWidth={2} />Pendiente</span>
+                          }
                         </td>
                         <td>
                           <div style={{ display: 'flex', gap: 4 }}>

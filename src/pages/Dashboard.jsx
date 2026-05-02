@@ -47,11 +47,16 @@ export default function Dashboard() {
     const salesToday     = sales.items.filter(s => s.date === today)
     const internActive   = internments.items.filter(i => i.status !== 'discharged').length
     const internCritical = internments.items.filter(i => i.status === 'critical').length
+    const getHour = s => s.createdAt ? new Date(s.createdAt).getHours() : -1
+    const turnoManiana = salesToday.filter(s => { const h = getHour(s); return h >= 9 && h < 13 })
+    const turnoTarde   = salesToday.filter(s => { const h = getHour(s); return h >= 17 && h < 21 })
     return {
       internActive, internCritical,
       groomingToday, cirugiasToday,
       salesTodayCount:  salesToday.length,
       salesTodayAmount: salesToday.reduce((s, v) => s + (v.total || 0), 0),
+      turnoManiana: { count: turnoManiana.length, amount: turnoManiana.reduce((s, v) => s + (v.total || 0), 0) },
+      turnoTarde:   { count: turnoTarde.length,   amount: turnoTarde.reduce((s, v) => s + (v.total || 0), 0) },
     }
   }, [internments.items, grooming.items, cirugias.items, sales.items, today])
 
@@ -117,6 +122,22 @@ export default function Dashboard() {
             <div className="stat-card__value" style={{ color: 'var(--vet-emerald)' }}>{stats.salesTodayCount}</div>
             {stats.salesTodayAmount > 0 && (
               <div className="stat-card__sub">{formatCurrency(stats.salesTodayAmount)}</div>
+            )}
+            {(stats.turnoManiana.count > 0 || stats.turnoTarde.count > 0) && (
+              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 3, width: '100%', fontSize: 12 }}>
+                {stats.turnoManiana.count > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                    <span>☀️ Mañana ({stats.turnoManiana.count})</span>
+                    <span style={{ fontWeight: 600 }}>{formatCurrency(stats.turnoManiana.amount)}</span>
+                  </div>
+                )}
+                {stats.turnoTarde.count > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                    <span>🌆 Tarde ({stats.turnoTarde.count})</span>
+                    <span style={{ fontWeight: 600 }}>{formatCurrency(stats.turnoTarde.amount)}</span>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>

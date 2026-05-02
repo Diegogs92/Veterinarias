@@ -1,0 +1,1 @@
+ALTER TABLE grooming_sessions ADD COLUMN IF NOT EXISTS paid BOOLEAN DEFAULT false;

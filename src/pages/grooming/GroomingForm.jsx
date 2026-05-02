@@ -11,7 +11,7 @@ const PAYMENT_METHODS = [
   { value: 'tarjeta_debito',  label: 'Tarjeta débito',   surcharge: 0.05 },
   { value: 'transferencia',   label: 'Transferencia',    surcharge: 0    },
 ]
-const EMPTY = { petId: '', ownerId: '', date: todayStr(), services: [], price: '', observations: '', paymentMethod: 'efectivo' }
+const EMPTY = { petId: '', ownerId: '', date: todayStr(), services: [], price: '', observations: '', paymentMethod: 'efectivo', paid: false }
 const STEPS = ['Turno', 'Servicios']
 
 export default function GroomingForm({ isOpen, onClose, onSave, initial = null }) {
@@ -93,6 +93,13 @@ export default function GroomingForm({ isOpen, onClose, onSave, initial = null }
               {PAYMENT_METHODS.map(m => (
                 <button key={m.value} type="button" className={`toggle-btn${form.paymentMethod === m.value ? ' on' : ''}`} onClick={() => setForm(f => ({ ...f, paymentMethod: m.value }))}>{m.label}</button>
               ))}
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Estado de pago</label>
+            <div className="toggle-group">
+              <button type="button" className={`toggle-btn${!form.paid ? ' on--warn' : ''}`} onClick={() => setForm(f => ({ ...f, paid: false }))}>No pagado</button>
+              <button type="button" className={`toggle-btn${form.paid ? ' on--ok' : ''}`} onClick={() => setForm(f => ({ ...f, paid: true }))}>✓ Pagado</button>
             </div>
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
