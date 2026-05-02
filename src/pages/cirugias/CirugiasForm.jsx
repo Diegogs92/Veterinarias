@@ -5,8 +5,14 @@ import PetSelect from '../../components/ui/PetSelect'
 import { useApp } from '../../context/AppContext'
 import { todayStr } from '../../utils/helpers'
 
-const EMPTY = { petId: '', ownerId: '', date: todayStr(), diagnostico: '', costos: '', observaciones: '' }
+const EMPTY = { petId: '', ownerId: '', date: todayStr(), diagnostico: '', costos: '', observaciones: '', paymentMethod: 'efectivo' }
 const STEPS = ['Paciente', 'Diagnóstico', 'Costos']
+const PAYMENT_METHODS = [
+  { value: 'efectivo',        label: 'Efectivo' },
+  { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
+  { value: 'tarjeta_debito',  label: 'Tarjeta débito' },
+  { value: 'transferencia',   label: 'Transferencia' },
+]
 
 export default function CirugiasForm({ isOpen, onClose, onSave, initial = null }) {
   const { pets } = useApp()
@@ -15,7 +21,7 @@ export default function CirugiasForm({ isOpen, onClose, onSave, initial = null }
   const [step, setStep]     = useState(0)
 
   useEffect(() => {
-    if (isOpen) { setStep(0); setErrors({}); setForm(initial ? { ...initial } : EMPTY) }
+    if (isOpen) { setStep(0); setErrors({}); setForm(initial ? { ...EMPTY, ...initial } : EMPTY) }
   }, [isOpen, initial])
 
   const set = (field) => (e) => { setForm(f => ({ ...f, [field]: e.target.value })); setErrors(er => ({ ...er, [field]: '' })) }
@@ -41,7 +47,7 @@ export default function CirugiasForm({ isOpen, onClose, onSave, initial = null }
   const handleNext = () => { const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }; setStep(s => s + 1) }
   const handleSave = () => {
     const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }
-    onSave({ ...form, costos: parseFloat(form.costos) || 0 }); onClose()
+    onSave({ ...form, costos: parseFloat(form.costos) || 0, petId: form.petId || null, ownerId: form.ownerId || null }); onClose()
   }
 
   return (
@@ -81,6 +87,14 @@ export default function CirugiasForm({ isOpen, onClose, onSave, initial = null }
             <div style={{ position: 'relative' }}>
               <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontWeight: 600, pointerEvents: 'none' }}>$</span>
               <input className="form-input" type="number" min="0" step="1" value={form.costos} onFocus={e => e.target.select()} onChange={set('costos')} placeholder="0" style={{ paddingLeft: 26 }} />
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Medio de pago</label>
+            <div className="toggle-group">
+              {PAYMENT_METHODS.map(m => (
+                <button key={m.value} type="button" className={`toggle-btn${form.paymentMethod === m.value ? ' on' : ''}`} onClick={() => setForm(f => ({ ...f, paymentMethod: m.value }))}>{m.label}</button>
+              ))}
             </div>
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>

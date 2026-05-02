@@ -5,14 +5,19 @@ import PetSelect from '../../components/ui/PetSelect'
 import { useApp } from '../../context/AppContext'
 import { todayStr } from '../../utils/helpers'
 
-const EMPTY = { petId: '', ownerId: '', admissionDate: todayStr(), admissionTime: '08:00', reason: '', diagnosis: '', treatment: '', medication: '', status: 'active', cage: '', dischargeDate: '', dailyNotes: [] }
+const EMPTY = { petId: '', ownerId: '', admissionDate: todayStr(), admissionTime: '08:00', reason: '', diagnosis: '', treatment: '', medication: '', status: 'active', cage: '', dischargeDate: '', dailyNotes: [], paymentMethod: 'efectivo' }
 const STEPS = ['Paciente', 'Clínico', 'Estado']
-
 const STATUS_OPTS = [
   { value: 'active',     label: '🟡 Internado',  tone: 'warn'   },
   { value: 'critical',   label: '🔴 Crítico',     tone: 'danger' },
   { value: 'improving',  label: '🟢 Mejorando',  tone: 'ok'     },
   { value: 'discharged', label: '✅ Alta',         tone: 'ok'     },
+]
+const PAYMENT_METHODS = [
+  { value: 'efectivo',        label: 'Efectivo' },
+  { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
+  { value: 'tarjeta_debito',  label: 'Tarjeta débito' },
+  { value: 'transferencia',   label: 'Transferencia' },
 ]
 
 export default function InternmentForm({ isOpen, onClose, onSave, initial = null }) {
@@ -22,7 +27,7 @@ export default function InternmentForm({ isOpen, onClose, onSave, initial = null
   const [step, setStep]     = useState(0)
 
   useEffect(() => {
-    if (isOpen) { setStep(0); setErrors({}); setForm(initial ? { ...initial, dischargeDate: initial.dischargeDate || '' } : EMPTY) }
+    if (isOpen) { setStep(0); setErrors({}); setForm(initial ? { ...EMPTY, ...initial, dischargeDate: initial.dischargeDate || '' } : EMPTY) }
   }, [isOpen, initial])
 
   const set = (field) => (e) => { setForm(f => ({ ...f, [field]: e.target.value })); setErrors(er => ({ ...er, [field]: '' })) }
@@ -36,7 +41,7 @@ export default function InternmentForm({ isOpen, onClose, onSave, initial = null
   const validateStep = (s) => {
     const errs = {}
     if (s === 0) {
-      if (!form.petId)         errs.petId        = 'Seleccioná una mascota'
+      if (!form.petId)         errs.petId         = 'Seleccioná una mascota'
       if (!form.admissionDate) errs.admissionDate = 'Requerido'
     }
     if (s === 1) {
@@ -46,7 +51,7 @@ export default function InternmentForm({ isOpen, onClose, onSave, initial = null
   }
 
   const handleNext = () => { const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }; setStep(s => s + 1) }
-  const handleSave = () => { onSave({ ...form, dischargeDate: form.dischargeDate || null, dailyNotes: form.dailyNotes || [] }); onClose() }
+  const handleSave = () => { onSave({ ...form, dischargeDate: form.dischargeDate || null, dailyNotes: form.dailyNotes || [], petId: form.petId || null, ownerId: form.ownerId || null }); onClose() }
 
   return (
     <StepWizard
@@ -118,11 +123,19 @@ export default function InternmentForm({ isOpen, onClose, onSave, initial = null
             </div>
           </div>
           {form.status === 'discharged' && (
-            <div className="form-group" style={{ marginBottom: 0 }}>
+            <div className="form-group">
               <label className="form-label">Fecha de alta</label>
               <input className="form-input" type="date" value={form.dischargeDate || ''} onChange={set('dischargeDate')} />
             </div>
           )}
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">Medio de pago</label>
+            <div className="toggle-group">
+              {PAYMENT_METHODS.map(m => (
+                <button key={m.value} type="button" className={`toggle-btn${form.paymentMethod === m.value ? ' on' : ''}`} onClick={() => setForm(f => ({ ...f, paymentMethod: m.value }))}>{m.label}</button>
+              ))}
+            </div>
+          </div>
         </>
       )}
     </StepWizard>

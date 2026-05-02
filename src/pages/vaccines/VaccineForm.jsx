@@ -3,7 +3,14 @@ import Modal from '../../components/ui/Modal'
 import { useApp } from '../../context/AppContext'
 import { todayStr } from '../../utils/helpers'
 
-const EMPTY = { petId: '', vaccineName: '', catalogId: '', date: todayStr(), nextDue: '', notes: '' }
+const EMPTY = { petId: '', vaccineName: '', catalogId: '', date: todayStr(), nextDue: '', notes: '', paymentMethod: 'efectivo' }
+
+const PAYMENT_METHODS = [
+  { value: 'efectivo',        label: 'Efectivo' },
+  { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
+  { value: 'tarjeta_debito',  label: 'Tarjeta débito' },
+  { value: 'transferencia',   label: 'Transferencia' },
+]
 
 function addOneYear(dateStr) {
   if (!dateStr) return ''
@@ -137,6 +144,14 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
         </div>
       </div>
 
+      <div className="form-group">
+        <label className="form-label">Medio de pago</label>
+        <div className="toggle-group">
+          {PAYMENT_METHODS.map(m => (
+            <button key={m.value} type="button" className={`toggle-btn${form.paymentMethod === m.value ? ' on' : ''}`} onClick={() => setForm(f => ({ ...f, paymentMethod: m.value }))}>{m.label}</button>
+          ))}
+        </div>
+      </div>
       <div className="form-group" style={{ marginBottom: 0 }}>
         <label className="form-label">Observaciones</label>
         <textarea

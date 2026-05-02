@@ -5,8 +5,14 @@ import { useApp } from '../../context/AppContext'
 import { todayStr } from '../../utils/helpers'
 
 const SERVICES = ['Baño', 'Baño + corte completo']
-const EMPTY    = { petId: '', ownerId: '', date: todayStr(), services: [], price: '', observations: '' }
-const STEPS    = ['Turno', 'Servicios']
+const PAYMENT_METHODS = [
+  { value: 'efectivo',        label: 'Efectivo' },
+  { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
+  { value: 'tarjeta_debito',  label: 'Tarjeta débito' },
+  { value: 'transferencia',   label: 'Transferencia' },
+]
+const EMPTY = { petId: '', ownerId: '', date: todayStr(), services: [], price: '', observations: '', paymentMethod: 'efectivo' }
+const STEPS = ['Turno', 'Servicios']
 
 export default function GroomingForm({ isOpen, onClose, onSave, initial = null }) {
   const { pets } = useApp()
@@ -15,7 +21,7 @@ export default function GroomingForm({ isOpen, onClose, onSave, initial = null }
   const [step, setStep]     = useState(0)
 
   useEffect(() => {
-    if (isOpen) { setStep(0); setErrors({}); setForm(initial ? { ...initial, services: initial.services || [] } : EMPTY) }
+    if (isOpen) { setStep(0); setErrors({}); setForm(initial ? { ...EMPTY, ...initial, services: initial.services || [] } : EMPTY) }
   }, [isOpen, initial])
 
   const set = (field) => (e) => { setForm(f => ({ ...f, [field]: e.target.value })); setErrors(er => ({ ...er, [field]: '' })) }
@@ -35,7 +41,7 @@ export default function GroomingForm({ isOpen, onClose, onSave, initial = null }
   }
 
   const handleNext = () => { const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }; setStep(s => s + 1) }
-  const handleSave = () => { onSave({ ...form, price: parseFloat(form.price) || 0, time: null }); onClose() }
+  const handleSave = () => { onSave({ ...form, price: parseFloat(form.price) || 0, time: null, petId: form.petId || null, ownerId: form.ownerId || null }); onClose() }
 
   return (
     <StepWizard
@@ -64,6 +70,14 @@ export default function GroomingForm({ isOpen, onClose, onSave, initial = null }
             <div style={{ position: 'relative' }}>
               <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontWeight: 600, pointerEvents: 'none' }}>$</span>
               <input className="form-input" type="number" min="0" step="1" value={form.price} onFocus={e => e.target.select()} onChange={set('price')} placeholder="0" style={{ paddingLeft: 26 }} />
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Medio de pago</label>
+            <div className="toggle-group">
+              {PAYMENT_METHODS.map(m => (
+                <button key={m.value} type="button" className={`toggle-btn${form.paymentMethod === m.value ? ' on' : ''}`} onClick={() => setForm(f => ({ ...f, paymentMethod: m.value }))}>{m.label}</button>
+              ))}
             </div>
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>

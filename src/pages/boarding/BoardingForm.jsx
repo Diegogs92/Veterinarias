@@ -5,8 +5,14 @@ import PetSelect from '../../components/ui/PetSelect'
 import { useApp } from '../../context/AppContext'
 import { todayStr } from '../../utils/helpers'
 
-const EMPTY = { petId: '', ownerId: '', entryDate: todayStr(), exitDate: '', dailyPrice: '', feeding: '', observations: '', status: 'active' }
+const EMPTY = { petId: '', ownerId: '', entryDate: todayStr(), exitDate: '', dailyPrice: '', feeding: '', observations: '', status: 'active', paymentMethod: 'efectivo' }
 const STEPS  = ['Paciente', 'Cuidados']
+const PAYMENT_METHODS = [
+  { value: 'efectivo',        label: 'Efectivo' },
+  { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
+  { value: 'tarjeta_debito',  label: 'Tarjeta débito' },
+  { value: 'transferencia',   label: 'Transferencia' },
+]
 
 export default function BoardingForm({ isOpen, onClose, onSave, initial = null }) {
   const { pets } = useApp()
@@ -15,7 +21,7 @@ export default function BoardingForm({ isOpen, onClose, onSave, initial = null }
   const [step, setStep]     = useState(0)
 
   useEffect(() => {
-    if (isOpen) { setStep(0); setErrors({}); setForm(initial ? { ...initial, exitDate: initial.exitDate || '' } : EMPTY) }
+    if (isOpen) { setStep(0); setErrors({}); setForm(initial ? { ...EMPTY, ...initial, exitDate: initial.exitDate || '' } : EMPTY) }
   }, [isOpen, initial])
 
   const set = (field) => (e) => { setForm(f => ({ ...f, [field]: e.target.value })); setErrors(er => ({ ...er, [field]: '' })) }
@@ -36,7 +42,7 @@ export default function BoardingForm({ isOpen, onClose, onSave, initial = null }
   }
 
   const handleNext = () => { const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }; setStep(s => s + 1) }
-  const handleSave = () => { onSave({ ...form, dailyPrice: parseFloat(form.dailyPrice) || 0, exitDate: form.exitDate || null }); onClose() }
+  const handleSave = () => { onSave({ ...form, dailyPrice: parseFloat(form.dailyPrice) || 0, exitDate: form.exitDate || null, petId: form.petId || null, ownerId: form.ownerId || null }); onClose() }
 
   return (
     <StepWizard
@@ -80,6 +86,14 @@ export default function BoardingForm({ isOpen, onClose, onSave, initial = null }
           <div className="form-group">
             <label className="form-label">Observaciones</label>
             <textarea className="form-input" rows={4} value={form.observations} onChange={set('observations')} placeholder="Medicación, cuidados especiales, notas..." />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Medio de pago</label>
+            <div className="toggle-group">
+              {PAYMENT_METHODS.map(m => (
+                <button key={m.value} type="button" className={`toggle-btn${form.paymentMethod === m.value ? ' on' : ''}`} onClick={() => setForm(f => ({ ...f, paymentMethod: m.value }))}>{m.label}</button>
+              ))}
+            </div>
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">Estado</label>
