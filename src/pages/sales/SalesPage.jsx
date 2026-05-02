@@ -1,27 +1,19 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Search, Plus, Pencil, Trash2, ShoppingCart, TrendingUp, Clock, CircleCheck } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, ShoppingCart, TrendingUp, CircleCheck } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
-import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import Modal from '../../components/ui/Modal'
 import SaleForm from './SaleForm'
 import { formatDate, formatCurrency } from '../../utils/helpers'
 
-const PAYMENT_BADGE = {
-  paid:    { color: 'green',  label: 'Pagado' },
-  unpaid:  { color: 'red',    label: 'Pendiente' },
-  partial: { color: 'orange', label: 'Parcial' },
-}
-
 export default function SalesPage() {
   const { sales } = useApp()
-  const [search, setSearch]       = useState('')
-  const [payFilter, setPayFilter] = useState('')
-  const [formOpen, setFormOpen]   = useState(false)
-  const [editing, setEditing]     = useState(null)
-  const [deleting, setDeleting]   = useState(null)
-  const [toast, setToast]         = useState(false)
+  const [search, setSearch]     = useState('')
+  const [formOpen, setFormOpen] = useState(false)
+  const [editing, setEditing]   = useState(null)
+  const [deleting, setDeleting] = useState(null)
+  const [toast, setToast]       = useState(false)
 
   const showToast = useCallback(() => {
     setToast(true)
@@ -32,34 +24,23 @@ export default function SalesPage() {
     sales.items
       .filter(s => {
         const str = (s.items?.map(i => i.productName).join(' ') || '').toLowerCase()
-        const matchSearch = !search || str.includes(search.toLowerCase())
-        const matchPay    = !payFilter || s.paymentStatus === payFilter
-        return matchSearch && matchPay
+        return !search || str.includes(search.toLowerCase())
       })
       .sort((a, b) => new Date(b.date) - new Date(a.date)),
-    [sales.items, search, payFilter]
+    [sales.items, search]
   )
 
-  const totalSold    = sales.items.reduce((s, v) => s + (v.total || 0), 0)
-  const totalCobrado = sales.items.reduce((s, v) => s + (v.paidAmount || 0), 0)
-  const totalPending = totalSold - totalCobrado
+  const totalSold = sales.items.reduce((s, v) => s + (v.total || 0), 0)
 
   const handleSave = (data) => {
-    if (editing) {
-      sales.update(editing.id, data)
-    } else {
-      sales.add(data)
-    }
+    if (editing) sales.update(editing.id, data)
+    else sales.add(data)
     setEditing(null)
     setFormOpen(false)
     if (!editing) showToast()
   }
 
-  const handleDelete = () => {
-    if (!deleting) return
-    sales.remove(deleting.id)
-    setDeleting(null)
-  }
+  const handleDelete = () => { if (!deleting) return; sales.remove(deleting.id); setDeleting(null) }
 
   return (
     <>
@@ -75,15 +56,8 @@ export default function SalesPage() {
             <div className="stat-card__icon" style={{ color: 'var(--vet-emerald)' }}>
               <TrendingUp size={32} strokeWidth={1.75} />
             </div>
-            <div className="stat-card__label">Cobrado</div>
-            <div className="stat-card__value" style={{ color: 'var(--vet-emerald)', fontSize: 24 }}>{formatCurrency(totalCobrado)}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-card__icon" style={{ color: 'var(--vet-rose)' }}>
-              <Clock size={32} strokeWidth={1.75} />
-            </div>
-            <div className="stat-card__label">Pendiente de cobro</div>
-            <div className="stat-card__value" style={{ color: 'var(--vet-rose)', fontSize: 24 }}>{formatCurrency(totalPending)}</div>
+            <div className="stat-card__label">Total vendido</div>
+            <div className="stat-card__value" style={{ color: 'var(--vet-emerald)', fontSize: 24 }}>{formatCurrency(totalSold)}</div>
           </div>
         </div>
 
@@ -99,12 +73,6 @@ export default function SalesPage() {
               onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <div className="tabs" style={{ flexShrink: 0 }}>
-            <button className={`tab${payFilter === '' ? ' active' : ''}`} onClick={() => setPayFilter('')}>Todos</button>
-            <button className={`tab${payFilter === 'paid' ? ' active' : ''}`} onClick={() => setPayFilter('paid')}>Pagado</button>
-            <button className={`tab${payFilter === 'partial' ? ' active' : ''}`} onClick={() => setPayFilter('partial')}>Parcial</button>
-            <button className={`tab${payFilter === 'unpaid' ? ' active' : ''}`} onClick={() => setPayFilter('unpaid')}>Pendiente</button>
-          </div>
           <button className="btn btn--primary" style={{ marginLeft: 'auto' }} onClick={() => { setEditing(null); setFormOpen(true) }}>
             <Plus size={18} /> Registrar venta
           </button>
@@ -115,8 +83,8 @@ export default function SalesPage() {
           <EmptyState
             icon={<ShoppingCart size={40} strokeWidth={1.5} />}
             title="Sin ventas"
-            text={search || payFilter ? 'No hay ventas que coincidan' : 'Registrá la primera venta'}
-            action={!search && !payFilter
+            text={search ? 'No hay ventas que coincidan' : 'Registrá la primera venta'}
+            action={!search
               ? <button className="btn btn--primary" onClick={() => { setEditing(null); setFormOpen(true) }}>
                   <Plus size={18} /> Registrar venta
                 </button>
@@ -132,13 +100,11 @@ export default function SalesPage() {
                     <th>Fecha</th>
                     <th>Productos</th>
                     <th style={{ textAlign: 'right' }}>Total</th>
-                    <th>Estado</th>
                     <th style={{ width: 80 }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map(sale => {
-                    const badge     = PAYMENT_BADGE[sale.paymentStatus] || PAYMENT_BADGE.unpaid
                     const itemCount = sale.items?.length || 0
                     const firstItem = sale.items?.[0]?.productName || '—'
                     return (
@@ -154,30 +120,13 @@ export default function SalesPage() {
                         </td>
                         <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap' }}>
                           {formatCurrency(sale.total)}
-                          {sale.paymentStatus === 'partial' && (
-                            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 400 }}>
-                              Pagó {formatCurrency(sale.paidAmount)}
-                            </div>
-                          )}
-                        </td>
-                        <td>
-                          <Badge color={badge.color} dot>{badge.label}</Badge>
                         </td>
                         <td>
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                            <button
-                              className="btn btn--subtle btn--icon"
-                              onClick={() => { setEditing(sale); setFormOpen(true) }}
-                              title="Editar"
-                            >
+                            <button className="btn btn--subtle btn--icon" onClick={() => { setEditing(sale); setFormOpen(true) }} title="Editar">
                               <Pencil size={18} />
                             </button>
-                            <button
-                              className="btn btn--subtle btn--icon"
-                              onClick={() => setDeleting(sale)}
-                              title="Eliminar"
-                              style={{ color: 'var(--vet-rose)' }}
-                            >
+                            <button className="btn btn--subtle btn--icon" onClick={() => setDeleting(sale)} title="Eliminar" style={{ color: 'var(--vet-rose)' }}>
                               <Trash2 size={18} />
                             </button>
                           </div>
