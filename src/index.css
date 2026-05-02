@@ -638,9 +638,8 @@ select.form-input {
 
 /* === TABLE === */
 .table-wrap { overflow-x: auto; }
-table { width: 100%; max-width: 700px; border-collapse: collapse; }
-.card .table-wrap { max-width: 700px; }
-.card--table { max-width: none; }
+table { width: 100%; border-collapse: collapse; }
+.card--table table { max-width: 700px; }
 thead th {
   text-align: left;
   padding: 6px 8px;
