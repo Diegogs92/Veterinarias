@@ -3,14 +3,7 @@ import Modal from '../../components/ui/Modal'
 import { useApp } from '../../context/AppContext'
 import { todayStr } from '../../utils/helpers'
 
-const EMPTY = { petId: '', vaccineName: '', catalogId: '', date: todayStr(), nextDue: '', notes: '', paymentMethod: 'efectivo' }
-
-const PAYMENT_METHODS = [
-  { value: 'efectivo',        label: 'Efectivo' },
-  { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
-  { value: 'tarjeta_debito',  label: 'Tarjeta débito' },
-  { value: 'transferencia',   label: 'Transferencia' },
-]
+const EMPTY = { petId: '', vaccineName: '', catalogId: '', date: todayStr(), nextDue: '', notes: '' }
 
 function addOneYear(dateStr) {
   if (!dateStr) return ''
@@ -59,7 +52,8 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
   const handleSave = () => {
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
-    onSave(form)
+    const { paymentMethod: _pm, ...payload } = form
+    onSave(payload)
     onClose()
   }
 
@@ -104,10 +98,9 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
         <label className="form-label">Vacuna *</label>
         {catalogOptions.length > 0 && (
           <select
-            className="form-input"
+            className={`form-input${errors.vaccineName ? ' form-input--error' : ''}`}
             value={form.catalogId || ''}
             onChange={handleCatalogSelect}
-            style={{ marginBottom: 8 }}
           >
             <option value="">Seleccionar del catálogo...</option>
             {catalogOptions.map(v => (
@@ -116,12 +109,16 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
             <option value="__custom">Otra / personalizada</option>
           </select>
         )}
-        <input
-          className={`form-input${errors.vaccineName ? ' form-input--error' : ''}`}
-          value={form.vaccineName}
-          onChange={set('vaccineName')}
-          placeholder="Nombre de la vacuna"
-        />
+        {(form.catalogId === '__custom' || catalogOptions.length === 0) && (
+          <input
+            className={`form-input${errors.vaccineName ? ' form-input--error' : ''}`}
+            value={form.vaccineName}
+            onChange={set('vaccineName')}
+            placeholder="Nombre de la vacuna"
+            style={{ marginTop: catalogOptions.length > 0 ? 8 : 0 }}
+            autoFocus
+          />
+        )}
         {errors.vaccineName && <span className="form-error">{errors.vaccineName}</span>}
       </div>
 
@@ -144,14 +141,6 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
         </div>
       </div>
 
-      <div className="form-group">
-        <label className="form-label">Medio de pago</label>
-        <div className="toggle-group">
-          {PAYMENT_METHODS.map(m => (
-            <button key={m.value} type="button" className={`toggle-btn${form.paymentMethod === m.value ? ' on' : ''}`} onClick={() => setForm(f => ({ ...f, paymentMethod: m.value }))}>{m.label}</button>
-          ))}
-        </div>
-      </div>
       <div className="form-group" style={{ marginBottom: 0 }}>
         <label className="form-label">Observaciones</label>
         <textarea
