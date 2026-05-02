@@ -3,7 +3,7 @@ import Modal from '../../components/ui/Modal'
 import { useApp } from '../../context/AppContext'
 import { todayStr } from '../../utils/helpers'
 
-const EMPTY = { petId: '', vaccineName: '', catalogId: '', date: todayStr(), nextDue: '', notes: '', paymentMethod: 'efectivo' }
+const EMPTY = { petId: '', vaccineName: '', catalogId: '', date: todayStr(), nextDue: '', notes: '', paymentMethod: 'efectivo', price: '' }
 
 const PAYMENT_METHODS = [
   { value: 'efectivo',        label: 'Efectivo' },
@@ -26,7 +26,7 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
 
   useEffect(() => {
     if (isOpen) {
-      setForm(initial ? { ...EMPTY, ...initial } : EMPTY)
+      setForm(initial ? { ...EMPTY, ...initial, price: initial.price != null ? String(initial.price) : '' } : EMPTY)
       setErrors({})
     }
   }, [isOpen, initial])
@@ -59,7 +59,7 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
   const handleSave = () => {
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
-    onSave({ ...form, nextDue: form.nextDue || null })
+    onSave({ ...form, nextDue: form.nextDue || null, price: parseFloat(form.price) || 0 })
     onClose()
   }
 
@@ -147,13 +147,29 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
         </div>
       </div>
 
-      <div className="form-group">
-        <label className="form-label">Medio de pago</label>
-        <div className="toggle-group">
-          {PAYMENT_METHODS.map(m => (
-            <button key={m.value} type="button" className={`toggle-btn${form.paymentMethod === m.value ? ' on' : ''}`}
-              onClick={() => setForm(f => ({ ...f, paymentMethod: m.value }))}>{m.label}</button>
-          ))}
+      <div className="form-row form-row--2">
+        <div className="form-group">
+          <label className="form-label">Monto (ARS)</label>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontWeight: 600, pointerEvents: 'none' }}>$</span>
+            <input
+              className="form-input"
+              type="number" min="0" step="1"
+              value={form.price}
+              onFocus={e => e.target.select()}
+              onChange={set('price')}
+              placeholder="0"
+              style={{ paddingLeft: 26 }}
+            />
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Medio de pago</label>
+          <select className="form-input" value={form.paymentMethod} onChange={set('paymentMethod')}>
+            {PAYMENT_METHODS.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
         </div>
       </div>
 
