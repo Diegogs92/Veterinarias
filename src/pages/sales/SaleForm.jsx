@@ -71,10 +71,14 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
     setTimeout(() => setScanFeedback(null), 3000)
   }
 
-  const removeItem = (idx) => setForm(f => ({ ...f, items: f.items.filter((_, i) => i !== idx) }))
-  const updateQty  = (idx, qty) => {
+  const removeItem  = (idx) => setForm(f => ({ ...f, items: f.items.filter((_, i) => i !== idx) }))
+  const updateQty   = (idx, qty) => {
     const q = Math.max(1, parseInt(qty) || 1)
     setForm(f => { const items = [...f.items]; items[idx] = { ...items[idx], quantity: q, subtotal: q * items[idx].unitPrice }; return { ...f, items } })
+  }
+  const updatePrice = (idx, price) => {
+    const p = parseFloat(price) || 0
+    setForm(f => { const items = [...f.items]; items[idx] = { ...items[idx], unitPrice: p, subtotal: p * items[idx].quantity }; return { ...f, items } })
   }
 
   const handleSave = () => {
@@ -207,7 +211,23 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                       }
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 500, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.productName}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{formatCurrency(item.unitPrice)} c/u</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
+                          <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>$</span>
+                          <input
+                            type="number" min="0" step="1"
+                            value={item.unitPrice}
+                            onChange={e => updatePrice(idx, e.target.value)}
+                            onFocus={e => e.target.select()}
+                            style={{
+                              width: 72, fontSize: 12, color: 'var(--text-tertiary)',
+                              background: 'transparent', border: 'none', borderBottom: '1px dashed var(--border)',
+                              outline: 'none', padding: '0 2px', lineHeight: 1.4,
+                            }}
+                            onMouseEnter={e => e.target.style.borderBottomColor = 'var(--accent)'}
+                            onMouseLeave={e => e.target.style.borderBottomColor = 'var(--border)'}
+                          />
+                          <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>c/u</span>
+                        </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <button type="button" className="btn btn--subtle btn--icon" onClick={() => updateQty(idx, item.quantity - 1)} style={{ width: 28, height: 28 }}><Minus size={13} /></button>
