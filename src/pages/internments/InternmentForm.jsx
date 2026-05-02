@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import StepWizard from '../../components/ui/StepWizard'
-import OwnerSelect from '../../components/ui/OwnerSelect'
 import PetSelect from '../../components/ui/PetSelect'
 import { useApp } from '../../context/AppContext'
 import { todayStr } from '../../utils/helpers'
@@ -64,7 +63,6 @@ export default function InternmentForm({ isOpen, onClose, onSave, initial = null
       {step === 0 && (
         <>
           <PetSelect value={form.petId} onChange={handlePetChange} error={errors.petId} required />
-          <OwnerSelect value={form.ownerId} onChange={id => setForm(f => ({ ...f, ownerId: id }))} disabled={!!form.petId} label="Dueño" />
           <div className="form-row form-row--3">
             <div className="form-group">
               <label className="form-label">Fecha de ingreso *</label>
