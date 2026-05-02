@@ -638,11 +638,13 @@ select.form-input {
 
 /* === TABLE === */
 .table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
+table { width: 100%; max-width: 700px; border-collapse: collapse; }
+.card .table-wrap { max-width: 700px; }
+.card--table { max-width: 700px; }
 thead th {
   text-align: left;
-  padding: 8px 10px;
-  font-size: 11.5px;
+  padding: 6px 8px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
@@ -652,8 +654,8 @@ thead th {
   white-space: nowrap;
 }
 tbody td {
-  padding: 10px 10px;
-  font-size: 15px;
+  padding: 8px 8px;
+  font-size: 16px;
   border-bottom: 1px solid var(--border-2);
   vertical-align: middle;
 }
@@ -1313,7 +1315,7 @@ tbody tr:hover td { background: var(--bg-sub); }
   .btn--icon.btn--sm { width: 44px; }
 
   /* Table rows - keep compact */
-  tbody td { padding: 10px 10px; }
+  tbody td { padding: 8px 8px; }
 
   /* Two-col grid stays 2 cols */
   .two-col-grid { gap: 20px; }
@@ -1424,7 +1426,7 @@ tbody tr:hover td { background: var(--bg-sub); }
   /* Tables — ensure horizontal scroll works */
   .table-wrap { -webkit-overflow-scrolling: touch; }
   thead th,
-  tbody td { padding: 10px 12px; }
+  tbody td { padding: 8px 8px; }
 
   /* Card header wrapping */
   .card__header { flex-wrap: wrap; gap: 8px; }

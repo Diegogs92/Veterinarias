@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
 import EmptyState from '../../components/ui/EmptyState'
 import Modal from '../../components/ui/Modal'
-import SidePanel from '../../components/ui/SidePanel'
+import InlinePanel from '../../components/ui/InlinePanel'
 import SpeciesIcon from '../../components/ui/SpeciesIcon'
 import CirugiasForm from './CirugiasForm'
 import { formatDate, formatCurrency } from '../../utils/helpers'
@@ -33,15 +33,15 @@ const PM_LABEL = { efectivo: 'Efectivo', tarjeta_credito: 'Tarjeta crédito', ta
 
 function Field({ label, children }) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>{label}</div>
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{label}</div>
       <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.5 }}>{children || <span style={{ color: 'var(--text-tertiary)' }}>—</span>}</div>
     </div>
   )
 }
 
 function Divider() {
-  return <div style={{ borderTop: '1px solid var(--border-2)', margin: '16px 0' }} />
+  return <div style={{ borderTop: '1px solid var(--border-2)', margin: '12px 0' }} />
 }
 
 export default function CirugiasPage() {
@@ -121,121 +121,121 @@ export default function CirugiasPage() {
             action={<button className="btn btn--primary" onClick={() => setFormOpen(true)}><Plus size={18} /> Nueva cirugía</button>}
           />
         ) : (
-          <div className="card card--no-hover">
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Mascota</th>
-                    <th>Fecha</th>
-                    <th>Diagnóstico</th>
-                    <th style={{ textAlign: 'right' }}>Costos</th>
-                    <th>Pago</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(c => {
-                    const pet   = pets.find(c.petId)
-                    return (
-                      <tr
-                        key={c.id}
-                        onClick={() => setSelected(c)}
-                        style={{ cursor: 'pointer', background: selected?.id === c.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
-                      >
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div style={{ width: 32, height: 32, borderRadius: 'var(--r-sm)', background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)', flexShrink: 0 }}>
-                              <SpeciesIcon species={pet?.species} size={16} strokeWidth={1.5} />
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+            <div className="card card--no-hover card--table" style={{ flex: 1, minWidth: 0 }}>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Mascota</th>
+                      <th>Fecha</th>
+                      <th>Diagnóstico</th>
+                      <th style={{ textAlign: 'right' }}>Costos</th>
+                      <th>Pago</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map(c => {
+                      const pet   = pets.find(c.petId)
+                      return (
+                        <tr
+                          key={c.id}
+                          onClick={() => setSelected(c)}
+                          style={{ cursor: 'pointer', background: selected?.id === c.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
+                        >
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <div style={{ width: 32, height: 32, borderRadius: 'var(--r-sm)', background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)', flexShrink: 0 }}>
+                                <SpeciesIcon species={pet?.species} size={16} strokeWidth={1.5} />
+                              </div>
+                              <span style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</span>
                             </div>
-                            <span style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</span>
-                          </div>
-                        </td>
-                        <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(c.date)}</td>
-                        <td style={{ maxWidth: 260 }}>
-                          <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                            {c.diagnostico || '—'}
-                          </span>
-                        </td>
-                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
-                          {c.costos > 0 ? formatCurrency(c.costos) : '—'}
-                        </td>
-                        <td>
-                          {c.paid
-                            ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontSize: 13, fontWeight: 600 }}><CheckCircle2 size={15} strokeWidth={2} />Pagado</span>
-                            : <PendingBtn onClick={(e) => { e.stopPropagation(); setPaying(c) }} />
-                          }
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setEditing(c); setFormOpen(true) }}>
-                              <Pencil size={18} strokeWidth={2} />
-                            </button>
-                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setDeleting(c) }} style={{ color: 'var(--vet-rose)' }}>
-                              <Trash2 size={18} strokeWidth={2} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                          </td>
+                          <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(c.date)}</td>
+                          <td style={{ maxWidth: 260 }}>
+                            <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                              {c.diagnostico || '—'}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
+                            {c.costos > 0 ? formatCurrency(c.costos) : '—'}
+                          </td>
+                          <td>
+                            {c.paid
+                              ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontSize: 13, fontWeight: 600 }}><CheckCircle2 size={15} strokeWidth={2} />Pagado</span>
+                              : <PendingBtn onClick={(e) => { e.stopPropagation(); setPaying(c) }} />
+                            }
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                              <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setEditing(c); setFormOpen(true) }}>
+                                <Pencil size={18} strokeWidth={2} />
+                              </button>
+                              <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setDeleting(c) }} style={{ color: 'var(--vet-rose)' }}>
+                                <Trash2 size={18} strokeWidth={2} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
+
+            <InlinePanel
+              isOpen={!!selectedLive}
+              onClose={() => setSelected(null)}
+              title={selectedPet?.name || 'Detalle'}
+            >
+              {selectedLive && (
+                <>
+                  <Field label="Mascota">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 'var(--r-sm)', background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)', flexShrink: 0 }}>
+                        <SpeciesIcon species={selectedPet?.species} size={14} strokeWidth={1.5} />
+                      </div>
+                      <span style={{ fontWeight: 600 }}>{selectedPet?.name || '—'}</span>
+                      {selectedPet?.species && <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>({selectedPet.species})</span>}
+                    </div>
+                  </Field>
+                  <Field label="Dueño">{selectedOwner?.name}</Field>
+                  <Field label="Fecha">{selectedLive.date ? formatDate(selectedLive.date) : null}</Field>
+                  <Divider />
+                  <Field label="Diagnóstico">{selectedLive.diagnostico}</Field>
+                  {selectedLive.observaciones && <Field label="Observaciones">{selectedLive.observaciones}</Field>}
+                  <Divider />
+                  <Field label="Costos">
+                    {selectedLive.costos > 0 ? <span style={{ fontWeight: 700, color: 'var(--vet-teal)' }}>{formatCurrency(selectedLive.costos)}</span> : null}
+                  </Field>
+                  <Field label="Pago">
+                    {selectedLive.paid
+                      ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontWeight: 600 }}><CheckCircle2 size={14} strokeWidth={2} />Pagado{selectedLive.paymentMethod ? ` · ${PM_LABEL[selectedLive.paymentMethod] || selectedLive.paymentMethod}` : ''}</span>
+                      : <span style={{ color: 'var(--warn)', fontWeight: 600 }}>Pendiente</span>
+                    }
+                  </Field>
+                  <Divider />
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button className="btn btn--ghost btn--sm" onClick={() => { setEditing(selectedLive); setFormOpen(true) }}>
+                      <Pencil size={14} /> Editar
+                    </button>
+                    <button className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => setDeleting(selectedLive)}>
+                      <Trash2 size={14} /> Eliminar
+                    </button>
+                    {!selectedLive.paid && (
+                      <button className="btn btn--primary btn--sm" style={{ marginLeft: 'auto' }} onClick={() => setPaying(selectedLive)}>
+                        Cobrar
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </InlinePanel>
           </div>
         )}
       </div>
-
-      {/* Side Panel */}
-      <SidePanel
-        isOpen={!!selectedLive}
-        onClose={() => setSelected(null)}
-        title={selectedPet?.name || 'Detalle'}
-        width={440}
-      >
-        {selectedLive && (
-          <>
-            <Field label="Mascota">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 'var(--r-sm)', background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)', flexShrink: 0 }}>
-                  <SpeciesIcon species={selectedPet?.species} size={14} strokeWidth={1.5} />
-                </div>
-                <span style={{ fontWeight: 600 }}>{selectedPet?.name || '—'}</span>
-                {selectedPet?.species && <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>({selectedPet.species})</span>}
-              </div>
-            </Field>
-            <Field label="Dueño">{selectedOwner?.name}</Field>
-            <Field label="Fecha">{selectedLive.date ? formatDate(selectedLive.date) : null}</Field>
-            <Divider />
-            <Field label="Diagnóstico">{selectedLive.diagnostico}</Field>
-            {selectedLive.observaciones && <Field label="Observaciones">{selectedLive.observaciones}</Field>}
-            <Divider />
-            <Field label="Costos">
-              {selectedLive.costos > 0 ? <span style={{ fontWeight: 700, color: 'var(--vet-teal)' }}>{formatCurrency(selectedLive.costos)}</span> : null}
-            </Field>
-            <Field label="Pago">
-              {selectedLive.paid
-                ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontWeight: 600 }}><CheckCircle2 size={14} strokeWidth={2} />Pagado{selectedLive.paymentMethod ? ` · ${PM_LABEL[selectedLive.paymentMethod] || selectedLive.paymentMethod}` : ''}</span>
-                : <span style={{ color: 'var(--warn)', fontWeight: 600 }}>Pendiente</span>
-              }
-            </Field>
-            <Divider />
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button className="btn btn--ghost btn--sm" onClick={() => { setEditing(selectedLive); setFormOpen(true) }}>
-                <Pencil size={14} /> Editar
-              </button>
-              <button className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => setDeleting(selectedLive)}>
-                <Trash2 size={14} /> Eliminar
-              </button>
-              {!selectedLive.paid && (
-                <button className="btn btn--primary btn--sm" style={{ marginLeft: 'auto' }} onClick={() => setPaying(selectedLive)}>
-                  Cobrar
-                </button>
-              )}
-            </div>
-          </>
-        )}
-      </SidePanel>
 
       <CirugiasForm
         isOpen={formOpen}

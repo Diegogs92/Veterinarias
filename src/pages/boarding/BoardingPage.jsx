@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
 import EmptyState from '../../components/ui/EmptyState'
 import Modal from '../../components/ui/Modal'
-import SidePanel from '../../components/ui/SidePanel'
+import InlinePanel from '../../components/ui/InlinePanel'
 import BoardingForm from './BoardingForm'
 import { formatDate, formatCurrency, todayStr } from '../../utils/helpers'
 
@@ -39,15 +39,15 @@ const PM_LABEL = { efectivo: 'Efectivo', tarjeta_credito: 'Tarjeta crédito', ta
 
 function Field({ label, children }) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>{label}</div>
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{label}</div>
       <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.5 }}>{children || <span style={{ color: 'var(--text-tertiary)' }}>—</span>}</div>
     </div>
   )
 }
 
 function Divider() {
-  return <div style={{ borderTop: '1px solid var(--border-2)', margin: '16px 0' }} />
+  return <div style={{ borderTop: '1px solid var(--border-2)', margin: '12px 0' }} />
 }
 
 export default function BoardingPage() {
@@ -152,139 +152,139 @@ export default function BoardingPage() {
             )}
           />
         ) : (
-          <div className="card card--no-hover">
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Mascota</th>
-                    <th>Ingreso</th>
-                    <th style={{ textAlign: 'right' }}>Días</th>
-                    <th style={{ textAlign: 'right' }}>Total</th>
-                    <th>Pago</th>
-                    <th>Estado</th>
-                    <th style={{ width: 120 }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(b => {
-                    const pet      = pets.find(b.petId)
-                    const isActive = b.status === 'active'
-                    const days     = calcDays(b.entryDate, b.exitDate)
-                    const total    = b.dailyPrice > 0 ? b.dailyPrice * days : null
-                    return (
-                      <tr
-                        key={b.id}
-                        onClick={() => setSelected(b)}
-                        style={{ cursor: 'pointer', background: selected?.id === b.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
-                      >
-                        <td>
-                          <div style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</div>
-                        </td>
-                        <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(b.entryDate)}</td>
-                        <td style={{ textAlign: 'right', fontSize: 13 }}>{days}</td>
-                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
-                          {total ? formatCurrency(total) : '—'}
-                        </td>
-                        <td>
-                          {b.paid
-                            ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontSize: 13, fontWeight: 600 }}><CheckCircle2 size={15} strokeWidth={2} />Pagado</span>
-                            : <PendingBtn onClick={(e) => { e.stopPropagation(); setPaying(b) }} />
-                          }
-                        </td>
-                        <td>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: isActive ? 'var(--blue)' : 'var(--ok)' }}>
-                            {isActive ? 'En pensión' : 'Retirado'}
-                          </span>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                            {isActive && (
-                              <button className="btn btn--subtle btn--sm" onClick={(e) => { e.stopPropagation(); setCheckoutTarget(b) }} title="Registrar retiro">
-                                <Check size={14} strokeWidth={2.5} /> Retirar
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+            <div className="card card--no-hover card--table" style={{ flex: 1, minWidth: 0 }}>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Mascota</th>
+                      <th>Ingreso</th>
+                      <th style={{ textAlign: 'right' }}>Días</th>
+                      <th style={{ textAlign: 'right' }}>Total</th>
+                      <th>Pago</th>
+                      <th>Estado</th>
+                      <th style={{ width: 120 }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map(b => {
+                      const pet      = pets.find(b.petId)
+                      const isActive = b.status === 'active'
+                      const days     = calcDays(b.entryDate, b.exitDate)
+                      const total    = b.dailyPrice > 0 ? b.dailyPrice * days : null
+                      return (
+                        <tr
+                          key={b.id}
+                          onClick={() => setSelected(b)}
+                          style={{ cursor: 'pointer', background: selected?.id === b.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
+                        >
+                          <td>
+                            <div style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</div>
+                          </td>
+                          <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(b.entryDate)}</td>
+                          <td style={{ textAlign: 'right', fontSize: 13 }}>{days}</td>
+                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
+                            {total ? formatCurrency(total) : '—'}
+                          </td>
+                          <td>
+                            {b.paid
+                              ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontSize: 13, fontWeight: 600 }}><CheckCircle2 size={15} strokeWidth={2} />Pagado</span>
+                              : <PendingBtn onClick={(e) => { e.stopPropagation(); setPaying(b) }} />
+                            }
+                          </td>
+                          <td>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: isActive ? 'var(--blue)' : 'var(--ok)' }}>
+                              {isActive ? 'En pensión' : 'Retirado'}
+                            </span>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                              {isActive && (
+                                <button className="btn btn--subtle btn--sm" onClick={(e) => { e.stopPropagation(); setCheckoutTarget(b) }} title="Registrar retiro">
+                                  <Check size={14} strokeWidth={2.5} /> Retirar
+                                </button>
+                              )}
+                              <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setEditing(b); setFormOpen(true) }} title="Editar">
+                                <Pencil size={18} />
                               </button>
-                            )}
-                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setEditing(b); setFormOpen(true) }} title="Editar">
-                              <Pencil size={18} />
-                            </button>
-                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setDeleting(b) }} title="Eliminar" style={{ color: 'var(--vet-rose)' }}>
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                              <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setDeleting(b) }} title="Eliminar" style={{ color: 'var(--vet-rose)' }}>
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
+
+            <InlinePanel
+              isOpen={!!selectedLive}
+              onClose={() => setSelected(null)}
+              title={selectedPet?.name || 'Detalle'}
+            >
+              {selectedLive && (() => {
+                const days  = calcDays(selectedLive.entryDate, selectedLive.exitDate)
+                const total = selectedLive.dailyPrice > 0 ? selectedLive.dailyPrice * days : null
+                const isActive = selectedLive.status === 'active'
+                return (
+                  <>
+                    <Field label="Mascota">
+                      <span style={{ fontWeight: 600 }}>{selectedPet?.name || '—'}</span>
+                      {selectedPet?.species && <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}> ({selectedPet.species})</span>}
+                    </Field>
+                    <Field label="Dueño">{selectedOwner?.name}</Field>
+                    <Divider />
+                    <Field label="Ingreso">{selectedLive.entryDate ? formatDate(selectedLive.entryDate) : null}</Field>
+                    <Field label="Egreso">{selectedLive.exitDate ? formatDate(selectedLive.exitDate) : <span style={{ color: 'var(--text-tertiary)' }}>En curso</span>}</Field>
+                    <Field label="Días">{days}</Field>
+                    {selectedLive.dailyPrice > 0 && <Field label="Precio diario">{formatCurrency(selectedLive.dailyPrice)}</Field>}
+                    <Field label="Total">
+                      {total ? <span style={{ fontWeight: 700, color: 'var(--vet-teal)' }}>{formatCurrency(total)}</span> : null}
+                    </Field>
+                    {selectedLive.feeding && <Field label="Alimentación">{selectedLive.feeding}</Field>}
+                    {selectedLive.observations && <Field label="Observaciones">{selectedLive.observations}</Field>}
+                    <Divider />
+                    <Field label="Estado">
+                      <span style={{ fontWeight: 600, color: isActive ? 'var(--blue)' : 'var(--ok)' }}>
+                        {isActive ? 'En pensión' : 'Retirado'}
+                      </span>
+                    </Field>
+                    <Field label="Pago">
+                      {selectedLive.paid
+                        ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontWeight: 600 }}><CheckCircle2 size={14} strokeWidth={2} />Pagado{selectedLive.paymentMethod ? ` · ${PM_LABEL[selectedLive.paymentMethod] || selectedLive.paymentMethod}` : ''}</span>
+                        : <span style={{ color: 'var(--warn)', fontWeight: 600 }}>Pendiente</span>
+                      }
+                    </Field>
+                    <Divider />
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {isActive && (
+                        <button className="btn btn--ghost btn--sm" onClick={() => setCheckoutTarget(selectedLive)}>
+                          <Check size={14} strokeWidth={2.5} /> Retirar
+                        </button>
+                      )}
+                      <button className="btn btn--ghost btn--sm" onClick={() => { setEditing(selectedLive); setFormOpen(true) }}>
+                        <Pencil size={14} /> Editar
+                      </button>
+                      <button className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => setDeleting(selectedLive)}>
+                        <Trash2 size={14} /> Eliminar
+                      </button>
+                      {!selectedLive.paid && (
+                        <button className="btn btn--primary btn--sm" style={{ marginLeft: 'auto' }} onClick={() => setPaying(selectedLive)}>
+                          Cobrar
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )
+              })()}
+            </InlinePanel>
           </div>
         )}
       </div>
-
-      {/* Side Panel */}
-      <SidePanel
-        isOpen={!!selectedLive}
-        onClose={() => setSelected(null)}
-        title={selectedPet?.name || 'Detalle'}
-        width={420}
-      >
-        {selectedLive && (() => {
-          const days  = calcDays(selectedLive.entryDate, selectedLive.exitDate)
-          const total = selectedLive.dailyPrice > 0 ? selectedLive.dailyPrice * days : null
-          const isActive = selectedLive.status === 'active'
-          return (
-            <>
-              <Field label="Mascota">
-                <span style={{ fontWeight: 600 }}>{selectedPet?.name || '—'}</span>
-                {selectedPet?.species && <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}> ({selectedPet.species})</span>}
-              </Field>
-              <Field label="Dueño">{selectedOwner?.name}</Field>
-              <Divider />
-              <Field label="Ingreso">{selectedLive.entryDate ? formatDate(selectedLive.entryDate) : null}</Field>
-              <Field label="Egreso">{selectedLive.exitDate ? formatDate(selectedLive.exitDate) : <span style={{ color: 'var(--text-tertiary)' }}>En curso</span>}</Field>
-              <Field label="Días">{days}</Field>
-              {selectedLive.dailyPrice > 0 && <Field label="Precio diario">{formatCurrency(selectedLive.dailyPrice)}</Field>}
-              <Field label="Total">
-                {total ? <span style={{ fontWeight: 700, color: 'var(--vet-teal)' }}>{formatCurrency(total)}</span> : null}
-              </Field>
-              {selectedLive.feeding && <Field label="Alimentación">{selectedLive.feeding}</Field>}
-              {selectedLive.observations && <Field label="Observaciones">{selectedLive.observations}</Field>}
-              <Divider />
-              <Field label="Estado">
-                <span style={{ fontWeight: 600, color: isActive ? 'var(--blue)' : 'var(--ok)' }}>
-                  {isActive ? 'En pensión' : 'Retirado'}
-                </span>
-              </Field>
-              <Field label="Pago">
-                {selectedLive.paid
-                  ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontWeight: 600 }}><CheckCircle2 size={14} strokeWidth={2} />Pagado{selectedLive.paymentMethod ? ` · ${PM_LABEL[selectedLive.paymentMethod] || selectedLive.paymentMethod}` : ''}</span>
-                  : <span style={{ color: 'var(--warn)', fontWeight: 600 }}>Pendiente</span>
-                }
-              </Field>
-              <Divider />
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {isActive && (
-                  <button className="btn btn--ghost btn--sm" onClick={() => setCheckoutTarget(selectedLive)}>
-                    <Check size={14} strokeWidth={2.5} /> Retirar
-                  </button>
-                )}
-                <button className="btn btn--ghost btn--sm" onClick={() => { setEditing(selectedLive); setFormOpen(true) }}>
-                  <Pencil size={14} /> Editar
-                </button>
-                <button className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => setDeleting(selectedLive)}>
-                  <Trash2 size={14} /> Eliminar
-                </button>
-                {!selectedLive.paid && (
-                  <button className="btn btn--primary btn--sm" style={{ marginLeft: 'auto' }} onClick={() => setPaying(selectedLive)}>
-                    Cobrar
-                  </button>
-                )}
-              </div>
-            </>
-          )
-        })()}
-      </SidePanel>
 
       <BoardingForm
         isOpen={formOpen}

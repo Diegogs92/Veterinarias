@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import Header from '../../components/layout/Header'
 import Modal from '../../components/ui/Modal'
-import SidePanel from '../../components/ui/SidePanel'
+import InlinePanel from '../../components/ui/InlinePanel'
 import EmptyState from '../../components/ui/EmptyState'
 import VaccineCatalogForm from './VaccineCatalogForm'
 import VaccineForm from './VaccineForm'
@@ -43,15 +43,15 @@ const PM_LABEL = { efectivo: 'Efectivo', tarjeta_credito: 'Tarjeta crédito', ta
 
 function Field({ label, children }) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>{label}</div>
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{label}</div>
       <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.5 }}>{children || <span style={{ color: 'var(--text-tertiary)' }}>—</span>}</div>
     </div>
   )
 }
 
 function Divider() {
-  return <div style={{ borderTop: '1px solid var(--border-2)', margin: '16px 0' }} />
+  return <div style={{ borderTop: '1px solid var(--border-2)', margin: '12px 0' }} />
 }
 
 export default function VaccinesPage() {
@@ -110,6 +110,7 @@ export default function VaccinesPage() {
   const selectedLive = selected ? petVaccines.items.find(v => v.id === selected.id) : null
   const selectedPet  = selectedLive ? pets.find(selectedLive.petId) : null
   const selectedOwner = selectedLive && selectedPet ? owners.find(selectedPet.ownerId) : null
+  const isOverdue = selectedLive?.nextDue && new Date(selectedLive.nextDue) < new Date()
 
   return (
     <>
@@ -153,124 +154,123 @@ export default function VaccinesPage() {
             )}
           />
         ) : (
-          <div className="card card--no-hover">
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Mascota</th>
-                    <th>Vacuna</th>
-                    <th>Fecha</th>
-                    <th style={{ textAlign: 'right' }}>Monto</th>
-                    <th>Pago</th>
-                    <th style={{ width: 80 }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRecords.map(r => {
-                    const pet     = pets.find(r.petId)
-                    const isOverdue = r.nextDue && new Date(r.nextDue) < new Date()
-                    return (
-                      <tr
-                        key={r.id}
-                        onClick={() => setSelected(r)}
-                        style={{ cursor: 'pointer', background: selected?.id === r.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
-                      >
-                        <td>
-                          <div>
-                            <div style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</div>
-                            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{pet?.species || ''}</div>
-                          </div>
-                        </td>
-                        <td style={{ fontSize: 14 }}>{r.vaccineName}</td>
-                        <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{r.date ? formatDate(r.date) : '—'}</td>
-                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
-                          {r.price > 0 ? formatCurrency(r.price) : '—'}
-                        </td>
-                        <td>
-                          {r.paid
-                            ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontSize: 13, fontWeight: 600 }}><CheckCircle2 size={15} strokeWidth={2} />Pagado</span>
-                            : <PendingBtn onClick={(e) => { e.stopPropagation(); setPaying(r) }} />
-                          }
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setVaccineForm({ open: true, editing: r, prefill: null }) }} title="Editar">
-                              <Pencil size={18} />
-                            </button>
-                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setDeletingVacc(r) }} title="Eliminar" style={{ color: 'var(--vet-rose)' }}>
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+            <div className="card card--no-hover card--table" style={{ flex: 1, minWidth: 0 }}>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Mascota</th>
+                      <th>Vacuna</th>
+                      <th>Fecha</th>
+                      <th style={{ textAlign: 'right' }}>Monto</th>
+                      <th>Pago</th>
+                      <th style={{ width: 80 }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRecords.map(r => {
+                      const pet = pets.find(r.petId)
+                      return (
+                        <tr
+                          key={r.id}
+                          onClick={() => setSelected(r)}
+                          style={{ cursor: 'pointer', background: selected?.id === r.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
+                        >
+                          <td>
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</div>
+                              <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{pet?.species || ''}</div>
+                            </div>
+                          </td>
+                          <td style={{ fontSize: 14 }}>{r.vaccineName}</td>
+                          <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{r.date ? formatDate(r.date) : '—'}</td>
+                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
+                            {r.price > 0 ? formatCurrency(r.price) : '—'}
+                          </td>
+                          <td>
+                            {r.paid
+                              ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontSize: 13, fontWeight: 600 }}><CheckCircle2 size={15} strokeWidth={2} />Pagado</span>
+                              : <PendingBtn onClick={(e) => { e.stopPropagation(); setPaying(r) }} />
+                            }
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                              <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setVaccineForm({ open: true, editing: r, prefill: null }) }} title="Editar">
+                                <Pencil size={18} />
+                              </button>
+                              <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setDeletingVacc(r) }} title="Eliminar" style={{ color: 'var(--vet-rose)' }}>
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
+
+            <InlinePanel
+              isOpen={!!selectedLive}
+              onClose={() => setSelected(null)}
+              title={selectedPet?.name || 'Detalle'}
+            >
+              {selectedLive && (
+                <>
+                  <Field label="Mascota">
+                    <div style={{ fontWeight: 600 }}>{selectedPet?.name || '—'}</div>
+                    {selectedPet?.species && <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{selectedPet.species}</div>}
+                  </Field>
+                  <Field label="Dueño">
+                    {selectedOwner ? (
+                      <div>
+                        <div>{selectedOwner.name}</div>
+                        {selectedOwner.phone && <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{selectedOwner.phone}</div>}
+                      </div>
+                    ) : null}
+                  </Field>
+                  <Divider />
+                  <Field label="Vacuna">{selectedLive.vaccineName}</Field>
+                  <Field label="Fecha aplicada">{selectedLive.date ? formatDate(selectedLive.date) : null}</Field>
+                  <Field label="Próximo vencimiento">
+                    {selectedLive.nextDue ? (
+                      <span style={{ color: isOverdue ? 'var(--danger)' : 'inherit', fontWeight: isOverdue ? 600 : 400 }}>
+                        {isOverdue && '⚠ '}{formatDate(selectedLive.nextDue)}
+                      </span>
+                    ) : null}
+                  </Field>
+                  <Field label="Monto">
+                    {selectedLive.price > 0 ? <span style={{ fontWeight: 700, color: 'var(--vet-teal)' }}>{formatCurrency(selectedLive.price)}</span> : null}
+                  </Field>
+                  <Field label="Estado de pago">
+                    {selectedLive.paid
+                      ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontWeight: 600 }}><CheckCircle2 size={14} strokeWidth={2} />Pagado{selectedLive.paymentMethod ? ` · ${PM_LABEL[selectedLive.paymentMethod] || selectedLive.paymentMethod}` : ''}</span>
+                      : <span style={{ color: 'var(--warn)', fontWeight: 600 }}>Pendiente</span>
+                    }
+                  </Field>
+                  {selectedLive.notes && <Field label="Observaciones">{selectedLive.notes}</Field>}
+                  <Divider />
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button className="btn btn--ghost btn--sm" onClick={() => { setEditing(selectedLive); setVaccineForm({ open: true, editing: selectedLive, prefill: null }) }}>
+                      <Pencil size={14} /> Editar
+                    </button>
+                    <button className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => setDeletingVacc(selectedLive)}>
+                      <Trash2 size={14} /> Eliminar
+                    </button>
+                    {!selectedLive.paid && (
+                      <button className="btn btn--primary btn--sm" style={{ marginLeft: 'auto' }} onClick={() => setPaying(selectedLive)}>
+                        Cobrar
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </InlinePanel>
           </div>
         )}
       </div>
-
-      {/* Side Panel */}
-      <SidePanel
-        isOpen={!!selectedLive}
-        onClose={() => setSelected(null)}
-        title={selectedPet?.name || 'Detalle'}
-        width={420}
-      >
-        {selectedLive && (
-          <>
-            <Field label="Mascota">
-              <div style={{ fontWeight: 600 }}>{selectedPet?.name || '—'}</div>
-              {selectedPet?.species && <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{selectedPet.species}</div>}
-            </Field>
-            <Field label="Dueño">
-              {selectedOwner ? (
-                <div>
-                  <div>{selectedOwner.name}</div>
-                  {selectedOwner.phone && <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{selectedOwner.phone}</div>}
-                </div>
-              ) : null}
-            </Field>
-            <Divider />
-            <Field label="Vacuna">{selectedLive.vaccineName}</Field>
-            <Field label="Fecha aplicada">{selectedLive.date ? formatDate(selectedLive.date) : null}</Field>
-            <Field label="Próximo vencimiento">
-              {selectedLive.nextDue ? (
-                <span style={{ color: isOverdue ? 'var(--danger)' : 'inherit', fontWeight: isOverdue ? 600 : 400 }}>
-                  {isOverdue && '⚠ '}{formatDate(selectedLive.nextDue)}
-                </span>
-              ) : null}
-            </Field>
-            <Field label="Monto">
-              {selectedLive.price > 0 ? <span style={{ fontWeight: 700, color: 'var(--vet-teal)' }}>{formatCurrency(selectedLive.price)}</span> : null}
-            </Field>
-            <Field label="Estado de pago">
-              {selectedLive.paid
-                ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontWeight: 600 }}><CheckCircle2 size={14} strokeWidth={2} />Pagado{selectedLive.paymentMethod ? ` · ${PM_LABEL[selectedLive.paymentMethod] || selectedLive.paymentMethod}` : ''}</span>
-                : <span style={{ color: 'var(--warn)', fontWeight: 600 }}>Pendiente</span>
-              }
-            </Field>
-            {selectedLive.notes && <Field label="Observaciones">{selectedLive.notes}</Field>}
-            <Divider />
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button className="btn btn--ghost btn--sm" onClick={() => { setEditing(selectedLive); setVaccineForm({ open: true, editing: selectedLive, prefill: null }) }}>
-                <Pencil size={14} /> Editar
-              </button>
-              <button className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => setDeletingVacc(selectedLive)}>
-                <Trash2 size={14} /> Eliminar
-              </button>
-              {!selectedLive.paid && (
-                <button className="btn btn--primary btn--sm" style={{ marginLeft: 'auto' }} onClick={() => setPaying(selectedLive)}>
-                  Cobrar
-                </button>
-              )}
-            </div>
-          </>
-        )}
-      </SidePanel>
 
       {/* Catalog modal */}
       <Modal

@@ -11,7 +11,7 @@ import { useApp } from '../../context/AppContext'
 import EmptyState from '../../components/ui/EmptyState'
 import Header from '../../components/layout/Header'
 import Modal from '../../components/ui/Modal'
-import SidePanel from '../../components/ui/SidePanel'
+import InlinePanel from '../../components/ui/InlinePanel'
 import SpeciesIcon from '../../components/ui/SpeciesIcon'
 import GroomingForm from './GroomingForm'
 import { formatDate, formatCurrency } from '../../utils/helpers'
@@ -43,15 +43,15 @@ const PM_LABEL = { efectivo: 'Efectivo', tarjeta_credito: 'Tarjeta crédito', ta
 
 function Field({ label, children }) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>{label}</div>
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{label}</div>
       <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.5 }}>{children || <span style={{ color: 'var(--text-tertiary)' }}>—</span>}</div>
     </div>
   )
 }
 
 function Divider() {
-  return <div style={{ borderTop: '1px solid var(--border-2)', margin: '16px 0' }} />
+  return <div style={{ borderTop: '1px solid var(--border-2)', margin: '12px 0' }} />
 }
 
 export default function GroomingPage() {
@@ -93,7 +93,6 @@ export default function GroomingPage() {
 
   const whatsappUrl = (phone) => `https://wa.me/${phone.replace(/\D/g, '')}`
 
-  // Always read from live items so selected reflects latest updates
   const selectedLive = selected ? grooming.items.find(g => g.id === selected.id) : null
   const selectedPet  = selectedLive ? pets.find(selectedLive.petId) : null
   const selectedOwner = selectedLive ? owners.find(selectedLive.ownerId) : null
@@ -144,143 +143,143 @@ export default function GroomingPage() {
             action={<button className="btn btn--primary" onClick={() => setFormOpen(true)}>+ Nuevo turno</button>}
           />
         ) : (
-          <div className="card card--no-hover">
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Mascota</th>
-                    <th>Precio</th>
-                    <th>Pago</th>
-                    <th style={{ width: 80 }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(g => {
-                    const pet   = pets.find(g.petId)
-                    return (
-                      <tr
-                        key={g.id}
-                        onClick={() => setSelected(g)}
-                        style={{ cursor: 'pointer', background: selected?.id === g.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
-                      >
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div style={{
-                              width: 32, height: 32, borderRadius: 'var(--r-sm)',
-                              background: 'rgba(0,122,255,0.1)',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              color: 'var(--blue)', flexShrink: 0,
-                            }}>
-                              <SpeciesIcon species={pet?.species} size={16} strokeWidth={1.5} />
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+            <div className="card card--no-hover card--table" style={{ flex: 1, minWidth: 0 }}>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Mascota</th>
+                      <th>Precio</th>
+                      <th>Pago</th>
+                      <th style={{ width: 80 }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map(g => {
+                      const pet   = pets.find(g.petId)
+                      return (
+                        <tr
+                          key={g.id}
+                          onClick={() => setSelected(g)}
+                          style={{ cursor: 'pointer', background: selected?.id === g.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
+                        >
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <div style={{
+                                width: 32, height: 32, borderRadius: 'var(--r-sm)',
+                                background: 'rgba(0,122,255,0.1)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                color: 'var(--blue)', flexShrink: 0,
+                              }}>
+                                <SpeciesIcon species={pet?.species} size={16} strokeWidth={1.5} />
+                              </div>
+                              <span style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</span>
                             </div>
-                            <span style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</span>
-                          </div>
-                        </td>
-                        <td style={{ fontWeight: 700, color: 'var(--vet-teal)', fontSize: 14 }}>
-                          {g.price > 0 ? formatCurrency(g.price) : '—'}
-                        </td>
-                        <td>
-                          {g.paid
-                            ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontSize: 13, fontWeight: 600 }}><CheckCircle2 size={15} strokeWidth={2} />Pagado</span>
-                            : <PendingBtn onClick={(e) => { e.stopPropagation(); setPaying(g) }} />
-                          }
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: 4 }}>
-                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setEditing(g); setFormOpen(true) }}>
-                              <Pencil size={18} strokeWidth={2} />
-                            </button>
-                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setDeleting(g) }}>
-                              <Trash2 size={18} strokeWidth={2} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                          </td>
+                          <td style={{ fontWeight: 700, color: 'var(--vet-teal)', fontSize: 14 }}>
+                            {g.price > 0 ? formatCurrency(g.price) : '—'}
+                          </td>
+                          <td>
+                            {g.paid
+                              ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontSize: 13, fontWeight: 600 }}><CheckCircle2 size={15} strokeWidth={2} />Pagado</span>
+                              : <PendingBtn onClick={(e) => { e.stopPropagation(); setPaying(g) }} />
+                            }
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: 4 }}>
+                              <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setEditing(g); setFormOpen(true) }}>
+                                <Pencil size={18} strokeWidth={2} />
+                              </button>
+                              <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setDeleting(g) }}>
+                                <Trash2 size={18} strokeWidth={2} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
+
+            <InlinePanel
+              isOpen={!!selectedLive}
+              onClose={() => setSelected(null)}
+              title={selectedPet?.name || 'Detalle'}
+            >
+              {selectedLive && (
+                <>
+                  <Field label="Mascota">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 'var(--r-sm)', background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)', flexShrink: 0 }}>
+                        <SpeciesIcon species={selectedPet?.species} size={14} strokeWidth={1.5} />
+                      </div>
+                      <span style={{ fontWeight: 600 }}>{selectedPet?.name || '—'}</span>
+                      {selectedPet?.species && <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>({selectedPet.species})</span>}
+                    </div>
+                  </Field>
+                  <Field label="Dueño">
+                    {selectedOwner ? (
+                      <div>
+                        <div>{selectedOwner.name}</div>
+                        {selectedOwner.phone && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                            <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{selectedOwner.phone}</span>
+                            <a
+                              href={whatsappUrl(selectedOwner.phone)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn--subtle btn--icon"
+                              style={{ color: '#25D366', padding: '2px 4px', lineHeight: 1 }}
+                              title="Enviar WhatsApp"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <WhatsAppIcon size={15} />
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </Field>
+                  <Divider />
+                  <Field label="Fecha">{selectedLive.date ? formatDate(selectedLive.date) : null}</Field>
+                  <Field label="Servicios">
+                    {(selectedLive.services || []).length > 0 ? (selectedLive.services.join(', ')) : null}
+                  </Field>
+                  <Field label="Precio">
+                    {selectedLive.price > 0 ? <span style={{ fontWeight: 700, color: 'var(--vet-teal)' }}>{formatCurrency(selectedLive.price)}</span> : null}
+                  </Field>
+                  <Field label="Estado de pago">
+                    {selectedLive.paid
+                      ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontWeight: 600 }}><CheckCircle2 size={14} strokeWidth={2} />Pagado{selectedLive.paymentMethod ? ` · ${PM_LABEL[selectedLive.paymentMethod] || selectedLive.paymentMethod}` : ''}</span>
+                      : <span style={{ color: 'var(--warn)', fontWeight: 600 }}>Pendiente</span>
+                    }
+                  </Field>
+                  {selectedLive.observations && (
+                    <Field label="Observaciones">{selectedLive.observations}</Field>
+                  )}
+                  <Divider />
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button className="btn btn--ghost btn--sm" onClick={() => { setEditing(selectedLive); setFormOpen(true) }}>
+                      <Pencil size={14} /> Editar
+                    </button>
+                    <button className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => setDeleting(selectedLive)}>
+                      <Trash2 size={14} /> Eliminar
+                    </button>
+                    {!selectedLive.paid && (
+                      <button className="btn btn--primary btn--sm" style={{ marginLeft: 'auto' }} onClick={() => setPaying(selectedLive)}>
+                        Cobrar
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+            </InlinePanel>
           </div>
         )}
       </div>
-
-      {/* Side Panel */}
-      <SidePanel
-        isOpen={!!selectedLive}
-        onClose={() => setSelected(null)}
-        title={selectedPet?.name || 'Detalle'}
-        width={420}
-      >
-        {selectedLive && (
-          <>
-            <Field label="Mascota">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 'var(--r-sm)', background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)', flexShrink: 0 }}>
-                  <SpeciesIcon species={selectedPet?.species} size={14} strokeWidth={1.5} />
-                </div>
-                <span style={{ fontWeight: 600 }}>{selectedPet?.name || '—'}</span>
-                {selectedPet?.species && <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>({selectedPet.species})</span>}
-              </div>
-            </Field>
-            <Field label="Dueño">
-              {selectedOwner ? (
-                <div>
-                  <div>{selectedOwner.name}</div>
-                  {selectedOwner.phone && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{selectedOwner.phone}</span>
-                      <a
-                        href={whatsappUrl(selectedOwner.phone)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn--subtle btn--icon"
-                        style={{ color: '#25D366', padding: '2px 4px', lineHeight: 1 }}
-                        title="Enviar WhatsApp"
-                        onClick={e => e.stopPropagation()}
-                      >
-                        <WhatsAppIcon size={15} />
-                      </a>
-                    </div>
-                  )}
-                </div>
-              ) : null}
-            </Field>
-            <Divider />
-            <Field label="Fecha">{selectedLive.date ? formatDate(selectedLive.date) : null}</Field>
-            <Field label="Servicios">
-              {(selectedLive.services || []).length > 0 ? (selectedLive.services.join(', ')) : null}
-            </Field>
-            <Field label="Precio">
-              {selectedLive.price > 0 ? <span style={{ fontWeight: 700, color: 'var(--vet-teal)' }}>{formatCurrency(selectedLive.price)}</span> : null}
-            </Field>
-            <Field label="Estado de pago">
-              {selectedLive.paid
-                ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontWeight: 600 }}><CheckCircle2 size={14} strokeWidth={2} />Pagado{selectedLive.paymentMethod ? ` · ${PM_LABEL[selectedLive.paymentMethod] || selectedLive.paymentMethod}` : ''}</span>
-                : <span style={{ color: 'var(--warn)', fontWeight: 600 }}>Pendiente</span>
-              }
-            </Field>
-            {selectedLive.observations && (
-              <Field label="Observaciones">{selectedLive.observations}</Field>
-            )}
-            <Divider />
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button className="btn btn--ghost btn--sm" onClick={() => { setEditing(selectedLive); setFormOpen(true) }}>
-                <Pencil size={14} /> Editar
-              </button>
-              <button className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => setDeleting(selectedLive)}>
-                <Trash2 size={14} /> Eliminar
-              </button>
-              {!selectedLive.paid && (
-                <button className="btn btn--primary btn--sm" style={{ marginLeft: 'auto' }} onClick={() => setPaying(selectedLive)}>
-                  Cobrar
-                </button>
-              )}
-            </div>
-          </>
-        )}
-      </SidePanel>
 
       <GroomingForm
         isOpen={formOpen}

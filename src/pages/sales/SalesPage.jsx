@@ -1,10 +1,10 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Search, Plus, Pencil, Trash2, ShoppingCart, TrendingUp, CircleCheck, CheckCircle2 } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, ShoppingCart, TrendingUp, CircleCheck } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
 import EmptyState from '../../components/ui/EmptyState'
 import Modal from '../../components/ui/Modal'
-import SidePanel from '../../components/ui/SidePanel'
+import InlinePanel from '../../components/ui/InlinePanel'
 import SaleForm from './SaleForm'
 import { formatDate, formatCurrency } from '../../utils/helpers'
 
@@ -12,15 +12,15 @@ const PM_LABEL = { efectivo: 'Efectivo', tarjeta_credito: 'Tarjeta crédito', ta
 
 function Field({ label, children }) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>{label}</div>
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{label}</div>
       <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.5 }}>{children || <span style={{ color: 'var(--text-tertiary)' }}>—</span>}</div>
     </div>
   )
 }
 
 function Divider() {
-  return <div style={{ borderTop: '1px solid var(--border-2)', margin: '16px 0' }} />
+  return <div style={{ borderTop: '1px solid var(--border-2)', margin: '12px 0' }} />
 }
 
 export default function SalesPage() {
@@ -141,100 +141,100 @@ export default function SalesPage() {
             }
           />
         ) : (
-          <div className="card card--no-hover">
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Productos</th>
-                    <th style={{ textAlign: 'right' }}>Total</th>
-                    <th style={{ width: 80 }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(sale => {
-                    const itemCount = sale.items?.length || 0
-                    const firstItem = sale.items?.[0]?.productName || '—'
-                    return (
-                      <tr
-                        key={sale.id}
-                        onClick={() => setSelected(sale)}
-                        style={{ cursor: 'pointer', background: selected?.id === sale.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
-                      >
-                        <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-                          {formatDate(sale.date)}
-                        </td>
-                        <td style={{ maxWidth: 260 }}>
-                          <div style={{ fontSize: 14 }} className="truncate">{firstItem}</div>
-                          {itemCount > 1 && (
-                            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>+{itemCount - 1} más</div>
-                          )}
-                        </td>
-                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
-                          {formatCurrency(sale.total)}
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setEditing(sale); setFormOpen(true) }} title="Editar">
-                              <Pencil size={18} />
-                            </button>
-                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setDeleting(sale) }} title="Eliminar" style={{ color: 'var(--vet-rose)' }}>
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+            <div className="card card--no-hover card--table" style={{ flex: 1, minWidth: 0 }}>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Productos</th>
+                      <th style={{ textAlign: 'right' }}>Total</th>
+                      <th style={{ width: 80 }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map(sale => {
+                      const itemCount = sale.items?.length || 0
+                      const firstItem = sale.items?.[0]?.productName || '—'
+                      return (
+                        <tr
+                          key={sale.id}
+                          onClick={() => setSelected(sale)}
+                          style={{ cursor: 'pointer', background: selected?.id === sale.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
+                        >
+                          <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                            {formatDate(sale.date)}
+                          </td>
+                          <td style={{ maxWidth: 260 }}>
+                            <div style={{ fontSize: 14 }} className="truncate">{firstItem}</div>
+                            {itemCount > 1 && (
+                              <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>+{itemCount - 1} más</div>
+                            )}
+                          </td>
+                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
+                            {formatCurrency(sale.total)}
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                              <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setEditing(sale); setFormOpen(true) }} title="Editar">
+                                <Pencil size={18} />
+                              </button>
+                              <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setDeleting(sale) }} title="Eliminar" style={{ color: 'var(--vet-rose)' }}>
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
+
+            <InlinePanel
+              isOpen={!!selectedLive}
+              onClose={() => setSelected(null)}
+              title="Detalle de venta"
+            >
+              {selectedLive && (
+                <>
+                  <Field label="Fecha">{selectedLive.date ? formatDate(selectedLive.date) : null}</Field>
+                  <Field label="Medio de pago">
+                    {selectedLive.paymentMethod ? PM_LABEL[selectedLive.paymentMethod] || selectedLive.paymentMethod : null}
+                  </Field>
+                  <Divider />
+                  <Field label="Productos">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {(selectedLive.items || []).map((item, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                          <span>{item.productName}{item.qty > 1 ? ` x${item.qty}` : ''}</span>
+                          <span style={{ fontWeight: 600, color: 'var(--vet-teal)' }}>{formatCurrency(item.subtotal || item.price || 0)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Field>
+                  <Divider />
+                  <Field label="Total">
+                    <span style={{ fontWeight: 700, color: 'var(--vet-teal)', fontSize: 18 }}>{formatCurrency(selectedLive.total)}</span>
+                  </Field>
+                  {selectedLive.observations && <Field label="Observaciones">{selectedLive.observations}</Field>}
+                  <Divider />
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button className="btn btn--ghost btn--sm" onClick={() => { setEditing(selectedLive); setFormOpen(true) }}>
+                      <Pencil size={14} /> Editar
+                    </button>
+                    <button className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => setDeleting(selectedLive)}>
+                      <Trash2 size={14} /> Eliminar
+                    </button>
+                  </div>
+                </>
+              )}
+            </InlinePanel>
           </div>
         )}
       </div>
-
-      {/* Side Panel */}
-      <SidePanel
-        isOpen={!!selectedLive}
-        onClose={() => setSelected(null)}
-        title="Detalle de venta"
-        width={420}
-      >
-        {selectedLive && (
-          <>
-            <Field label="Fecha">{selectedLive.date ? formatDate(selectedLive.date) : null}</Field>
-            <Field label="Medio de pago">
-              {selectedLive.paymentMethod ? PM_LABEL[selectedLive.paymentMethod] || selectedLive.paymentMethod : null}
-            </Field>
-            <Divider />
-            <Field label="Productos">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {(selectedLive.items || []).map((item, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                    <span>{item.productName}{item.qty > 1 ? ` x${item.qty}` : ''}</span>
-                    <span style={{ fontWeight: 600, color: 'var(--vet-teal)' }}>{formatCurrency(item.subtotal || item.price || 0)}</span>
-                  </div>
-                ))}
-              </div>
-            </Field>
-            <Divider />
-            <Field label="Total">
-              <span style={{ fontWeight: 700, color: 'var(--vet-teal)', fontSize: 18 }}>{formatCurrency(selectedLive.total)}</span>
-            </Field>
-            {selectedLive.observations && <Field label="Observaciones">{selectedLive.observations}</Field>}
-            <Divider />
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button className="btn btn--ghost btn--sm" onClick={() => { setEditing(selectedLive); setFormOpen(true) }}>
-                <Pencil size={14} /> Editar
-              </button>
-              <button className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => setDeleting(selectedLive)}>
-                <Trash2 size={14} /> Eliminar
-              </button>
-            </div>
-          </>
-        )}
-      </SidePanel>
 
       <SaleForm
         isOpen={formOpen}
