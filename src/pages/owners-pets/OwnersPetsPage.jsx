@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Search, Pencil, Trash2, Users, PawPrint } from 'lucide-react'
+import { Search, Pencil, Trash2, Users, PawPrint, Grid3x3, List } from 'lucide-react'
 
 function WhatsAppIcon({ size = 18 }) {
   return (
@@ -87,6 +87,7 @@ export default function OwnersPetsPage() {
   const [petFormOpen, setPetFormOpen] = useState(false)
   const [editingPet, setEditingPet] = useState(null)
   const [deletingPet, setDeletingPet] = useState(null)
+  const [petView, setPetView] = useState('cards')
 
   const filteredPets = useMemo(() =>
     pets.items.filter(p => {
@@ -276,6 +277,22 @@ export default function OwnersPetsPage() {
                   ))}
                 </div>
               )}
+              <div className="tabs" style={{ flexShrink: 0 }}>
+                <button
+                  className={`tab${petView === 'cards' ? ' active' : ''}`}
+                  onClick={() => setPetView('cards')}
+                  title="Vista de tarjetas"
+                >
+                  <Grid3x3 size={16} strokeWidth={2} />
+                </button>
+                <button
+                  className={`tab${petView === 'table' ? ' active' : ''}`}
+                  onClick={() => setPetView('table')}
+                  title="Vista de lista"
+                >
+                  <List size={16} strokeWidth={2} />
+                </button>
+              </div>
             </div>
 
             {filteredPets.length === 0 ? (
@@ -287,6 +304,78 @@ export default function OwnersPetsPage() {
                   <button className="btn btn--primary" onClick={() => setPetFormOpen(true)}>+ Nueva mascota</button>
                 )}
               />
+            ) : petView === 'table' ? (
+              <div className="card card--no-hover">
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Mascota</th>
+                        <th>Dueño</th>
+                        <th>Especie</th>
+                        <th>Raza</th>
+                        <th>Edad</th>
+                        <th style={{ width: 80 }}></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredPets.map(pet => {
+                        const owner = owners.find(pet.ownerId)
+                        return (
+                          <tr
+                            key={pet.id}
+                            onClick={() => navigate(`/pets/${pet.id}`)}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <div style={{ width: 32, height: 32, borderRadius: 'var(--r-sm)', background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)', flexShrink: 0 }}>
+                                  <SpeciesIcon species={pet.species} size={16} strokeWidth={1.5} />
+                                </div>
+                                <span style={{ fontWeight: 600, fontSize: 14 }}>{pet.name}</span>
+                              </div>
+                            </td>
+                            <td>
+                              {owner ? (
+                                <div>
+                                  <div style={{ fontWeight: 600, fontSize: 14 }}>{owner.name}{owner.apellido ? ` ${owner.apellido}` : ''}</div>
+                                  {owner.phone && (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                                      <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{owner.phone}</span>
+                                      <a href={`https://wa.me/${toWhatsAppNumber(owner.phone)}`} target="_blank" rel="noopener noreferrer" style={{ color: '#25D366' }} onClick={e => e.stopPropagation()}>
+                                        <WhatsAppIcon size={14} />
+                                      </a>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : <span style={{ color: 'var(--text-tertiary)' }}>—</span>}
+                            </td>
+                            <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                              {speciesLabel(pet.species) || '—'}
+                            </td>
+                            <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                              {pet.breed || '—'}
+                            </td>
+                            <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                              {pet.birthDate ? calcAge(pet.birthDate) : '—'}
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                                <button className="btn btn--subtle btn--icon" onClick={e => { e.stopPropagation(); setEditingPet(pet); setPetFormOpen(true) }} title="Editar">
+                                  <Pencil size={18} />
+                                </button>
+                                <button className="btn btn--subtle btn--icon" onClick={e => { e.stopPropagation(); setDeletingPet(pet) }} title="Eliminar" style={{ color: 'var(--vet-rose)' }}>
+                                  <Trash2 size={18} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
                 {filteredPets.map(pet => {

@@ -639,7 +639,7 @@ select.form-input {
 /* === TABLE === */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
-.card--table table { max-width: 700px; }
+.page > .card--table table { max-width: 700px; }
 thead th {
   text-align: left;
   padding: 6px 8px;
