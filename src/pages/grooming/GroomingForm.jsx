@@ -39,7 +39,7 @@ export default function GroomingForm({ isOpen, onClose, onSave, initial = null }
   }
 
   const handleNext = () => { const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }; setStep(s => s + 1) }
-  const handleSave = () => { onSave({ ...form, price: parseFloat(form.price) || 0 }); onClose() }
+  const handleSave = () => { onSave({ ...form, price: parseFloat(form.price) || 0, time: form.time || null }); onClose() }
 
   return (
     <StepWizard
