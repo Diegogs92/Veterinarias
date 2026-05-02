@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react'
 import StepWizard from '../../components/ui/StepWizard'
 import PetSelect from '../../components/ui/PetSelect'
 import { useApp } from '../../context/AppContext'
-import { todayStr } from '../../utils/helpers'
+import { todayStr, formatCurrency } from '../../utils/helpers'
 
 const SERVICES = ['Baño', 'Baño + corte completo']
 const PAYMENT_METHODS = [
-  { value: 'efectivo',        label: 'Efectivo' },
-  { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
-  { value: 'tarjeta_debito',  label: 'Tarjeta débito' },
-  { value: 'transferencia',   label: 'Transferencia' },
+  { value: 'efectivo',        label: 'Efectivo',         surcharge: 0    },
+  { value: 'tarjeta_credito', label: 'Tarjeta crédito',  surcharge: 0.20 },
+  { value: 'tarjeta_debito',  label: 'Tarjeta débito',   surcharge: 0.05 },
+  { value: 'transferencia',   label: 'Transferencia',    surcharge: 0    },
 ]
 const EMPTY = { petId: '', ownerId: '', date: todayStr(), services: [], price: '', observations: '', paymentMethod: 'efectivo' }
 const STEPS = ['Turno', 'Servicios']
@@ -40,8 +40,13 @@ export default function GroomingForm({ isOpen, onClose, onSave, initial = null }
     return errs
   }
 
+  const basePrice      = parseFloat(form.price) || 0
+  const surcharge      = PAYMENT_METHODS.find(m => m.value === form.paymentMethod)?.surcharge ?? 0
+  const surchargeAmt   = Math.round(basePrice * surcharge)
+  const total          = basePrice + surchargeAmt
+
   const handleNext = () => { const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }; setStep(s => s + 1) }
-  const handleSave = () => { onSave({ ...form, price: parseFloat(form.price) || 0, time: null, petId: form.petId || null, ownerId: form.ownerId || null }); onClose() }
+  const handleSave = () => { onSave({ ...form, price: total, time: null, petId: form.petId || null, ownerId: form.ownerId || null }); onClose() }
 
   return (
     <StepWizard
@@ -71,6 +76,16 @@ export default function GroomingForm({ isOpen, onClose, onSave, initial = null }
               <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontWeight: 600, pointerEvents: 'none' }}>$</span>
               <input className="form-input" type="number" min="0" step="1" value={form.price} onFocus={e => e.target.select()} onChange={set('price')} placeholder="0" style={{ paddingLeft: 26 }} />
             </div>
+            {surchargeAmt > 0 && (
+              <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 2, fontSize: 13 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--orange)' }}>
+                  <span>Recargo ({surcharge * 100}%)</span><span>+ {formatCurrency(surchargeAmt)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--accent)', borderTop: '1px solid var(--border-2)', paddingTop: 4 }}>
+                  <span>Total</span><span>{formatCurrency(total)}</span>
+                </div>
+              </div>
+            )}
           </div>
           <div className="form-group">
             <label className="form-label">Medio de pago</label>

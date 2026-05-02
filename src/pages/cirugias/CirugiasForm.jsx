@@ -3,15 +3,15 @@ import StepWizard from '../../components/ui/StepWizard'
 import OwnerSelect from '../../components/ui/OwnerSelect'
 import PetSelect from '../../components/ui/PetSelect'
 import { useApp } from '../../context/AppContext'
-import { todayStr } from '../../utils/helpers'
+import { todayStr, formatCurrency } from '../../utils/helpers'
 
 const EMPTY = { petId: '', ownerId: '', date: todayStr(), diagnostico: '', costos: '', observaciones: '', paymentMethod: 'efectivo' }
 const STEPS = ['Paciente', 'Diagnóstico', 'Costos']
 const PAYMENT_METHODS = [
-  { value: 'efectivo',        label: 'Efectivo' },
-  { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
-  { value: 'tarjeta_debito',  label: 'Tarjeta débito' },
-  { value: 'transferencia',   label: 'Transferencia' },
+  { value: 'efectivo',        label: 'Efectivo',         surcharge: 0    },
+  { value: 'tarjeta_credito', label: 'Tarjeta crédito',  surcharge: 0.20 },
+  { value: 'tarjeta_debito',  label: 'Tarjeta débito',   surcharge: 0.05 },
+  { value: 'transferencia',   label: 'Transferencia',    surcharge: 0    },
 ]
 
 export default function CirugiasForm({ isOpen, onClose, onSave, initial = null }) {
@@ -44,10 +44,15 @@ export default function CirugiasForm({ isOpen, onClose, onSave, initial = null }
     return errs
   }
 
+  const basePrice    = parseFloat(form.costos) || 0
+  const surcharge    = PAYMENT_METHODS.find(m => m.value === form.paymentMethod)?.surcharge ?? 0
+  const surchargeAmt = Math.round(basePrice * surcharge)
+  const total        = basePrice + surchargeAmt
+
   const handleNext = () => { const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }; setStep(s => s + 1) }
   const handleSave = () => {
     const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }
-    onSave({ ...form, costos: parseFloat(form.costos) || 0, petId: form.petId || null, ownerId: form.ownerId || null }); onClose()
+    onSave({ ...form, costos: total, petId: form.petId || null, ownerId: form.ownerId || null }); onClose()
   }
 
   return (
@@ -88,6 +93,16 @@ export default function CirugiasForm({ isOpen, onClose, onSave, initial = null }
               <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', fontWeight: 600, pointerEvents: 'none' }}>$</span>
               <input className="form-input" type="number" min="0" step="1" value={form.costos} onFocus={e => e.target.select()} onChange={set('costos')} placeholder="0" style={{ paddingLeft: 26 }} />
             </div>
+            {surchargeAmt > 0 && (
+              <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 2, fontSize: 13 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--orange)' }}>
+                  <span>Recargo ({surcharge * 100}%)</span><span>+ {formatCurrency(surchargeAmt)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--accent)', borderTop: '1px solid var(--border-2)', paddingTop: 4 }}>
+                  <span>Total</span><span>{formatCurrency(total)}</span>
+                </div>
+              </div>
+            )}
           </div>
           <div className="form-group">
             <label className="form-label">Medio de pago</label>
