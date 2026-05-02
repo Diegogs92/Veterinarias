@@ -145,8 +145,8 @@ export default function ConsultasPage() {
             }
           />
         ) : (
-          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-            <div className="card card--no-hover card--table" style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="card card--no-hover card--table">
               <div className="table-wrap">
                 <table>
                   <thead>
@@ -211,6 +211,7 @@ export default function ConsultasPage() {
               isOpen={!!selectedLive}
               onClose={() => setSelected(null)}
               title={selectedPet?.name || 'Detalle'}
+              headerColor={selectedLive?.paymentStatus === 'paid' ? 'var(--ok-3)' : 'var(--warn-3)'}
             >
               {selectedLive && (
                 <>

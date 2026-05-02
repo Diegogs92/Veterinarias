@@ -143,8 +143,8 @@ export default function GroomingPage() {
             action={<button className="btn btn--primary" onClick={() => setFormOpen(true)}>+ Nuevo turno</button>}
           />
         ) : (
-          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-            <div className="card card--no-hover card--table" style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="card card--no-hover card--table">
               <div className="table-wrap">
                 <table>
                   <thead>
@@ -208,6 +208,7 @@ export default function GroomingPage() {
               isOpen={!!selectedLive}
               onClose={() => setSelected(null)}
               title={selectedPet?.name || 'Detalle'}
+              headerColor={selectedLive?.paid ? 'var(--ok-3)' : 'var(--warn-3)'}
             >
               {selectedLive && (
                 <>

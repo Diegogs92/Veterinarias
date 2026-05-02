@@ -1,12 +1,12 @@
 import { X } from 'lucide-react'
 
-export default function InlinePanel({ isOpen, onClose, title, children, width = 380 }) {
+export default function InlinePanel({ isOpen, onClose, title, children, width, headerColor }) {
   if (!isOpen) return null
 
   return (
     <div
       style={{
-        width,
+        width: width || '100%',
         flexShrink: 0,
         background: 'var(--bg-elev)',
         border: '1px solid var(--border)',
@@ -20,7 +20,15 @@ export default function InlinePanel({ isOpen, onClose, title, children, width = 
         flexDirection: 'column',
       }}
     >
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+      <div style={{
+        padding: '12px 16px',
+        borderBottom: '1px solid var(--border)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexShrink: 0,
+        background: headerColor || undefined,
+      }}>
         <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>{title}</h3>
         <button className="btn btn--subtle btn--icon" onClick={onClose} style={{ width: 30, height: 30 }}>
           <X size={16} strokeWidth={2.5} />
