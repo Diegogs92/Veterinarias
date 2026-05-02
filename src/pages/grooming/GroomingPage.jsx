@@ -1,9 +1,8 @@
 import { useState, useMemo } from 'react'
-import { Search, Pencil, Trash2, Scissors } from 'lucide-react'
+import { Search, Pencil, Trash2, Scissors, MessageCircle } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
-import Header from '../../components/layout/Header'
-import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
+import Header from '../../components/layout/Header'
 import Modal from '../../components/ui/Modal'
 import SpeciesIcon from '../../components/ui/SpeciesIcon'
 import GroomingForm from './GroomingForm'
@@ -11,32 +10,27 @@ import { formatDate, formatCurrency } from '../../utils/helpers'
 
 export default function GroomingPage() {
   const { grooming, pets, owners } = useApp()
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [search, setSearch]   = useState('')
   const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState(null)
+  const [editing, setEditing]  = useState(null)
   const [deleting, setDeleting] = useState(null)
 
   const filtered = useMemo(() =>
     grooming.items
       .filter(g => {
-        const pet = pets.find(g.petId)
+        const pet   = pets.find(g.petId)
         const owner = owners.find(g.ownerId)
-        const str = `${pet?.name || ''} ${owner?.name || ''} ${(g.services || []).join(' ')} ${g.observations || ''}`.toLowerCase()
-        return str.includes(search.toLowerCase()) &&
-          (statusFilter === 'all' || g.status === statusFilter)
+        const str   = `${pet?.name || ''} ${owner?.name || ''} ${(g.services || []).join(' ')} ${g.observations || ''}`.toLowerCase()
+        return str.includes(search.toLowerCase())
       })
       .sort((a, b) => new Date(b.date) - new Date(a.date)),
-    [grooming.items, search, statusFilter, pets, owners]
+    [grooming.items, search, pets, owners]
   )
 
-  const handleSave = (data) => {
-    if (editing) grooming.update(editing.id, data)
-    else grooming.add(data)
-    setEditing(null)
-  }
-
+  const handleSave   = (data) => { if (editing) grooming.update(editing.id, data); else grooming.add(data); setEditing(null) }
   const handleDelete = () => { grooming.remove(deleting.id); setDeleting(null) }
+
+  const whatsappUrl = (phone) => `https://wa.me/${phone.replace(/\D/g, '')}`
 
   return (
     <>
@@ -54,17 +48,6 @@ export default function GroomingPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
-          </div>
-          <div className="tabs" style={{ flexShrink: 0 }}>
-            {[
-              { value: 'all',       label: 'Todos' },
-              { value: 'completed', label: 'Realizados' },
-              { value: 'scheduled', label: 'Programados' },
-            ].map(t => (
-              <button key={t.value} className={`tab${statusFilter === t.value ? ' active' : ''}`} onClick={() => setStatusFilter(t.value)}>
-                {t.label}
-              </button>
-            ))}
           </div>
           <button className="btn btn--primary" style={{ marginLeft: 'auto' }} onClick={() => { setEditing(null); setFormOpen(true) }}>
             + Nuevo turno
@@ -89,13 +72,12 @@ export default function GroomingPage() {
                     <th>Fecha</th>
                     <th>Servicios</th>
                     <th>Precio</th>
-                    <th>Estado</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map(g => {
-                    const pet = pets.find(g.petId)
+                    const pet   = pets.find(g.petId)
                     const owner = owners.find(g.ownerId)
                     return (
                       <tr key={g.id}>
@@ -112,7 +94,26 @@ export default function GroomingPage() {
                             <span style={{ fontWeight: 600 }}>{pet?.name || '—'}</span>
                           </div>
                         </td>
-                        <td style={{ color: 'var(--text-secondary)' }}>{owner?.name || '—'}</td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>{owner?.name || '—'}</span>
+                            {owner?.phone && (
+                              <>
+                                <span style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>{owner.phone}</span>
+                                <a
+                                  href={whatsappUrl(owner.phone)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="btn btn--subtle btn--icon"
+                                  style={{ color: '#25D366', padding: '2px 4px', lineHeight: 1 }}
+                                  title="Enviar WhatsApp"
+                                >
+                                  <MessageCircle size={16} strokeWidth={2} />
+                                </a>
+                              </>
+                            )}
+                          </div>
+                        </td>
                         <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{formatDate(g.date)}</td>
                         <td>
                           {(g.services || []).length === 0
@@ -132,11 +133,6 @@ export default function GroomingPage() {
                         </td>
                         <td style={{ fontWeight: 600, color: 'var(--vet-teal)' }}>
                           {g.price > 0 ? formatCurrency(g.price) : '—'}
-                        </td>
-                        <td>
-                          <Badge color={g.status === 'completed' ? 'green' : 'blue'} dot>
-                            {g.status === 'completed' ? 'Realizado' : 'Programado'}
-                          </Badge>
                         </td>
                         <td>
                           <div style={{ display: 'flex', gap: 4 }}>

@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
 import StepWizard from '../../components/ui/StepWizard'
-import OwnerSelect from '../../components/ui/OwnerSelect'
 import PetSelect from '../../components/ui/PetSelect'
 import { useApp } from '../../context/AppContext'
 import { todayStr } from '../../utils/helpers'
 
-const SERVICES = ['Baño', 'Corte', 'Corte de uñas', 'Limpieza de orejas', 'Baño + corte completo']
-const EMPTY    = { petId: '', ownerId: '', date: todayStr(), time: '', services: [], price: '', observations: '', status: 'completed' }
+const SERVICES = ['Baño', 'Baño + corte completo']
+const EMPTY    = { petId: '', ownerId: '', date: todayStr(), services: [], price: '', observations: '' }
 const STEPS    = ['Turno', 'Servicios']
 
 export default function GroomingForm({ isOpen, onClose, onSave, initial = null }) {
@@ -31,15 +30,12 @@ export default function GroomingForm({ isOpen, onClose, onSave, initial = null }
 
   const validateStep = (s) => {
     const errs = {}
-    if (s === 0) {
-      if (!form.petId) errs.petId = 'Seleccioná una mascota'
-      if (!form.date)  errs.date  = 'Requerido'
-    }
+    if (s === 0 && !form.petId) errs.petId = 'Seleccioná una mascota'
     return errs
   }
 
   const handleNext = () => { const e = validateStep(step); if (Object.keys(e).length) { setErrors(e); return }; setStep(s => s + 1) }
-  const handleSave = () => { onSave({ ...form, price: parseFloat(form.price) || 0, time: form.time || null }); onClose() }
+  const handleSave = () => { onSave({ ...form, price: parseFloat(form.price) || 0, time: null }); onClose() }
 
   return (
     <StepWizard
@@ -50,34 +46,13 @@ export default function GroomingForm({ isOpen, onClose, onSave, initial = null }
       saveLabel={initial ? 'Guardar cambios' : 'Registrar'}
     >
       {step === 0 && (
-        <>
-          <PetSelect value={form.petId} onChange={handlePetChange} error={errors.petId} required />
-          <OwnerSelect value={form.ownerId} onChange={id => setForm(f => ({ ...f, ownerId: id }))} disabled={!!form.petId} label="Dueño" />
-          <div className="form-row form-row--2">
-            <div className="form-group">
-              <label className="form-label">Fecha *</label>
-              <input className={`form-input${errors.date ? ' form-input--error' : ''}`} type="date" value={form.date} onChange={set('date')} />
-              {errors.date && <span className="form-error">{errors.date}</span>}
-            </div>
-            <div className="form-group">
-              <label className="form-label">Horario</label>
-              <input className="form-input" type="time" value={form.time} onChange={set('time')} />
-            </div>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Estado</label>
-            <div className="toggle-group">
-              <button type="button" className={`toggle-btn${form.status === 'scheduled' ? ' on' : ''}`} onClick={() => setForm(f => ({ ...f, status: 'scheduled' }))}>📅 Programado</button>
-              <button type="button" className={`toggle-btn${form.status === 'completed' ? ' on--ok' : ''}`} onClick={() => setForm(f => ({ ...f, status: 'completed' }))}>✅ Realizado</button>
-            </div>
-          </div>
-        </>
+        <PetSelect value={form.petId} onChange={handlePetChange} error={errors.petId} required />
       )}
 
       {step === 1 && (
         <>
           <div className="form-group">
-            <label className="form-label">Servicios</label>
+            <label className="form-label">Servicio</label>
             <div className="toggle-group">
               {SERVICES.map(svc => (
                 <button key={svc} type="button" className={`toggle-btn${form.services.includes(svc) ? ' on' : ''}`} onClick={() => toggleService(svc)}>{svc}</button>
