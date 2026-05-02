@@ -155,17 +155,13 @@ export default function FinancesPage() {
   }, [expenses])
 
   // ── Recent income table ────────────────────────────────────────────────────
+  const [detailSale, setDetailSale] = useState(null)
+
   const recentIncome = useMemo(() => {
     return sales.items
       .filter(s => s.total > 0 && (!filterPayMethod || s.paymentMethod === filterPayMethod))
-      .map(s => ({
-        id: s.id, date: s.date,
-        label: `Venta (${owners.find(s.ownerId)?.name || '—'})`,
-        amount: s.total || 0,
-        paymentMethod: s.paymentMethod,
-      }))
       .sort((a, b) => new Date(b.date) - new Date(a.date))
-  }, [sales.items, owners, filterPayMethod])
+  }, [sales.items, filterPayMethod])
 
   return (
     <>
@@ -240,26 +236,28 @@ export default function FinancesPage() {
                 <thead>
                   <tr>
                     <th>Fecha</th>
-                    <th>Descripción</th>
                     <th>Forma de pago</th>
                     <th style={{ textAlign: 'right' }}>Total</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {recentIncome.map(entry => {
+                  {recentIncome.map(sale => {
                     const METHOD_LABEL = {
                       efectivo: 'Efectivo', tarjeta_credito: 'Tarjeta crédito',
                       tarjeta_debito: 'Tarjeta débito', transferencia: 'Transferencia',
                     }
                     return (
-                      <tr key={entry.id}>
-                        <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(entry.date)}</td>
-                        <td style={{ fontSize: 13 }} className="truncate">{entry.label}</td>
-                        <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                          {METHOD_LABEL[entry.paymentMethod] || '—'}
-                        </td>
+                      <tr key={sale.id}>
+                        <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(sale.date)}</td>
+                        <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{METHOD_LABEL[sale.paymentMethod] || '—'}</td>
                         <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-emerald)', whiteSpace: 'nowrap' }}>
-                          + {formatCurrency(entry.amount)}
+                          + {formatCurrency(sale.total)}
+                        </td>
+                        <td>
+                          <button className="btn btn--subtle btn--sm" onClick={() => setDetailSale(sale)}>
+                            Ver detalle
+                          </button>
                         </td>
                       </tr>
                     )
@@ -416,6 +414,50 @@ export default function FinancesPage() {
           </div>
         )}
       </div>
+
+      {/* Sale detail modal */}
+      {detailSale && (() => {
+        const owner = owners.find(detailSale.ownerId)
+        const METHOD_LABEL = {
+          efectivo: 'Efectivo', tarjeta_credito: 'Tarjeta crédito',
+          tarjeta_debito: 'Tarjeta débito', transferencia: 'Transferencia',
+        }
+        return (
+          <Modal isOpen onClose={() => setDetailSale(null)} title="Detalle de venta" size="sm">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {owner && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Cliente</span>
+                  <span style={{ fontWeight: 600 }}>{owner.name}{owner.apellido ? ` ${owner.apellido}` : ''}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Fecha</span>
+                <span>{formatDate(detailSale.date)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Forma de pago</span>
+                <span>{METHOD_LABEL[detailSale.paymentMethod] || '—'}</span>
+              </div>
+              <div style={{ borderTop: '1px solid var(--border-2)', paddingTop: 12 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Productos</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {(detailSale.items || []).map((item, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                      <span>{item.productName} <span style={{ color: 'var(--text-tertiary)' }}>x{item.quantity}</span></span>
+                      <span style={{ fontWeight: 600 }}>{formatCurrency(item.subtotal)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ borderTop: '1px solid var(--border-2)', paddingTop: 10, display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16, color: 'var(--vet-emerald)' }}>
+                <span>Total</span>
+                <span>{formatCurrency(detailSale.total)}</span>
+              </div>
+            </div>
+          </Modal>
+        )
+      })()}
 
       {/* Expense modal */}
       <Modal
