@@ -6,7 +6,6 @@ import {
 import { useApp } from '../../context/AppContext'
 import { useAuth } from '../../context/AuthContext'
 import Header from '../../components/layout/Header'
-import Badge from '../../components/ui/Badge'
 import EmptyState from '../../components/ui/EmptyState'
 import Modal from '../../components/ui/Modal'
 import { formatDate, formatCurrency, todayStr } from '../../utils/helpers'
@@ -22,6 +21,8 @@ const EMPTY_PAYMENT = { amount: '', date: todayStr(), notes: '' }
 export default function FinancesPage() {
   const { cash, sales, owners, debts, registerDebtPayment } = useApp()
   const { canViewFinances } = useAuth()
+
+  const [filterPayMethod, setFilterPayMethod] = useState('')
 
   // Expense modal
   const [expenseOpen, setExpenseOpen]   = useState(false)
@@ -155,18 +156,16 @@ export default function FinancesPage() {
 
   // ── Recent income table ────────────────────────────────────────────────────
   const recentIncome = useMemo(() => {
-    const salesEntries = sales.items
-      .filter(s => s.paidAmount > 0)
+    return sales.items
+      .filter(s => s.total > 0 && (!filterPayMethod || s.paymentMethod === filterPayMethod))
       .map(s => ({
-        id: s.id, type: 'sale', date: s.date,
+        id: s.id, date: s.date,
         label: `Venta (${owners.find(s.ownerId)?.name || '—'})`,
-        amount: s.paidAmount || 0,
-        status: s.paymentStatus,
+        amount: s.total || 0,
+        paymentMethod: s.paymentMethod,
       }))
-    return salesEntries
       .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .slice(0, 20)
-  }, [sales.items, owners])
+  }, [sales.items, owners, filterPayMethod])
 
   return (
     <>
@@ -215,12 +214,25 @@ export default function FinancesPage() {
 
         {/* Recent income table */}
         <div className="card card--no-hover" style={{ marginBottom: 32 }}>
-          <div className="card__header">
-            <span className="card__title">Últimos cobros</span>
+          <div className="card__header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <span className="card__title">Cobros</span>
+            <div className="tabs">
+              {[
+                { value: '',                label: 'Todos' },
+                { value: 'efectivo',        label: 'Efectivo' },
+                { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
+                { value: 'tarjeta_debito',  label: 'Tarjeta débito' },
+                { value: 'transferencia',   label: 'Transferencia' },
+              ].map(t => (
+                <button key={t.value} className={`tab${filterPayMethod === t.value ? ' active' : ''}`} onClick={() => setFilterPayMethod(t.value)}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
           </div>
           {recentIncome.length === 0 ? (
             <div style={{ padding: '24px 20px', color: 'var(--text-tertiary)', fontSize: 13 }}>
-              Aún no hay cobros registrados.
+              No hay cobros con ese filtro.
             </div>
           ) : (
             <div className="table-wrap">
@@ -228,29 +240,30 @@ export default function FinancesPage() {
                 <thead>
                   <tr>
                     <th>Fecha</th>
-                    <th>Origen</th>
                     <th>Descripción</th>
-                    <th style={{ textAlign: 'right' }}>Cobrado</th>
+                    <th>Forma de pago</th>
+                    <th style={{ textAlign: 'right' }}>Total</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {recentIncome.map(entry => (
-                    <tr key={`${entry.type}-${entry.id}`}>
-                      <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(entry.date)}</td>
-                      <td>
-                        <Badge color={entry.type === 'sale' ? 'blue' : 'purple'}>
-                          {entry.type === 'sale' ? 'Venta' : 'Consulta'}
-                        </Badge>
-                      </td>
-                      <td style={{ fontSize: 13 }} className="truncate">{entry.label}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-emerald)', whiteSpace: 'nowrap' }}>
-                        + {formatCurrency(entry.amount)}
-                        {entry.status === 'partial' && (
-                          <Badge color="orange" style={{ marginLeft: 6 }}>Parcial</Badge>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {recentIncome.map(entry => {
+                    const METHOD_LABEL = {
+                      efectivo: 'Efectivo', tarjeta_credito: 'Tarjeta crédito',
+                      tarjeta_debito: 'Tarjeta débito', transferencia: 'Transferencia',
+                    }
+                    return (
+                      <tr key={entry.id}>
+                        <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(entry.date)}</td>
+                        <td style={{ fontSize: 13 }} className="truncate">{entry.label}</td>
+                        <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                          {METHOD_LABEL[entry.paymentMethod] || '—'}
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-emerald)', whiteSpace: 'nowrap' }}>
+                          + {formatCurrency(entry.amount)}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
