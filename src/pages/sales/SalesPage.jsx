@@ -9,28 +9,39 @@ import { formatDate, formatCurrency } from '../../utils/helpers'
 
 export default function SalesPage() {
   const { sales } = useApp()
-  const [search, setSearch]     = useState('')
-  const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing]   = useState(null)
-  const [deleting, setDeleting] = useState(null)
-  const [toast, setToast]       = useState(false)
+  const [search, setSearch]           = useState('')
+  const [filterPayMethod, setFilterPayMethod] = useState('')
+  const [filterFecha, setFilterFecha] = useState('')
+  const [formOpen, setFormOpen]       = useState(false)
+  const [editing, setEditing]         = useState(null)
+  const [deleting, setDeleting]       = useState(null)
+  const [toast, setToast]             = useState(false)
 
   const showToast = useCallback(() => {
     setToast(true)
     setTimeout(() => setToast(false), 3000)
   }, [])
 
-  const filtered = useMemo(() =>
-    sales.items
+  const today = new Date().toISOString().slice(0, 10)
+  const startOfWeek = (() => { const d = new Date(); d.setDate(d.getDate() - d.getDay()); return d.toISOString().slice(0, 10) })()
+  const startOfMonth = new Date().toISOString().slice(0, 8) + '01'
+
+  const filtered = useMemo(() => {
+    return sales.items
       .filter(s => {
         const str = (s.items?.map(i => i.productName).join(' ') || '').toLowerCase()
-        return !search || str.includes(search.toLowerCase())
+        if (search && !str.includes(search.toLowerCase())) return false
+        if (filterPayMethod && s.paymentMethod !== filterPayMethod) return false
+        if (filterFecha === 'hoy'  && s.date !== today) return false
+        if (filterFecha === 'semana' && s.date < startOfWeek) return false
+        if (filterFecha === 'mes'  && s.date < startOfMonth) return false
+        return true
       })
-      .sort((a, b) => new Date(b.date) - new Date(a.date)),
-    [sales.items, search]
-  )
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+  }, [sales.items, search, filterPayMethod, filterFecha])
 
-  const totalSold = sales.items.reduce((s, v) => s + (v.total || 0), 0)
+  const totalSold     = sales.items.reduce((s, v) => s + (v.total || 0), 0)
+  const filteredTotal = filtered.reduce((s, v) => s + (v.total || 0), 0)
 
   const handleSave = (data) => {
     if (editing) sales.update(editing.id, data)
@@ -56,13 +67,20 @@ export default function SalesPage() {
             <div className="stat-card__icon" style={{ color: 'var(--vet-emerald)' }}>
               <TrendingUp size={32} strokeWidth={1.75} />
             </div>
-            <div className="stat-card__label">Total vendido</div>
-            <div className="stat-card__value" style={{ color: 'var(--vet-emerald)', fontSize: 24 }}>{formatCurrency(totalSold)}</div>
+            <div className="stat-card__label">{(search || filterPayMethod || filterFecha) ? 'Total filtrado' : 'Total vendido'}</div>
+            <div className="stat-card__value" style={{ color: 'var(--vet-emerald)', fontSize: 24 }}>
+              {formatCurrency((search || filterPayMethod || filterFecha) ? filteredTotal : totalSold)}
+            </div>
+            {(search || filterPayMethod || filterFecha) && (
+              <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                Total general: {formatCurrency(totalSold)}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Filters */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <div className="search-wrap" style={{ flex: 1, minWidth: 200 }}>
             <Search size={18} className="search-icon" />
             <input
@@ -76,6 +94,21 @@ export default function SalesPage() {
           <button className="btn btn--primary" style={{ marginLeft: 'auto' }} onClick={() => { setEditing(null); setFormOpen(true) }}>
             <Plus size={18} /> Registrar venta
           </button>
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="tabs">
+            <button className={`tab${filterFecha === '' ? ' active' : ''}`} onClick={() => setFilterFecha('')}>Todas las fechas</button>
+            <button className={`tab${filterFecha === 'hoy' ? ' active' : ''}`} onClick={() => setFilterFecha('hoy')}>Hoy</button>
+            <button className={`tab${filterFecha === 'semana' ? ' active' : ''}`} onClick={() => setFilterFecha('semana')}>Esta semana</button>
+            <button className={`tab${filterFecha === 'mes' ? ' active' : ''}`} onClick={() => setFilterFecha('mes')}>Este mes</button>
+          </div>
+          <div className="tabs">
+            <button className={`tab${filterPayMethod === '' ? ' active' : ''}`} onClick={() => setFilterPayMethod('')}>Todos</button>
+            <button className={`tab${filterPayMethod === 'efectivo' ? ' active' : ''}`} onClick={() => setFilterPayMethod('efectivo')}>Efectivo</button>
+            <button className={`tab${filterPayMethod === 'tarjeta_credito' ? ' active' : ''}`} onClick={() => setFilterPayMethod('tarjeta_credito')}>Tarjeta crédito</button>
+            <button className={`tab${filterPayMethod === 'tarjeta_debito' ? ' active' : ''}`} onClick={() => setFilterPayMethod('tarjeta_debito')}>Tarjeta débito</button>
+            <button className={`tab${filterPayMethod === 'transferencia' ? ' active' : ''}`} onClick={() => setFilterPayMethod('transferencia')}>Transferencia</button>
+          </div>
         </div>
 
         {/* Table */}
