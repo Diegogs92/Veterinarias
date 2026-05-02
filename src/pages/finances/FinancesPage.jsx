@@ -268,66 +268,6 @@ export default function FinancesPage() {
           )}
         </div>
 
-        {/* ── BLOCK 2: Debts ──────────────────────────────────────────────── */}
-        <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--text-secondary)' }}>
-          Deudas pendientes
-        </h2>
-        {debtsByOwner.length === 0 ? (
-          <div className="card card--no-hover" style={{ marginBottom: 32 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px', color: 'var(--vet-emerald)' }}>
-              <CheckCircle2 size={20} strokeWidth={2} />
-              <span style={{ fontSize: 14, fontWeight: 600 }}>Sin deudas pendientes</span>
-            </div>
-          </div>
-        ) : (
-          <div className="card card--no-hover" style={{ marginBottom: 32 }}>
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Cliente</th>
-                    <th style={{ textAlign: 'right' }}>Deuda total</th>
-                    <th style={{ textAlign: 'right' }}>Pagado</th>
-                    <th style={{ textAlign: 'right' }}>Saldo</th>
-                    <th style={{ width: 80 }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {debtsByOwner.map(entry => {
-                    const owner = owners.find(entry.ownerId)
-                    return (
-                      <tr key={entry.ownerId}>
-                        <td style={{ fontWeight: 600 }}>{owner?.name || '—'}</td>
-                        <td style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>
-                          {formatCurrency(entry.totalDebt)}
-                        </td>
-                        <td style={{ textAlign: 'right', color: 'var(--vet-emerald)' }}>
-                          {formatCurrency(entry.totalPaid)}
-                        </td>
-                        <td style={{ textAlign: 'right', fontWeight: 800, color: 'var(--vet-rose)' }}>
-                          {formatCurrency(entry.balance)}
-                        </td>
-                        <td>
-                          {entry.debts.map(d => (
-                            <button
-                              key={d.id}
-                              className="btn btn--subtle btn--sm"
-                              style={{ fontSize: 12, whiteSpace: 'nowrap' }}
-                              onClick={() => openPayment(d)}
-                            >
-                              Registrar pago
-                            </button>
-                          ))}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
         {/* ── BLOCK 3: Expenses ───────────────────────────────────────────── */}
         <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 16 }}>Egresos</h2>
 
