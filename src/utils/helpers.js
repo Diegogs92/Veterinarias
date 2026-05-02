@@ -1,3 +1,8 @@
+export const toProperCase = (str) => {
+  if (!str || typeof str !== 'string') return str
+  return str.replace(/\S+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+}
+
 export const generateId = () =>
   `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 

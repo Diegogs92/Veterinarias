@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
+import { toProperCase } from '../utils/helpers'
 
 // ── Case conversion ──────────────────────────────────────────────────────────
 const toSnake = s => s.replace(/[A-Z]/g, c => `_${c.toLowerCase()}`)
@@ -20,7 +21,16 @@ function objToCamel(obj) {
   )
 }
 
-const convRows = rows => (rows || []).map(r => objToCamel(r))
+const NAME_FIELDS = new Set(['name', 'apellido', 'pet_name', 'product_name'])
+const convRows = rows => (rows || []).map(r => {
+  const camel = objToCamel(r)
+  for (const key of Object.keys(r)) {
+    if (NAME_FIELDS.has(key) && typeof r[key] === 'string') {
+      camel[toCamel(key)] = toProperCase(r[key])
+    }
+  }
+  return camel
+})
 
 // ── Generic Supabase CRUD hook ────────────────────────────────────────────────
 function useSupaCrud(table, omit = []) {
