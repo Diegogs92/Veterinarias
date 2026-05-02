@@ -27,7 +27,7 @@ function PendingBtn({ onClick }) {
       style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color var(--t-fast)', color: hovered ? 'var(--ok)' : 'var(--warn)' }}
     >
       <Clock size={15} strokeWidth={2} />
-      {hovered ? 'Cobrar' : 'Pendiente'}
+      {hovered ? 'Cobrar' : 'No pagado'}
     </button>
   )
 }
@@ -131,7 +131,7 @@ export default function GroomingPage() {
           <div className="tabs">
             <button className={`tab${filterPago === '' ? ' active' : ''}`} onClick={() => setFilterPago('')}>Todos</button>
             <button className={`tab${filterPago === 'pagado' ? ' active' : ''}`} onClick={() => setFilterPago('pagado')}>Pagado</button>
-            <button className={`tab${filterPago === 'pendiente' ? ' active' : ''}`} onClick={() => setFilterPago('pendiente')}>Pendiente</button>
+            <button className={`tab${filterPago === 'pendiente' ? ' active' : ''}`} onClick={() => setFilterPago('pendiente')}>No pagado</button>
           </div>
         </div>
 
@@ -151,7 +151,7 @@ export default function GroomingPage() {
                     <tr>
                       <th>Mascota</th>
                       <th>Precio</th>
-                      <th>Pago</th>
+                      <th>Estado</th>
                       <th style={{ width: 80 }}></th>
                     </tr>
                   </thead>
@@ -254,7 +254,7 @@ export default function GroomingPage() {
                   <Field label="Estado de pago">
                     {selectedLive.paid
                       ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontWeight: 600 }}><CheckCircle2 size={14} strokeWidth={2} />Pagado{selectedLive.paymentMethod ? ` · ${PM_LABEL[selectedLive.paymentMethod] || selectedLive.paymentMethod}` : ''}</span>
-                      : <span style={{ color: 'var(--warn)', fontWeight: 600 }}>Pendiente</span>
+                      : <span style={{ color: 'var(--warn)', fontWeight: 600 }}>No pagado</span>
                     }
                   </Field>
                   {selectedLive.observations && (
