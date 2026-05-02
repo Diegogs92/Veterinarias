@@ -130,6 +130,7 @@ export default function GroomingPage() {
                   <tr>
                     <th>Mascota</th>
                     <th>Dueño</th>
+                    <th>Teléfono</th>
                     <th>Precio</th>
                     <th>Pago</th>
                     <th></th>
@@ -154,12 +155,11 @@ export default function GroomingPage() {
                             <span style={{ fontWeight: 600 }}>{pet?.name || '—'}</span>
                           </div>
                         </td>
+                        <td style={{ color: 'var(--text-secondary)' }}>{owner?.name || '—'}</td>
                         <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ color: 'var(--text-secondary)' }}>{owner?.name || '—'}</span>
-                            {owner?.phone && (
-                              <>
-                                <span style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>{owner.phone}</span>
+                          {owner?.phone
+                            ? <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{owner.phone}</span>
                                 <a
                                   href={whatsappUrl(owner.phone)}
                                   target="_blank"
@@ -170,9 +170,9 @@ export default function GroomingPage() {
                                 >
                                   <WhatsAppIcon size={16} />
                                 </a>
-                              </>
-                            )}
-                          </div>
+                              </div>
+                            : <span style={{ color: 'var(--text-tertiary)' }}>—</span>
+                          }
                         </td>
                         <td style={{ fontWeight: 600, color: 'var(--vet-teal)' }}>
                           {g.price > 0 ? formatCurrency(g.price) : '—'}
