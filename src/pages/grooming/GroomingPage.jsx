@@ -11,6 +11,7 @@ import { useApp } from '../../context/AppContext'
 import EmptyState from '../../components/ui/EmptyState'
 import Header from '../../components/layout/Header'
 import Modal from '../../components/ui/Modal'
+import SidePanel from '../../components/ui/SidePanel'
 import SpeciesIcon from '../../components/ui/SpeciesIcon'
 import GroomingForm from './GroomingForm'
 import { formatDate, formatCurrency } from '../../utils/helpers'
@@ -33,11 +34,25 @@ function PendingBtn({ onClick }) {
 
 const PAYMENT_METHODS = [
   { value: 'efectivo',        label: 'Efectivo',         surcharge: 0    },
-  { value: 'tarjeta_credito', label: 'Tarjeta crédito',  surcharge: 0.20 },
-  { value: 'tarjeta_debito',  label: 'Tarjeta débito',   surcharge: 0.05 },
   { value: 'transferencia',   label: 'Transferencia',    surcharge: 0    },
+  { value: 'tarjeta_debito',  label: 'Tarjeta débito',   surcharge: 0.05 },
+  { value: 'tarjeta_credito', label: 'Tarjeta crédito',  surcharge: 0.20 },
 ]
 
+const PM_LABEL = { efectivo: 'Efectivo', tarjeta_credito: 'Tarjeta crédito', tarjeta_debito: 'Tarjeta débito', transferencia: 'Transferencia' }
+
+function Field({ label, children }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>{label}</div>
+      <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.5 }}>{children || <span style={{ color: 'var(--text-tertiary)' }}>—</span>}</div>
+    </div>
+  )
+}
+
+function Divider() {
+  return <div style={{ borderTop: '1px solid var(--border-2)', margin: '16px 0' }} />
+}
 
 export default function GroomingPage() {
   const { grooming, pets, owners } = useApp()
@@ -49,6 +64,7 @@ export default function GroomingPage() {
   const [editing, setEditing]       = useState(null)
   const [deleting, setDeleting]     = useState(null)
   const [paying, setPaying]         = useState(null)
+  const [selected, setSelected]     = useState(null)
 
   const filtered = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10)
@@ -68,7 +84,7 @@ export default function GroomingPage() {
   }, [grooming.items, search, filterService, filterPago, filterFecha, pets, owners])
 
   const handleSave     = (data) => { if (editing) grooming.update(editing.id, data); else grooming.add(data); setEditing(null) }
-  const handleDelete   = () => { grooming.remove(deleting.id); setDeleting(null) }
+  const handleDelete   = () => { if (deleting?.id === selected?.id) setSelected(null); grooming.remove(deleting.id); setDeleting(null) }
   const handleMarkPaid = (method) => {
     const surchargeAmt = Math.round((paying.price || 0) * method.surcharge)
     grooming.update(paying.id, { paid: true, paymentMethod: method.value, price: (paying.price || 0) + surchargeAmt })
@@ -76,6 +92,11 @@ export default function GroomingPage() {
   }
 
   const whatsappUrl = (phone) => `https://wa.me/${phone.replace(/\D/g, '')}`
+
+  // Always read from live items so selected reflects latest updates
+  const selectedLive = selected ? grooming.items.find(g => g.id === selected.id) : null
+  const selectedPet  = selectedLive ? pets.find(selectedLive.petId) : null
+  const selectedOwner = selectedLive ? owners.find(selectedLive.ownerId) : null
 
   return (
     <>
@@ -130,7 +151,6 @@ export default function GroomingPage() {
                   <tr>
                     <th>Mascota</th>
                     <th>Dueño</th>
-                    <th>Teléfono</th>
                     <th>Precio</th>
                     <th>Pago</th>
                     <th></th>
@@ -141,7 +161,11 @@ export default function GroomingPage() {
                     const pet   = pets.find(g.petId)
                     const owner = owners.find(g.ownerId)
                     return (
-                      <tr key={g.id}>
+                      <tr
+                        key={g.id}
+                        onClick={() => setSelected(g)}
+                        style={{ cursor: 'pointer', background: selected?.id === g.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
+                      >
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <div style={{
@@ -152,43 +176,25 @@ export default function GroomingPage() {
                             }}>
                               <SpeciesIcon species={pet?.species} size={16} strokeWidth={1.5} />
                             </div>
-                            <span style={{ fontWeight: 600 }}>{pet?.name || '—'}</span>
+                            <span style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</span>
                           </div>
                         </td>
-                        <td style={{ color: 'var(--text-secondary)' }}>{owner?.name || '—'}</td>
-                        <td>
-                          {owner?.phone
-                            ? <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{owner.phone}</span>
-                                <a
-                                  href={whatsappUrl(owner.phone)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="btn btn--subtle btn--icon"
-                                  style={{ color: '#25D366', padding: '2px 4px', lineHeight: 1 }}
-                                  title="Enviar WhatsApp"
-                                >
-                                  <WhatsAppIcon size={16} />
-                                </a>
-                              </div>
-                            : <span style={{ color: 'var(--text-tertiary)' }}>—</span>
-                          }
-                        </td>
-                        <td style={{ fontWeight: 600, color: 'var(--vet-teal)' }}>
+                        <td style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{owner?.name || '—'}</td>
+                        <td style={{ fontWeight: 600, color: 'var(--vet-teal)', fontSize: 14 }}>
                           {g.price > 0 ? formatCurrency(g.price) : '—'}
                         </td>
                         <td>
                           {g.paid
                             ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontSize: 13, fontWeight: 600 }}><CheckCircle2 size={15} strokeWidth={2} />Pagado</span>
-                            : <PendingBtn onClick={() => setPaying(g)} />
+                            : <PendingBtn onClick={(e) => { e.stopPropagation(); setPaying(g) }} />
                           }
                         </td>
                         <td>
                           <div style={{ display: 'flex', gap: 4 }}>
-                            <button className="btn btn--subtle btn--icon" onClick={() => { setEditing(g); setFormOpen(true) }}>
+                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setEditing(g); setFormOpen(true) }}>
                               <Pencil size={18} strokeWidth={2} />
                             </button>
-                            <button className="btn btn--subtle btn--icon" onClick={() => setDeleting(g)}>
+                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setDeleting(g) }}>
                               <Trash2 size={18} strokeWidth={2} />
                             </button>
                           </div>
@@ -202,6 +208,82 @@ export default function GroomingPage() {
           </div>
         )}
       </div>
+
+      {/* Side Panel */}
+      <SidePanel
+        isOpen={!!selectedLive}
+        onClose={() => setSelected(null)}
+        title={selectedPet?.name || 'Detalle'}
+        width={420}
+      >
+        {selectedLive && (
+          <>
+            <Field label="Mascota">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 'var(--r-sm)', background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)', flexShrink: 0 }}>
+                  <SpeciesIcon species={selectedPet?.species} size={14} strokeWidth={1.5} />
+                </div>
+                <span style={{ fontWeight: 600 }}>{selectedPet?.name || '—'}</span>
+                {selectedPet?.species && <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>({selectedPet.species})</span>}
+              </div>
+            </Field>
+            <Field label="Dueño">
+              {selectedOwner ? (
+                <div>
+                  <div>{selectedOwner.name}</div>
+                  {selectedOwner.phone && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                      <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{selectedOwner.phone}</span>
+                      <a
+                        href={whatsappUrl(selectedOwner.phone)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn--subtle btn--icon"
+                        style={{ color: '#25D366', padding: '2px 4px', lineHeight: 1 }}
+                        title="Enviar WhatsApp"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <WhatsAppIcon size={15} />
+                      </a>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </Field>
+            <Divider />
+            <Field label="Fecha">{selectedLive.date ? formatDate(selectedLive.date) : null}</Field>
+            <Field label="Servicios">
+              {(selectedLive.services || []).length > 0 ? (selectedLive.services.join(', ')) : null}
+            </Field>
+            <Field label="Precio">
+              {selectedLive.price > 0 ? <span style={{ fontWeight: 700, color: 'var(--vet-teal)' }}>{formatCurrency(selectedLive.price)}</span> : null}
+            </Field>
+            <Field label="Estado de pago">
+              {selectedLive.paid
+                ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontWeight: 600 }}><CheckCircle2 size={14} strokeWidth={2} />Pagado{selectedLive.paymentMethod ? ` · ${PM_LABEL[selectedLive.paymentMethod] || selectedLive.paymentMethod}` : ''}</span>
+                : <span style={{ color: 'var(--warn)', fontWeight: 600 }}>Pendiente</span>
+              }
+            </Field>
+            {selectedLive.observations && (
+              <Field label="Observaciones">{selectedLive.observations}</Field>
+            )}
+            <Divider />
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button className="btn btn--ghost btn--sm" onClick={() => { setEditing(selectedLive); setFormOpen(true) }}>
+                <Pencil size={14} /> Editar
+              </button>
+              <button className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => setDeleting(selectedLive)}>
+                <Trash2 size={14} /> Eliminar
+              </button>
+              {!selectedLive.paid && (
+                <button className="btn btn--primary btn--sm" style={{ marginLeft: 'auto' }} onClick={() => setPaying(selectedLive)}>
+                  Cobrar
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </SidePanel>
 
       <GroomingForm
         isOpen={formOpen}

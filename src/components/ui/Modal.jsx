@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { X } from 'lucide-react'
 
-export default function Modal({ isOpen, onClose, title, children, footer, size = '', className = '' }) {
+export default function Modal({ isOpen, onClose, title, children, footer, size = '', className = '', style }) {
   useEffect(() => {
     if (!isOpen) return
     const handleKey = (e) => { if (e.key === 'Escape') onClose() }
@@ -13,7 +13,7 @@ export default function Modal({ isOpen, onClose, title, children, footer, size =
 
   return (
     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className={`modal ${size ? `modal--${size}` : ''} ${className}`} role="dialog" aria-modal="true">
+      <div className={`modal ${size ? `modal--${size}` : ''} ${className}`} style={style} role="dialog" aria-modal="true">
         <div className="modal__header">
           <h2 className="modal__title">{title}</h2>
           <button className="btn btn--subtle btn--icon" onClick={onClose} aria-label="Cerrar" style={{ width: 48, height: 48 }}>

@@ -14,9 +14,9 @@ const STATUS_OPTS = [
 ]
 const PAYMENT_METHODS = [
   { value: 'efectivo',        label: 'Efectivo' },
-  { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
-  { value: 'tarjeta_debito',  label: 'Tarjeta débito' },
   { value: 'transferencia',   label: 'Transferencia' },
+  { value: 'tarjeta_debito',  label: 'Tarjeta débito' },
+  { value: 'tarjeta_credito', label: 'Tarjeta crédito' },
 ]
 
 export default function InternmentForm({ isOpen, onClose, onSave, initial = null }) {

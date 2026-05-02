@@ -8,9 +8,9 @@ const EMPTY = { petId: '', ownerId: '', date: todayStr(), diagnostico: '', costo
 const STEPS = ['Paciente', 'Diagnóstico', 'Costos']
 const PAYMENT_METHODS = [
   { value: 'efectivo',        label: 'Efectivo',         surcharge: 0    },
-  { value: 'tarjeta_credito', label: 'Tarjeta crédito',  surcharge: 0.20 },
-  { value: 'tarjeta_debito',  label: 'Tarjeta débito',   surcharge: 0.05 },
   { value: 'transferencia',   label: 'Transferencia',    surcharge: 0    },
+  { value: 'tarjeta_debito',  label: 'Tarjeta débito',   surcharge: 0.05 },
+  { value: 'tarjeta_credito', label: 'Tarjeta crédito',  surcharge: 0.20 },
 ]
 
 export default function CirugiasForm({ isOpen, onClose, onSave, initial = null }) {

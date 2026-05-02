@@ -8,9 +8,9 @@ const EMPTY = { items: [], paymentMethod: 'efectivo' }
 
 const PAYMENT_METHODS = [
   { value: 'efectivo',         label: 'Efectivo',           Icon: Banknote,        surcharge: 0    },
-  { value: 'tarjeta_credito',  label: 'Tarjeta de crédito', Icon: CreditCard,      surcharge: 0.20 },
-  { value: 'tarjeta_debito',   label: 'Tarjeta de débito',  Icon: Wallet,          surcharge: 0.05 },
   { value: 'transferencia',    label: 'Transferencia',      Icon: ArrowRightLeft,  surcharge: 0    },
+  { value: 'tarjeta_debito',   label: 'Tarjeta de débito',  Icon: Wallet,          surcharge: 0.05 },
+  { value: 'tarjeta_credito',  label: 'Tarjeta de crédito', Icon: CreditCard,      surcharge: 0.20 },
 ]
 
 export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
