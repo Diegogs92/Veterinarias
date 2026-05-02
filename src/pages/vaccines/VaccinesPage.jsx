@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import Header from '../../components/layout/Header'
 import Modal from '../../components/ui/Modal'
+import SidePanel from '../../components/ui/SidePanel'
 import EmptyState from '../../components/ui/EmptyState'
 import VaccineCatalogForm from './VaccineCatalogForm'
 import VaccineForm from './VaccineForm'
@@ -38,6 +39,21 @@ const PAYMENT_METHODS = [
   { value: 'tarjeta_credito', label: 'Tarjeta crédito', surcharge: 0.20 },
 ]
 
+const PM_LABEL = { efectivo: 'Efectivo', tarjeta_credito: 'Tarjeta crédito', tarjeta_debito: 'Tarjeta débito', transferencia: 'Transferencia' }
+
+function Field({ label, children }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>{label}</div>
+      <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.5 }}>{children || <span style={{ color: 'var(--text-tertiary)' }}>—</span>}</div>
+    </div>
+  )
+}
+
+function Divider() {
+  return <div style={{ borderTop: '1px solid var(--border-2)', margin: '16px 0' }} />
+}
+
 export default function VaccinesPage() {
   const { vaccineCatalog, petVaccines, pets, owners } = useApp()
 
@@ -51,6 +67,7 @@ export default function VaccinesPage() {
   const [deletingCat, setDeletingCat]   = useState(null)
   const [deletingVacc, setDeletingVacc] = useState(null)
   const [paying, setPaying]             = useState(null)
+  const [selected, setSelected]         = useState(null)
 
   const filteredCatalog = useMemo(() =>
     vaccineCatalog.items.filter(v => v.species === species || v.species === 'both'),
@@ -90,6 +107,10 @@ export default function VaccinesPage() {
     setPaying(null)
   }
 
+  const selectedLive = selected ? petVaccines.items.find(v => v.id === selected.id) : null
+  const selectedPet  = selectedLive ? pets.find(selectedLive.petId) : null
+  const selectedOwner = selectedLive && selectedPet ? owners.find(selectedPet.ownerId) : null
+
   return (
     <>
       <Header
@@ -98,7 +119,6 @@ export default function VaccinesPage() {
       />
 
       <div className="page">
-        {/* ── Top bar ── */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <div className="search-wrap" style={{ flex: 1, minWidth: 200 }}>
             <Search size={18} className="search-icon" />
@@ -113,7 +133,6 @@ export default function VaccinesPage() {
           </button>
         </div>
 
-        {/* ── Pago filter tabs ── */}
         <div style={{ marginBottom: 16 }}>
           <div className="tabs">
             <button className={`tab${filterPago === '' ? ' active' : ''}`} onClick={() => setFilterPago('')}>Todos</button>
@@ -122,7 +141,6 @@ export default function VaccinesPage() {
           </div>
         </div>
 
-        {/* ── Records table ── */}
         {filteredRecords.length === 0 ? (
           <EmptyState
             icon={<CalendarCheck size={40} strokeWidth={1.5} />}
@@ -141,50 +159,46 @@ export default function VaccinesPage() {
                 <thead>
                   <tr>
                     <th>Mascota</th>
-                    <th>Dueño</th>
                     <th>Vacuna</th>
-                    <th>Fecha aplicada</th>
-                    <th>Próx. venc.</th>
+                    <th>Fecha</th>
                     <th style={{ textAlign: 'right' }}>Monto</th>
                     <th>Pago</th>
-                    <th></th>
+                    <th style={{ width: 80 }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredRecords.map(r => {
                     const pet     = pets.find(r.petId)
-                    const owner   = pet?.ownerId ? owners.find(pet.ownerId) : null
                     const isOverdue = r.nextDue && new Date(r.nextDue) < new Date()
                     return (
-                      <tr key={r.id}>
-                        <td style={{ fontWeight: 600 }}>{pet?.name || '—'}</td>
-                        <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
-                          {owner ? `${owner.name}${owner.apellido ? ` ${owner.apellido}` : ''}` : '—'}
+                      <tr
+                        key={r.id}
+                        onClick={() => setSelected(r)}
+                        style={{ cursor: 'pointer', background: selected?.id === r.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
+                      >
+                        <td>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{pet?.species || ''}</div>
+                          </div>
                         </td>
-                        <td style={{ fontSize: 13 }}>{r.vaccineName}</td>
+                        <td style={{ fontSize: 14 }}>{r.vaccineName}</td>
                         <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{r.date ? formatDate(r.date) : '—'}</td>
-                        <td style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
-                          {r.nextDue ? (
-                            <span style={{ color: isOverdue ? 'var(--danger)' : 'inherit', fontWeight: isOverdue ? 600 : 400 }}>
-                              {isOverdue && '⚠ '}{formatDate(r.nextDue)}
-                            </span>
-                          ) : '—'}
-                        </td>
-                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap' }}>
+                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
                           {r.price > 0 ? formatCurrency(r.price) : '—'}
                         </td>
                         <td>
                           {r.paid
                             ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontSize: 13, fontWeight: 600 }}><CheckCircle2 size={15} strokeWidth={2} />Pagado</span>
-                            : <PendingBtn onClick={() => setPaying(r)} />
+                            : <PendingBtn onClick={(e) => { e.stopPropagation(); setPaying(r) }} />
                           }
                         </td>
                         <td>
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                            <button className="btn btn--subtle btn--icon" onClick={() => setVaccineForm({ open: true, editing: r, prefill: null })} title="Editar">
+                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setVaccineForm({ open: true, editing: r, prefill: null }) }} title="Editar">
                               <Pencil size={18} />
                             </button>
-                            <button className="btn btn--subtle btn--icon" onClick={() => setDeletingVacc(r)} title="Eliminar" style={{ color: 'var(--vet-rose)' }}>
+                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setDeletingVacc(r) }} title="Eliminar" style={{ color: 'var(--vet-rose)' }}>
                               <Trash2 size={18} />
                             </button>
                           </div>
@@ -199,7 +213,66 @@ export default function VaccinesPage() {
         )}
       </div>
 
-      {/* ── Catalog modal ── */}
+      {/* Side Panel */}
+      <SidePanel
+        isOpen={!!selectedLive}
+        onClose={() => setSelected(null)}
+        title={selectedPet?.name || 'Detalle'}
+        width={420}
+      >
+        {selectedLive && (
+          <>
+            <Field label="Mascota">
+              <div style={{ fontWeight: 600 }}>{selectedPet?.name || '—'}</div>
+              {selectedPet?.species && <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{selectedPet.species}</div>}
+            </Field>
+            <Field label="Dueño">
+              {selectedOwner ? (
+                <div>
+                  <div>{selectedOwner.name}</div>
+                  {selectedOwner.phone && <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{selectedOwner.phone}</div>}
+                </div>
+              ) : null}
+            </Field>
+            <Divider />
+            <Field label="Vacuna">{selectedLive.vaccineName}</Field>
+            <Field label="Fecha aplicada">{selectedLive.date ? formatDate(selectedLive.date) : null}</Field>
+            <Field label="Próximo vencimiento">
+              {selectedLive.nextDue ? (
+                <span style={{ color: isOverdue ? 'var(--danger)' : 'inherit', fontWeight: isOverdue ? 600 : 400 }}>
+                  {isOverdue && '⚠ '}{formatDate(selectedLive.nextDue)}
+                </span>
+              ) : null}
+            </Field>
+            <Field label="Monto">
+              {selectedLive.price > 0 ? <span style={{ fontWeight: 700, color: 'var(--vet-teal)' }}>{formatCurrency(selectedLive.price)}</span> : null}
+            </Field>
+            <Field label="Estado de pago">
+              {selectedLive.paid
+                ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontWeight: 600 }}><CheckCircle2 size={14} strokeWidth={2} />Pagado{selectedLive.paymentMethod ? ` · ${PM_LABEL[selectedLive.paymentMethod] || selectedLive.paymentMethod}` : ''}</span>
+                : <span style={{ color: 'var(--warn)', fontWeight: 600 }}>Pendiente</span>
+              }
+            </Field>
+            {selectedLive.notes && <Field label="Observaciones">{selectedLive.notes}</Field>}
+            <Divider />
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button className="btn btn--ghost btn--sm" onClick={() => { setEditing(selectedLive); setVaccineForm({ open: true, editing: selectedLive, prefill: null }) }}>
+                <Pencil size={14} /> Editar
+              </button>
+              <button className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => setDeletingVacc(selectedLive)}>
+                <Trash2 size={14} /> Eliminar
+              </button>
+              {!selectedLive.paid && (
+                <button className="btn btn--primary btn--sm" style={{ marginLeft: 'auto' }} onClick={() => setPaying(selectedLive)}>
+                  Cobrar
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </SidePanel>
+
+      {/* Catalog modal */}
       <Modal
         isOpen={catalogOpen}
         onClose={() => setCatalogOpen(false)}
@@ -269,7 +342,7 @@ export default function VaccinesPage() {
         )}
       </Modal>
 
-      {/* ── Cobrar modal ── */}
+      {/* Cobrar modal */}
       <Modal isOpen={!!paying} onClose={() => setPaying(null)} title="Registrar pago" size="sm">
         <p style={{ color: 'var(--text-secondary)', marginBottom: 16, fontSize: 14 }}>
           Seleccioná la forma de pago para <strong>{pets.find(paying?.petId)?.name}</strong>:
@@ -290,7 +363,7 @@ export default function VaccinesPage() {
         </div>
       </Modal>
 
-      {/* ── Catalog form modal ── */}
+      {/* Catalog form modal */}
       <VaccineCatalogForm
         isOpen={catalogForm.open}
         onClose={() => setCatalogForm({ open: false, editing: null })}
@@ -298,7 +371,7 @@ export default function VaccinesPage() {
         onSave={handleSaveCatalog}
       />
 
-      {/* ── Pet vaccine registration modal ── */}
+      {/* Pet vaccine registration modal */}
       <VaccineForm
         isOpen={vaccineForm.open}
         onClose={() => setVaccineForm({ open: false, editing: null, prefill: null })}
@@ -306,14 +379,14 @@ export default function VaccinesPage() {
         onSave={handleSaveVaccine}
       />
 
-      {/* ── Delete catalog entry ── */}
+      {/* Delete catalog entry */}
       <Modal isOpen={!!deletingCat} onClose={() => setDeletingCat(null)} title="Eliminar vacuna del catálogo" size="sm"
         footer={<><button className="btn btn--ghost" onClick={() => setDeletingCat(null)}>Cancelar</button><button className="btn btn--danger" onClick={() => { vaccineCatalog.remove(deletingCat.id); setDeletingCat(null) }}>Eliminar</button></>}
       >
         <p>¿Eliminar <strong>{deletingCat?.name}</strong> del catálogo? Los registros existentes no se verán afectados.</p>
       </Modal>
 
-      {/* ── Delete vaccine record ── */}
+      {/* Delete vaccine record */}
       <Modal isOpen={!!deletingVacc} onClose={() => setDeletingVacc(null)} title="Eliminar registro de vacuna" size="sm"
         footer={<><button className="btn btn--ghost" onClick={() => setDeletingVacc(null)}>Cancelar</button><button className="btn btn--danger" onClick={() => { petVaccines.remove(deletingVacc.id); setDeletingVacc(null) }}>Eliminar</button></>}
       >

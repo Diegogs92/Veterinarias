@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react'
-import { Search, Plus, Pencil, Trash2, Hospital, AlertCircle, ClipboardList, Check, X } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, Hospital, AlertCircle, ClipboardList, Check, X, CheckCircle2 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
 import EmptyState from '../../components/ui/EmptyState'
 import Modal from '../../components/ui/Modal'
+import SidePanel from '../../components/ui/SidePanel'
 import InternmentForm from './InternmentForm'
 import { formatDate, formatDateTime, todayStr } from '../../utils/helpers'
 
@@ -12,6 +13,19 @@ const STATUS = {
   critical:   { label: 'Crítico',    color: 'var(--danger)' },
   improving:  { label: 'Mejorando',  color: 'var(--blue)'   },
   discharged: { label: 'Alta',       color: 'var(--ok)'     },
+}
+
+function Field({ label, children }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>{label}</div>
+      <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.5 }}>{children || <span style={{ color: 'var(--text-tertiary)' }}>—</span>}</div>
+    </div>
+  )
+}
+
+function Divider() {
+  return <div style={{ borderTop: '1px solid var(--border-2)', margin: '16px 0' }} />
 }
 
 function daysInterned(admissionDate, dischargeDate) {
@@ -32,6 +46,7 @@ export default function InternmentsPage() {
   const [dischargeTarget, setDischargeTarget] = useState(null)
   const [notesTarget, setNotesTarget]   = useState(null)
   const [newNote, setNewNote]           = useState('')
+  const [selected, setSelected]         = useState(null)
 
   const activeCount = useMemo(() =>
     internments.items.filter(i => i.status !== 'discharged').length,
@@ -59,7 +74,7 @@ export default function InternmentsPage() {
 
   const handleSave      = (data) => { if (editing) internments.update(editing.id, data); else internments.add(data); setEditing(null) }
   const handleDischarge = () => { internments.update(dischargeTarget.id, { status: 'discharged', dischargeDate: todayStr() }); setDischargeTarget(null) }
-  const handleDelete    = () => { internments.remove(deleting.id); setDeleting(null) }
+  const handleDelete    = () => { if (deleting?.id === selected?.id) setSelected(null); internments.remove(deleting.id); setDeleting(null) }
   const handleAddNote   = (id) => {
     if (!newNote.trim()) return
     addDailyNote(id, newNote.trim())
@@ -68,6 +83,10 @@ export default function InternmentsPage() {
 
   const notesIntern = notesTarget ? internments.items.find(i => i.id === notesTarget.id) : null
   const notes = (notesIntern?.dailyNotes || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date))
+
+  const selectedLive  = selected ? internments.items.find(i => i.id === selected.id) : null
+  const selectedPet   = selectedLive ? pets.find(selectedLive.petId) : null
+  const selectedOwner = selectedLive ? owners.find(selectedLive.ownerId) : null
 
   return (
     <>
@@ -135,7 +154,6 @@ export default function InternmentsPage() {
                 <thead>
                   <tr>
                     <th>Mascota</th>
-                    <th>Dueño</th>
                     <th>Motivo</th>
                     <th>Ingreso</th>
                     <th>Tiempo</th>
@@ -146,15 +164,19 @@ export default function InternmentsPage() {
                 <tbody>
                   {filtered.map(intern => {
                     const pet   = pets.find(intern.petId)
-                    const owner = owners.find(intern.ownerId)
                     const st    = STATUS[intern.status] || STATUS.active
                     const noteCount = (intern.dailyNotes || []).length
                     return (
-                      <tr key={intern.id}>
-                        <td style={{ fontWeight: 600 }}>{pet?.name || '—'}</td>
-                        <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{owner?.name || '—'}</td>
+                      <tr
+                        key={intern.id}
+                        onClick={() => setSelected(intern)}
+                        style={{ cursor: 'pointer', background: selected?.id === intern.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
+                      >
+                        <td>
+                          <div style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</div>
+                        </td>
                         <td style={{ maxWidth: 200 }}>
-                          <div style={{ fontSize: 13 }} className="truncate">{intern.reason || '—'}</div>
+                          <div style={{ fontSize: 14 }} className="truncate">{intern.reason || '—'}</div>
                         </td>
                         <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                           {formatDate(intern.admissionDate)}
@@ -169,7 +191,7 @@ export default function InternmentsPage() {
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
                             <button
                               className="btn btn--subtle btn--icon"
-                              onClick={() => { setNotesTarget(intern); setNewNote('') }}
+                              onClick={(e) => { e.stopPropagation(); setNotesTarget(intern); setNewNote('') }}
                               title="Notas de evolución"
                               style={{ position: 'relative' }}
                             >
@@ -181,14 +203,14 @@ export default function InternmentsPage() {
                               )}
                             </button>
                             {intern.status !== 'discharged' && (
-                              <button className="btn btn--subtle btn--sm" onClick={() => setDischargeTarget(intern)} title="Dar de alta">
+                              <button className="btn btn--subtle btn--sm" onClick={(e) => { e.stopPropagation(); setDischargeTarget(intern) }} title="Dar de alta">
                                 <Check size={14} strokeWidth={2.5} /> Alta
                               </button>
                             )}
-                            <button className="btn btn--subtle btn--icon" onClick={() => { setEditing(intern); setFormOpen(true) }} title="Editar">
+                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setEditing(intern); setFormOpen(true) }} title="Editar">
                               <Pencil size={18} />
                             </button>
-                            <button className="btn btn--subtle btn--icon" onClick={() => setDeleting(intern)} title="Eliminar" style={{ color: 'var(--vet-rose)' }}>
+                            <button className="btn btn--subtle btn--icon" onClick={(e) => { e.stopPropagation(); setDeleting(intern) }} title="Eliminar" style={{ color: 'var(--vet-rose)' }}>
                               <Trash2 size={18} />
                             </button>
                           </div>
@@ -202,6 +224,61 @@ export default function InternmentsPage() {
           </div>
         )}
       </div>
+
+      {/* Side Panel */}
+      <SidePanel
+        isOpen={!!selectedLive}
+        onClose={() => setSelected(null)}
+        title={selectedPet?.name || 'Detalle'}
+        width={420}
+      >
+        {selectedLive && (
+          <>
+            <Field label="Mascota">
+              <div style={{ fontWeight: 600 }}>{selectedPet?.name || '—'}</div>
+              {selectedPet?.species && <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{selectedPet.species}</div>}
+            </Field>
+            <Field label="Dueño">
+              {selectedOwner ? (
+                <div>
+                  <div>{selectedOwner.name}</div>
+                  {selectedOwner.phone && <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{selectedOwner.phone}</div>}
+                </div>
+              ) : null}
+            </Field>
+            <Divider />
+            <Field label="Motivo">{selectedLive.reason || null}</Field>
+            <Field label="Diagnóstico">{selectedLive.diagnosis || null}</Field>
+            <Field label="Ingreso">{selectedLive.admissionDate ? formatDate(selectedLive.admissionDate) : null}</Field>
+            <Field label="Egreso">{selectedLive.dischargeDate ? formatDate(selectedLive.dischargeDate) : <span style={{ color: 'var(--text-tertiary)' }}>En curso</span>}</Field>
+            <Field label="Tiempo internado">{daysInterned(selectedLive.admissionDate, selectedLive.dischargeDate)}</Field>
+            <Field label="Estado">
+              {(() => {
+                const st = STATUS[selectedLive.status] || STATUS.active
+                return <span style={{ fontWeight: 600, color: st.color }}>{st.label}</span>
+              })()}
+            </Field>
+            {selectedLive.observations && <Field label="Observaciones">{selectedLive.observations}</Field>}
+            <Divider />
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button className="btn btn--ghost btn--sm" onClick={() => { setNotesTarget(selectedLive); setNewNote('') }}>
+                <ClipboardList size={14} /> Notas
+              </button>
+              {selectedLive.status !== 'discharged' && (
+                <button className="btn btn--ghost btn--sm" onClick={() => setDischargeTarget(selectedLive)}>
+                  <Check size={14} strokeWidth={2.5} /> Dar de alta
+                </button>
+              )}
+              <button className="btn btn--ghost btn--sm" onClick={() => { setEditing(selectedLive); setFormOpen(true) }}>
+                <Pencil size={14} /> Editar
+              </button>
+              <button className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => setDeleting(selectedLive)}>
+                <Trash2 size={14} /> Eliminar
+              </button>
+            </div>
+          </>
+        )}
+      </SidePanel>
 
       <InternmentForm
         isOpen={formOpen}

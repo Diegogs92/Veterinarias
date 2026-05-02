@@ -150,16 +150,14 @@ export default function GroomingPage() {
                 <thead>
                   <tr>
                     <th>Mascota</th>
-                    <th>Dueño</th>
                     <th>Precio</th>
                     <th>Pago</th>
-                    <th></th>
+                    <th style={{ width: 80 }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map(g => {
                     const pet   = pets.find(g.petId)
-                    const owner = owners.find(g.ownerId)
                     return (
                       <tr
                         key={g.id}
@@ -179,8 +177,7 @@ export default function GroomingPage() {
                             <span style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</span>
                           </div>
                         </td>
-                        <td style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{owner?.name || '—'}</td>
-                        <td style={{ fontWeight: 600, color: 'var(--vet-teal)', fontSize: 14 }}>
+                        <td style={{ fontWeight: 700, color: 'var(--vet-teal)', fontSize: 14 }}>
                           {g.price > 0 ? formatCurrency(g.price) : '—'}
                         </td>
                         <td>

@@ -151,13 +151,13 @@ export default function CirugiasPage() {
                             <span style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</span>
                           </div>
                         </td>
-                        <td style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{formatDate(c.date)}</td>
+                        <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(c.date)}</td>
                         <td style={{ maxWidth: 260 }}>
-                          <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontSize: 13 }}>
+                          <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                             {c.diagnostico || '—'}
                           </span>
                         </td>
-                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap' }}>
+                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
                           {c.costos > 0 ? formatCurrency(c.costos) : '—'}
                         </td>
                         <td>

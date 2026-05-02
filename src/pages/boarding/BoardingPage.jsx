@@ -169,7 +169,6 @@ export default function BoardingPage() {
                 <tbody>
                   {filtered.map(b => {
                     const pet      = pets.find(b.petId)
-                    const owner    = owners.find(b.ownerId)
                     const isActive = b.status === 'active'
                     const days     = calcDays(b.entryDate, b.exitDate)
                     const total    = b.dailyPrice > 0 ? b.dailyPrice * days : null
@@ -181,11 +180,10 @@ export default function BoardingPage() {
                       >
                         <td>
                           <div style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</div>
-                          {owner && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{owner.name}</div>}
                         </td>
                         <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(b.entryDate)}</td>
                         <td style={{ textAlign: 'right', fontSize: 13 }}>{days}</td>
-                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap' }}>
+                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
                           {total ? formatCurrency(total) : '—'}
                         </td>
                         <td>
