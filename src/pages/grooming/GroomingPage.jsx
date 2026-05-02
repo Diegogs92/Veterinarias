@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import { Search, Pencil, Trash2, Scissors, CheckCircle2, Clock } from 'lucide-react'
 
 const WhatsAppIcon = ({ size = 16 }) => (
@@ -22,63 +22,6 @@ const PAYMENT_METHODS = [
   { value: 'transferencia',   label: 'Transferencia',    surcharge: 0    },
 ]
 
-function PayCell({ g, onMarkPaid }) {
-  const [hovered, setHovered] = useState(false)
-  const leaveTimer = useRef(null)
-
-  if (g.paid) {
-    return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontSize: 13, fontWeight: 600 }}>
-        <CheckCircle2 size={15} strokeWidth={2} />Pagado
-      </span>
-    )
-  }
-
-  const handleEnter = () => { clearTimeout(leaveTimer.current); setHovered(true) }
-  const handleLeave = () => { leaveTimer.current = setTimeout(() => setHovered(false), 200) }
-
-  return (
-    <div style={{ position: 'relative', display: 'inline-block' }} onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--warn)', fontSize: 13, fontWeight: 600, cursor: 'pointer', userSelect: 'none' }}>
-        <Clock size={15} strokeWidth={2} />
-        {hovered ? 'Marcar como pagado' : 'Pendiente'}
-      </span>
-      {hovered && (
-        <div style={{
-          position: 'absolute', top: '110%', left: 0, zIndex: 100,
-          background: 'var(--bg-card)', border: '1px solid var(--border)',
-          borderRadius: 'var(--r-md)', boxShadow: 'var(--shadow-md)',
-          padding: 8, display: 'flex', flexDirection: 'column', gap: 4, minWidth: 180,
-        }}>
-          {PAYMENT_METHODS.map(m => {
-            const surchargeAmt = Math.round((g.price || 0) * m.surcharge)
-            const total = (g.price || 0) + surchargeAmt
-            return (
-              <button
-                key={m.value}
-                type="button"
-                onClick={() => { onMarkPaid(g.id, m.value, total); setHovered(false) }}
-                style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '7px 10px', borderRadius: 'var(--r-sm)', border: '1px solid var(--border)',
-                  background: 'var(--bg-sub)', cursor: 'pointer', fontSize: 13, gap: 12,
-                  transition: 'background var(--t-fast)',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-3)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-sub)'}
-              >
-                <span style={{ fontWeight: 500 }}>{m.label}</span>
-                <span style={{ color: m.surcharge > 0 ? 'var(--orange)' : 'var(--text-tertiary)', fontSize: 12, fontWeight: 600 }}>
-                  {m.surcharge > 0 ? `+${m.surcharge * 100}% → ${formatCurrency(total)}` : formatCurrency(total)}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </div>
-  )
-}
 
 export default function GroomingPage() {
   const { grooming, pets, owners } = useApp()
@@ -86,6 +29,7 @@ export default function GroomingPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing]   = useState(null)
   const [deleting, setDeleting] = useState(null)
+  const [paying, setPaying]     = useState(null)
 
   const filtered = useMemo(() =>
     grooming.items
@@ -99,9 +43,13 @@ export default function GroomingPage() {
     [grooming.items, search, pets, owners]
   )
 
-  const handleSave   = (data) => { if (editing) grooming.update(editing.id, data); else grooming.add(data); setEditing(null) }
-  const handleDelete = () => { grooming.remove(deleting.id); setDeleting(null) }
-  const handleMarkPaid = (id, paymentMethod, price) => grooming.update(id, { paid: true, paymentMethod, price })
+  const handleSave     = (data) => { if (editing) grooming.update(editing.id, data); else grooming.add(data); setEditing(null) }
+  const handleDelete   = () => { grooming.remove(deleting.id); setDeleting(null) }
+  const handleMarkPaid = (method) => {
+    const surchargeAmt = Math.round((paying.price || 0) * method.surcharge)
+    grooming.update(paying.id, { paid: true, paymentMethod: method.value, price: (paying.price || 0) + surchargeAmt })
+    setPaying(null)
+  }
 
   const whatsappUrl = (phone) => `https://wa.me/${phone.replace(/\D/g, '')}`
 
@@ -208,8 +156,11 @@ export default function GroomingPage() {
                         <td style={{ fontWeight: 600, color: 'var(--vet-teal)' }}>
                           {g.price > 0 ? formatCurrency(g.price) : '—'}
                         </td>
-                        <td style={{ overflow: 'visible' }}>
-                          <PayCell g={g} onMarkPaid={handleMarkPaid} />
+                        <td>
+                          {g.paid
+                            ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontSize: 13, fontWeight: 600 }}><CheckCircle2 size={15} strokeWidth={2} />Pagado</span>
+                            : <button type="button" onClick={() => setPaying(g)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--warn)', fontSize: 13, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}><Clock size={15} strokeWidth={2} />Pendiente</button>
+                          }
                         </td>
                         <td>
                           <div style={{ display: 'flex', gap: 4 }}>
@@ -237,6 +188,44 @@ export default function GroomingPage() {
         onSave={handleSave}
         initial={editing}
       />
+
+      <Modal
+        isOpen={!!paying}
+        onClose={() => setPaying(null)}
+        title="Registrar pago"
+        size="sm"
+      >
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 16, fontSize: 14 }}>
+          Seleccioná la forma de pago para <strong>{pets.find(paying?.petId)?.name}</strong>:
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {PAYMENT_METHODS.map(m => {
+            const surchargeAmt = Math.round((paying?.price || 0) * m.surcharge)
+            const total = (paying?.price || 0) + surchargeAmt
+            return (
+              <button
+                key={m.value}
+                type="button"
+                onClick={() => handleMarkPaid(m)}
+                style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '12px 14px', borderRadius: 'var(--r-md)',
+                  border: '1px solid var(--border)', background: 'var(--bg-sub)',
+                  cursor: 'pointer', fontSize: 14, transition: 'all var(--t-fast)',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent-3)'; e.currentTarget.style.borderColor = 'var(--accent)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-sub)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+              >
+                <span style={{ fontWeight: 600 }}>{m.label}</span>
+                <span style={{ fontWeight: 700, color: m.surcharge > 0 ? 'var(--orange)' : 'var(--accent)' }}>
+                  {m.surcharge > 0 && <span style={{ fontWeight: 400, fontSize: 12, marginRight: 6, color: 'var(--orange)' }}>+{m.surcharge * 100}%</span>}
+                  {formatCurrency(total)}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </Modal>
 
       <Modal
         isOpen={!!deleting}
