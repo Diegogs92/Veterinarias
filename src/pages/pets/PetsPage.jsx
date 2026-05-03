@@ -39,15 +39,17 @@ export default function PetsPage() {
   const ownerFilter = searchParams.get('owner') || ''
 
   const filtered = useMemo(() =>
-    pets.items.filter(p => {
-      const owner = owners.find(p.ownerId)
-      const searchStr = `${p.name} ${p.breed} ${owner?.name || ''}`.toLowerCase()
-      return (
-        searchStr.includes(search.toLowerCase()) &&
-        (!speciesFilter || p.species === speciesFilter) &&
-        (!ownerFilter || p.ownerId === ownerFilter)
-      )
-    }),
+    pets.items
+      .filter(p => {
+        const owner = owners.find(p.ownerId)
+        const searchStr = `${p.name} ${p.breed} ${owner?.name || ''}`.toLowerCase()
+        return (
+          searchStr.includes(search.toLowerCase()) &&
+          (!speciesFilter || p.species === speciesFilter) &&
+          (!ownerFilter || p.ownerId === ownerFilter)
+        )
+      })
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es')),
     [pets.items, search, speciesFilter, ownerFilter, owners]
   )
 

@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Search, Plus, Pencil, Trash2, ShoppingCart, TrendingUp, CircleCheck } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, ShoppingCart, CircleCheck } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
 import EmptyState from '../../components/ui/EmptyState'
@@ -59,6 +59,7 @@ export default function SalesPage() {
 
   const totalSold     = sales.items.reduce((s, v) => s + (v.total || 0), 0)
   const filteredTotal = filtered.reduce((s, v) => s + (v.total || 0), 0)
+  const hasFilters    = !!(search || filterPayMethod || filterFecha)
 
   const handleSave = (data) => {
     if (editing) sales.update(editing.id, data)
@@ -76,27 +77,14 @@ export default function SalesPage() {
     <>
       <Header
         title="Ventas"
-        subtitle={`${sales.items.length} ventas · vendido ${formatCurrency(totalSold)}`}
+        subtitle={
+          hasFilters
+            ? `${filtered.length} de ${sales.items.length} ventas · ${formatCurrency(filteredTotal)}`
+            : `${sales.items.length} ventas · vendido ${formatCurrency(totalSold)}`
+        }
       />
 
       <div className="page">
-        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', marginBottom: 24 }}>
-          <div className="stat-card">
-            <div className="stat-card__icon" style={{ color: 'var(--vet-emerald)' }}>
-              <TrendingUp size={32} strokeWidth={1.75} />
-            </div>
-            <div className="stat-card__label">{(search || filterPayMethod || filterFecha) ? 'Total filtrado' : 'Total vendido'}</div>
-            <div className="stat-card__value" style={{ color: 'var(--vet-emerald)', fontSize: 24 }}>
-              {formatCurrency((search || filterPayMethod || filterFecha) ? filteredTotal : totalSold)}
-            </div>
-            {(search || filterPayMethod || filterFecha) && (
-              <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>
-                Total general: {formatCurrency(totalSold)}
-              </div>
-            )}
-          </div>
-        </div>
-
         <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <div className="search-wrap" style={{ flex: 1, minWidth: 200 }}>
             <Search size={18} className="search-icon" />

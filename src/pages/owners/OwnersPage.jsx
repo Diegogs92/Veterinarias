@@ -17,9 +17,9 @@ export default function OwnersPage() {
   const [deleting, setDeleting] = useState(null)
 
   const filtered = useMemo(() =>
-    owners.items.filter(o =>
-      `${o.name} ${o.phone} ${o.email}`.toLowerCase().includes(search.toLowerCase())
-    ),
+    owners.items
+      .filter(o => `${o.name} ${o.phone} ${o.email}`.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es')),
     [owners.items, search]
   )
 
