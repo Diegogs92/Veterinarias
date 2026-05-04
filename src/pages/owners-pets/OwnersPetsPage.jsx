@@ -10,8 +10,6 @@ function WhatsAppIcon({ size = 18 }) {
   )
 }
 
-// Convierte un teléfono libre a formato wa.me (E.164 sin '+').
-// Asume Argentina por defecto (+54 9 = móvil).
 function toWhatsAppNumber(raw) {
   let d = (raw || '').replace(/\D/g, '')
   if (!d) return ''
@@ -19,10 +17,12 @@ function toWhatsAppNumber(raw) {
   d = d.replace(/^0/, '').replace(/^15/, '')
   return `549${d}`
 }
+
 import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
 import EmptyState from '../../components/ui/EmptyState'
 import Modal from '../../components/ui/Modal'
+import InlinePanel from '../../components/ui/InlinePanel'
 import SpeciesIcon from '../../components/ui/SpeciesIcon'
 import OwnerForm from '../owners/OwnerForm'
 import PetForm from '../pets/PetForm'
@@ -35,6 +35,21 @@ const SPECIES_FILTER = [
   { value: 'pajaro', label: 'Pájaros' },
   { value: 'otro', label: 'Otros' },
 ]
+
+function Field({ label, children }) {
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 14, color: 'var(--text-primary)', lineHeight: 1.5 }}>
+        {children || <span style={{ color: 'var(--text-tertiary)' }}>—</span>}
+      </div>
+    </div>
+  )
+}
+
+function Divider() {
+  return <div style={{ borderTop: '1px solid var(--border-2)', margin: '12px 0' }} />
+}
 
 export default function OwnersPetsPage() {
   const { owners, pets } = useApp()
@@ -49,6 +64,8 @@ export default function OwnersPetsPage() {
     next.set('tab', t)
     if (t === 'owners') next.delete('owner')
     setSearchParams(next)
+    setSelectedPet(null)
+    setSelectedOwner(null)
   }
 
   const setOwnerFilter = (id) => {
@@ -56,6 +73,7 @@ export default function OwnersPetsPage() {
     next.set('tab', 'pets')
     if (id) next.set('owner', id)
     setSearchParams(next)
+    setSelectedPet(null)
   }
 
   // ── Owners tab state ─────────────────────────────────────────────────────
@@ -63,6 +81,7 @@ export default function OwnersPetsPage() {
   const [ownerFormOpen, setOwnerFormOpen] = useState(false)
   const [editingOwner, setEditingOwner] = useState(null)
   const [deletingOwner, setDeletingOwner] = useState(null)
+  const [selectedOwner, setSelectedOwner] = useState(null)
 
   const filteredOwners = useMemo(() =>
     owners.items
@@ -71,7 +90,10 @@ export default function OwnersPetsPage() {
     [owners.items, ownerSearch]
   )
 
-  const petCount = (ownerId) => pets.items.filter(p => p.ownerId === ownerId).length
+  const ownerPets = (ownerId) => pets.items.filter(p => p.ownerId === ownerId)
+  const petCount = (ownerId) => ownerPets(ownerId).length
+
+  const selectedOwnerLive = selectedOwner ? owners.items.find(o => o.id === selectedOwner.id) : null
 
   const handleSaveOwner = (data) => {
     if (editingOwner) owners.update(editingOwner.id, data)
@@ -79,7 +101,7 @@ export default function OwnersPetsPage() {
     setEditingOwner(null)
   }
 
-  const handleDeleteOwner = () => { owners.remove(deletingOwner.id); setDeletingOwner(null) }
+  const handleDeleteOwner = () => { owners.remove(deletingOwner.id); setDeletingOwner(null); setSelectedOwner(null) }
 
   // ── Pets tab state ───────────────────────────────────────────────────────
   const [petSearch, setPetSearch] = useState('')
@@ -88,6 +110,7 @@ export default function OwnersPetsPage() {
   const [editingPet, setEditingPet] = useState(null)
   const [deletingPet, setDeletingPet] = useState(null)
   const [petView, setPetView] = useState('table')
+  const [selectedPet, setSelectedPet] = useState(null)
 
   const filteredPets = useMemo(() =>
     pets.items
@@ -104,13 +127,15 @@ export default function OwnersPetsPage() {
     [pets.items, petSearch, speciesFilter, ownerFilter, owners]
   )
 
+  const selectedPetLive = selectedPet ? pets.items.find(p => p.id === selectedPet.id) : null
+
   const handleSavePet = (data) => {
     if (editingPet) pets.update(editingPet.id, data)
     else pets.add(data)
     setEditingPet(null)
   }
 
-  const handleDeletePet = () => { pets.remove(deletingPet.id); setDeletingPet(null) }
+  const handleDeletePet = () => { pets.remove(deletingPet.id); setDeletingPet(null); setSelectedPet(null) }
 
   const ownerData = ownerFilter ? owners.find(ownerFilter) : null
   const ownerName = ownerData ? `${ownerData.name}${ownerData.apellido ? ` ${ownerData.apellido}` : ''}` : null
@@ -160,7 +185,7 @@ export default function OwnersPetsPage() {
                   className="form-input"
                   placeholder="Buscar dueño..."
                   value={ownerSearch}
-                  onChange={e => setOwnerSearch(e.target.value)}
+                  onChange={e => { setOwnerSearch(e.target.value); setSelectedOwner(null) }}
                 />
               </div>
             </div>
@@ -173,81 +198,138 @@ export default function OwnersPetsPage() {
                 action={!ownerSearch && <button className="btn btn--primary" onClick={() => setOwnerFormOpen(true)}>+ Nuevo dueño</button>}
               />
             ) : (
-              <div className="card card--no-hover">
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Nombre</th>
-                        <th>Apellido</th>
-                        <th>Teléfono</th>
-                        <th>Email</th>
-                        <th>Dirección</th>
-                        <th>Mascotas</th>
-                        <th>Alta</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredOwners.map(owner => (
-                        <tr key={owner.id} style={{ cursor: 'pointer' }} onClick={() => setOwnerFilter(owner.id)}>
-                          <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <div className="avatar avatar--sm" style={{ background: avatarColor(owner.name), fontSize: 11 }}>
-                                {initials(`${owner.name}${owner.apellido ? ` ${owner.apellido}` : ''}`)}
+              <div style={{ display: 'grid', gridTemplateColumns: selectedOwnerLive ? '1.5fr 1fr' : '1fr', gap: 16 }}>
+                <div className="card card--no-hover card--table">
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Nombre</th>
+                          <th>Apellido</th>
+                          <th>Teléfono</th>
+                          <th>Email</th>
+                          <th>Dirección</th>
+                          <th>Mascotas</th>
+                          <th>Alta</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredOwners.map(owner => (
+                          <tr
+                            key={owner.id}
+                            style={{ cursor: 'pointer', background: selectedOwner?.id === owner.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
+                            onClick={() => setSelectedOwner(owner)}
+                          >
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <div className="avatar avatar--sm" style={{ background: avatarColor(owner.name), fontSize: 11 }}>
+                                  {initials(`${owner.name}${owner.apellido ? ` ${owner.apellido}` : ''}`)}
+                                </div>
+                                <span style={{ fontWeight: 600 }}>{owner.name}</span>
                               </div>
-                              <span style={{ fontWeight: 600 }}>{owner.name}</span>
-                            </div>
-                          </td>
-                          <td style={{ color: 'var(--text-secondary)' }}>{owner.apellido || '—'}</td>
-                          <td style={{ color: 'var(--text-secondary)' }}>
-                            {owner.phone
-                              ? (
+                            </td>
+                            <td style={{ color: 'var(--text-secondary)' }}>{owner.apellido || '—'}</td>
+                            <td style={{ color: 'var(--text-secondary)' }}>
+                              {owner.phone ? (
                                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                                   <span>{owner.phone}</span>
-                                  <a
-                                    href={`https://wa.me/${toWhatsAppNumber(owner.phone)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    title="Enviar WhatsApp"
-                                    onClick={e => e.stopPropagation()}
-                                    style={{ color: '#25D366', display: 'inline-flex', alignItems: 'center' }}
-                                  >
+                                  <a href={`https://wa.me/${toWhatsAppNumber(owner.phone)}`} target="_blank" rel="noopener noreferrer" title="Enviar WhatsApp" onClick={e => e.stopPropagation()} style={{ color: '#25D366', display: 'inline-flex', alignItems: 'center' }}>
                                     <WhatsAppIcon size={20} />
                                   </a>
                                 </div>
-                              )
-                              : '—'
-                            }
-                          </td>
-                          <td style={{ color: 'var(--text-secondary)' }}>{owner.email || '—'}</td>
-                          <td style={{ color: 'var(--text-secondary)', maxWidth: 180 }} className="truncate">{owner.address || '—'}</td>
-                          <td>
-                            <span style={{
-                              display: 'inline-flex', alignItems: 'center', gap: 5,
-                              background: 'var(--bg-input)', borderRadius: 'var(--r-full)',
-                              padding: '2px 10px', fontSize: 13, fontWeight: 600,
-                            }}>
-                              <PawPrint size={12} strokeWidth={2} />
-                              {petCount(owner.id)}
-                            </span>
-                          </td>
-                          <td style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>{formatDate(owner.createdAt)}</td>
-                          <td onClick={e => e.stopPropagation()}>
-                            <div style={{ display: 'flex', gap: 4 }}>
-                              <button className="btn btn--subtle btn--icon" title="Editar" onClick={() => { setEditingOwner(owner); setOwnerFormOpen(true) }}>
-                                <Pencil size={18} strokeWidth={2} />
-                              </button>
-                              <button className="btn btn--subtle btn--icon" title="Eliminar" onClick={() => setDeletingOwner(owner)}>
-                                <Trash2 size={18} strokeWidth={2} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                              ) : '—'}
+                            </td>
+                            <td style={{ color: 'var(--text-secondary)' }}>{owner.email || '—'}</td>
+                            <td style={{ color: 'var(--text-secondary)', maxWidth: 180 }} className="truncate">{owner.address || '—'}</td>
+                            <td>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'var(--bg-input)', borderRadius: 'var(--r-full)', padding: '2px 10px', fontSize: 13, fontWeight: 600 }}>
+                                <PawPrint size={12} strokeWidth={2} />
+                                {petCount(owner.id)}
+                              </span>
+                            </td>
+                            <td style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>{formatDate(owner.createdAt)}</td>
+                            <td onClick={e => e.stopPropagation()}>
+                              <div style={{ display: 'flex', gap: 4 }}>
+                                <button className="btn btn--subtle btn--icon" title="Editar" onClick={() => { setEditingOwner(owner); setOwnerFormOpen(true) }}>
+                                  <Pencil size={18} strokeWidth={2} />
+                                </button>
+                                <button className="btn btn--subtle btn--icon" title="Eliminar" onClick={() => setDeletingOwner(owner)}>
+                                  <Trash2 size={18} strokeWidth={2} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
+
+                <InlinePanel
+                  isOpen={!!selectedOwnerLive}
+                  onClose={() => setSelectedOwner(null)}
+                  title="Detalle del dueño"
+                >
+                  {selectedOwnerLive && (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                        <div className="avatar" style={{ background: avatarColor(selectedOwnerLive.name), fontSize: 16, width: 48, height: 48, flexShrink: 0 }}>
+                          {initials(`${selectedOwnerLive.name}${selectedOwnerLive.apellido ? ` ${selectedOwnerLive.apellido}` : ''}`)}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: 16 }}>{selectedOwnerLive.name}{selectedOwnerLive.apellido ? ` ${selectedOwnerLive.apellido}` : ''}</div>
+                          <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Alta: {formatDate(selectedOwnerLive.createdAt)}</div>
+                        </div>
+                      </div>
+                      <Divider />
+                      {selectedOwnerLive.phone && (
+                        <Field label="Teléfono">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span>{selectedOwnerLive.phone}</span>
+                            <a href={`https://wa.me/${toWhatsAppNumber(selectedOwnerLive.phone)}`} target="_blank" rel="noopener noreferrer" style={{ color: '#25D366', display: 'inline-flex' }}>
+                              <WhatsAppIcon size={16} />
+                            </a>
+                          </div>
+                        </Field>
+                      )}
+                      {selectedOwnerLive.email && <Field label="Email">{selectedOwnerLive.email}</Field>}
+                      {selectedOwnerLive.address && <Field label="Dirección">{selectedOwnerLive.address}</Field>}
+                      <Divider />
+                      <Field label="Mascotas">
+                        {ownerPets(selectedOwnerLive.id).length === 0
+                          ? <span style={{ color: 'var(--text-tertiary)' }}>Sin mascotas</span>
+                          : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              {ownerPets(selectedOwnerLive.id)
+                                .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'))
+                                .map(p => (
+                                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                                    <SpeciesIcon species={p.species} size={14} strokeWidth={1.5} style={{ color: 'var(--text-secondary)' }} />
+                                    <span>{p.name}</span>
+                                    {p.breed && <span style={{ color: 'var(--text-tertiary)' }}>· {p.breed}</span>}
+                                  </div>
+                                ))
+                              }
+                            </div>
+                          )
+                        }
+                      </Field>
+                      <Divider />
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <button className="btn btn--ghost btn--sm" onClick={() => { setEditingOwner(selectedOwnerLive); setOwnerFormOpen(true) }}>
+                          <Pencil size={14} /> Editar
+                        </button>
+                        <button className="btn btn--ghost btn--sm" onClick={() => setOwnerFilter(selectedOwnerLive.id)}>
+                          <PawPrint size={14} /> Ver mascotas
+                        </button>
+                        <button className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => setDeletingOwner(selectedOwnerLive)}>
+                          <Trash2 size={14} /> Eliminar
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </InlinePanel>
               </div>
             )}
           </>
@@ -263,35 +345,23 @@ export default function OwnersPetsPage() {
                   className="form-input"
                   placeholder="Buscar mascota o dueño..."
                   value={petSearch}
-                  onChange={e => setPetSearch(e.target.value)}
+                  onChange={e => { setPetSearch(e.target.value); setSelectedPet(null) }}
                 />
               </div>
               {!ownerFilter && (
                 <div className="tabs" style={{ flexShrink: 0 }}>
                   {SPECIES_FILTER.map(s => (
-                    <button
-                      key={s.value}
-                      className={`tab${speciesFilter === s.value ? ' active' : ''}`}
-                      onClick={() => setSpeciesFilter(s.value)}
-                    >
+                    <button key={s.value} className={`tab${speciesFilter === s.value ? ' active' : ''}`} onClick={() => { setSpeciesFilter(s.value); setSelectedPet(null) }}>
                       {s.label}
                     </button>
                   ))}
                 </div>
               )}
               <div className="tabs" style={{ flexShrink: 0 }}>
-                <button
-                  className={`tab${petView === 'cards' ? ' active' : ''}`}
-                  onClick={() => setPetView('cards')}
-                  title="Vista de tarjetas"
-                >
+                <button className={`tab${petView === 'cards' ? ' active' : ''}`} onClick={() => setPetView('cards')} title="Vista de tarjetas">
                   <Grid3x3 size={16} strokeWidth={2} />
                 </button>
-                <button
-                  className={`tab${petView === 'table' ? ' active' : ''}`}
-                  onClick={() => setPetView('table')}
-                  title="Vista de lista"
-                >
+                <button className={`tab${petView === 'table' ? ' active' : ''}`} onClick={() => setPetView('table')} title="Vista de lista">
                   <List size={16} strokeWidth={2} />
                 </button>
               </div>
@@ -307,76 +377,136 @@ export default function OwnersPetsPage() {
                 )}
               />
             ) : petView === 'table' ? (
-              <div className="card card--no-hover">
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Mascota</th>
-                        <th>Dueño</th>
-                        <th>Especie</th>
-                        <th>Raza</th>
-                        <th>Edad</th>
-                        <th style={{ width: 80 }}></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredPets.map(pet => {
-                        const owner = owners.find(pet.ownerId)
-                        return (
-                          <tr
-                            key={pet.id}
-                            onClick={() => navigate(`/pets/${pet.id}`)}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            <td>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <div style={{ width: 32, height: 32, borderRadius: 'var(--r-sm)', background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)', flexShrink: 0 }}>
-                                  <SpeciesIcon species={pet.species} size={16} strokeWidth={1.5} />
+              <div style={{ display: 'grid', gridTemplateColumns: selectedPetLive ? '1.5fr 1fr' : '1fr', gap: 16 }}>
+                <div className="card card--no-hover card--table">
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Mascota</th>
+                          <th>Dueño</th>
+                          <th>Especie</th>
+                          <th>Raza</th>
+                          <th>Edad</th>
+                          <th style={{ width: 80 }}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredPets.map(pet => {
+                          const owner = owners.find(pet.ownerId)
+                          return (
+                            <tr
+                              key={pet.id}
+                              onClick={() => setSelectedPet(pet)}
+                              style={{ cursor: 'pointer', background: selectedPet?.id === pet.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
+                            >
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                  <div style={{ width: 32, height: 32, borderRadius: 'var(--r-sm)', background: 'rgba(0,122,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--blue)', flexShrink: 0 }}>
+                                    <SpeciesIcon species={pet.species} size={16} strokeWidth={1.5} />
+                                  </div>
+                                  <span style={{ fontWeight: 600, fontSize: 14 }}>{pet.name}</span>
                                 </div>
-                                <span style={{ fontWeight: 600, fontSize: 14 }}>{pet.name}</span>
-                              </div>
-                            </td>
-                            <td>
-                              {owner ? (
-                                <div>
-                                  <div style={{ fontWeight: 600, fontSize: 14 }}>{owner.name}{owner.apellido ? ` ${owner.apellido}` : ''}</div>
-                                  {owner.phone && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                                      <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{owner.phone}</span>
-                                      <a href={`https://wa.me/${toWhatsAppNumber(owner.phone)}`} target="_blank" rel="noopener noreferrer" style={{ color: '#25D366' }} onClick={e => e.stopPropagation()}>
-                                        <WhatsAppIcon size={14} />
-                                      </a>
-                                    </div>
-                                  )}
+                              </td>
+                              <td>
+                                {owner ? (
+                                  <div>
+                                    <div style={{ fontWeight: 600, fontSize: 14 }}>{owner.name}{owner.apellido ? ` ${owner.apellido}` : ''}</div>
+                                    {owner.phone && (
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                                        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{owner.phone}</span>
+                                        <a href={`https://wa.me/${toWhatsAppNumber(owner.phone)}`} target="_blank" rel="noopener noreferrer" style={{ color: '#25D366' }} onClick={e => e.stopPropagation()}>
+                                          <WhatsAppIcon size={14} />
+                                        </a>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : <span style={{ color: 'var(--text-tertiary)' }}>—</span>}
+                              </td>
+                              <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{speciesLabel(pet.species) || '—'}</td>
+                              <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{pet.breed || '—'}</td>
+                              <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{pet.birthDate ? calcAge(pet.birthDate) : '—'}</td>
+                              <td>
+                                <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                                  <button className="btn btn--subtle btn--icon" onClick={e => { e.stopPropagation(); setEditingPet(pet); setPetFormOpen(true) }} title="Editar">
+                                    <Pencil size={18} />
+                                  </button>
+                                  <button className="btn btn--subtle btn--icon" onClick={e => { e.stopPropagation(); setDeletingPet(pet) }} title="Eliminar" style={{ color: 'var(--vet-rose)' }}>
+                                    <Trash2 size={18} />
+                                  </button>
                                 </div>
-                              ) : <span style={{ color: 'var(--text-tertiary)' }}>—</span>}
-                            </td>
-                            <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                              {speciesLabel(pet.species) || '—'}
-                            </td>
-                            <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                              {pet.breed || '—'}
-                            </td>
-                            <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-                              {pet.birthDate ? calcAge(pet.birthDate) : '—'}
-                            </td>
-                            <td>
-                              <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                                <button className="btn btn--subtle btn--icon" onClick={e => { e.stopPropagation(); setEditingPet(pet); setPetFormOpen(true) }} title="Editar">
-                                  <Pencil size={18} />
-                                </button>
-                                <button className="btn btn--subtle btn--icon" onClick={e => { e.stopPropagation(); setDeletingPet(pet) }} title="Eliminar" style={{ color: 'var(--vet-rose)' }}>
-                                  <Trash2 size={18} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
+
+                <InlinePanel
+                  isOpen={!!selectedPetLive}
+                  onClose={() => setSelectedPet(null)}
+                  title="Detalle de mascota"
+                >
+                  {selectedPetLive && (() => {
+                    const owner = owners.find(selectedPetLive.ownerId)
+                    return (
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                          <div style={{ width: 52, height: 52, borderRadius: 'var(--r-lg)', background: 'var(--bg-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, color: 'var(--text-secondary)' }}>
+                            {selectedPetLive.photo
+                              ? <img src={selectedPetLive.photo} alt={selectedPetLive.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              : <SpeciesIcon species={selectedPetLive.species} size={28} strokeWidth={1.25} />
+                            }
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: 16 }}>{selectedPetLive.name}</div>
+                            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{speciesLabel(selectedPetLive.species)}{selectedPetLive.breed ? ` · ${selectedPetLive.breed}` : ''}</div>
+                          </div>
+                        </div>
+                        <Divider />
+                        {selectedPetLive.birthDate && <Field label="Edad">{calcAge(selectedPetLive.birthDate)}</Field>}
+                        {selectedPetLive.color && <Field label="Color">{selectedPetLive.color}</Field>}
+                        {selectedPetLive.weight && <Field label="Peso">{selectedPetLive.weight} kg</Field>}
+                        <Divider />
+                        <Field label="Dueño">
+                          {owner ? (
+                            <div>
+                              <div style={{ fontWeight: 600 }}>{owner.name}{owner.apellido ? ` ${owner.apellido}` : ''}</div>
+                              {owner.phone && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                                  <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{owner.phone}</span>
+                                  <a href={`https://wa.me/${toWhatsAppNumber(owner.phone)}`} target="_blank" rel="noopener noreferrer" style={{ color: '#25D366', display: 'inline-flex' }}>
+                                    <WhatsAppIcon size={14} />
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          ) : null}
+                        </Field>
+                        {selectedPetLive.observations && (
+                          <>
+                            <Divider />
+                            <Field label="Observaciones">{selectedPetLive.observations}</Field>
+                          </>
+                        )}
+                        <Divider />
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          <button className="btn btn--ghost btn--sm" onClick={() => { setEditingPet(selectedPetLive); setPetFormOpen(true) }}>
+                            <Pencil size={14} /> Editar
+                          </button>
+                          <button className="btn btn--ghost btn--sm" onClick={() => navigate(`/pets/${selectedPetLive.id}`)}>
+                            <PawPrint size={14} /> Ver ficha completa
+                          </button>
+                          <button className="btn btn--ghost btn--sm" style={{ color: 'var(--danger)' }} onClick={() => setDeletingPet(selectedPetLive)}>
+                            <Trash2 size={14} /> Eliminar
+                          </button>
+                        </div>
+                      </>
+                    )
+                  })()}
+                </InlinePanel>
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
@@ -399,56 +529,27 @@ export default function OwnersPetsPage() {
                     >
                       {hasPhoto ? (
                         <>
-                          {/* Foto a tamaño completo */}
-                          <div style={{
-                            position: 'absolute', inset: 0,
-                            backgroundImage: `url(${pet.photo})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                          }} />
-                          {/* Velo oscuro para contraste */}
-                          <div style={{
-                            position: 'absolute', inset: 0,
-                            background: 'linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0.75) 100%)',
-                          }} />
+                          <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${pet.photo})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0.75) 100%)' }} />
                         </>
                       ) : (
-                        <div style={{
-                          position: 'absolute', inset: 0,
-                          display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-                          paddingTop: 10,
-                          color: 'var(--text-tertiary)',
-                          opacity: 0.45,
-                          pointerEvents: 'none',
-                        }}>
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 10, color: 'var(--text-tertiary)', opacity: 0.45, pointerEvents: 'none' }}>
                           <SpeciesIcon species={pet.species} size={44} strokeWidth={1.25} />
                         </div>
                       )}
-
                       <div style={{ position: 'relative', zIndex: 1, flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
                         <div style={{ fontWeight: 700, fontSize: 18, color: textColor, textShadow }}>{pet.name}</div>
-                        <div style={{ fontSize: 13.5, color: subColor, marginTop: 2, textShadow }}>
-                          {speciesLabel(pet.species)}{pet.breed ? ` · ${pet.breed}` : ''}
-                        </div>
+                        <div style={{ fontSize: 13.5, color: subColor, marginTop: 2, textShadow }}>{speciesLabel(pet.species)}{pet.breed ? ` · ${pet.breed}` : ''}</div>
                         <div style={{ fontSize: 12.5, color: subSubColor, marginTop: 4, textShadow }}>
                           {owner ? `${owner.name}${owner.apellido ? ` ${owner.apellido}` : ''}` : '—'}
                           {pet.birthDate && ` · ${calcAge(pet.birthDate)}`}
                         </div>
                       </div>
-
                       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
-                        <button
-                          className="btn btn--subtle btn--icon"
-                          style={glassBtn}
-                          onClick={e => { e.stopPropagation(); setEditingPet(pet); setPetFormOpen(true) }}
-                        >
+                        <button className="btn btn--subtle btn--icon" style={glassBtn} onClick={e => { e.stopPropagation(); setEditingPet(pet); setPetFormOpen(true) }}>
                           <Pencil size={18} strokeWidth={2} />
                         </button>
-                        <button
-                          className="btn btn--subtle btn--icon"
-                          style={glassBtn}
-                          onClick={e => { e.stopPropagation(); setDeletingPet(pet) }}
-                        >
+                        <button className="btn btn--subtle btn--icon" style={glassBtn} onClick={e => { e.stopPropagation(); setDeletingPet(pet) }}>
                           <Trash2 size={18} strokeWidth={2} />
                         </button>
                       </div>
