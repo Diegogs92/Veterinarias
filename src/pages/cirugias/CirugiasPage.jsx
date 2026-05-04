@@ -158,7 +158,7 @@ export default function CirugiasPage() {
                               {c.diagnostico || '—'}
                             </span>
                           </td>
-                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
+                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap' }}>
                             {c.costos > 0 ? formatCurrency(c.costos) : '—'}
                           </td>
                           <td>

@@ -135,8 +135,7 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
                 width: 22, height: 22, borderRadius: '50%',
                 background: 'var(--danger)', color: '#fff',
                 border: 'none', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
+                display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <X size={12} />
             </button>
@@ -152,8 +151,7 @@ export default function ProductForm({ isOpen, onClose, onSave, initial = null })
               display: 'flex', flexDirection: 'column',
               alignItems: 'center', justifyContent: 'center',
               gap: 6, cursor: 'pointer', color: 'var(--text-tertiary)',
-              fontSize: 12,
-            }}
+              fontSize: 12 }}
           >
             <ImagePlus size={22} strokeWidth={1.5} />
             Agregar foto

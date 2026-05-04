@@ -170,8 +170,7 @@ export default function UsersPage() {
                               width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
                               background: `var(--vet-${badge.color === 'purple' ? 'violet' : badge.color === 'teal' ? 'teal' : 'sky'})`,
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              color: 'white', fontSize: 13, fontWeight: 700,
-                            }}>
+                              color: 'white', fontSize: 13, fontWeight: 700 }}>
                               {u.username.slice(0, 2).toUpperCase()}
                             </div>
                             <div>
@@ -195,7 +194,7 @@ export default function UsersPage() {
                             {u.is_active ? 'Activo' : 'Inactivo'}
                           </Badge>
                         </td>
-                        <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                        <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                           {formatDate(u.created_at)}
                         </td>
                         <td>
@@ -231,8 +230,7 @@ export default function UsersPage() {
         <div style={{
           marginTop: 24, padding: '16px 20px',
           background: 'var(--surface-2)', borderRadius: 'var(--r-lg)',
-          display: 'flex', flexWrap: 'wrap', gap: 24,
-        }}>
+          display: 'flex', flexWrap: 'wrap', gap: 24 }}>
           <span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 600, alignSelf: 'center' }}>Roles:</span>
           {[
             { role: 'developer', desc: 'Acceso a todas las herramientas, incluyendo las en prueba' },

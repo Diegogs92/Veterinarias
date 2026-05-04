@@ -639,11 +639,10 @@ select.form-input {
 /* === TABLE === */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
-.page > .card--table table { max-width: 700px; }
 thead th {
   text-align: left;
-  padding: 6px 8px;
-  font-size: 11px;
+  padding: 8px 12px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-tertiary);
   text-transform: uppercase;
@@ -653,10 +652,15 @@ thead th {
   white-space: nowrap;
 }
 tbody td {
-  padding: 8px 8px;
-  font-size: 16px;
+  padding: 12px 12px;
+  font-size: 15px;
   border-bottom: 1px solid var(--border-2);
   vertical-align: middle;
+}
+.table-wrap tbody td,
+.table-wrap tbody td div,
+.table-wrap tbody td span:not(.chip):not([class*="badge"]) {
+  font-size: 15px;
 }
 tbody tr:last-child td { border-bottom: none; }
 tbody tr {

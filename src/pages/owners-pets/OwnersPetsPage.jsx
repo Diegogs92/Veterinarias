@@ -248,7 +248,7 @@ export default function OwnersPetsPage() {
                                 {petCount(owner.id)}
                               </span>
                             </td>
-                            <td style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>{formatDate(owner.createdAt)}</td>
+                            <td style={{ color: 'var(--text-tertiary)' }}>{formatDate(owner.createdAt)}</td>
                             <td onClick={e => e.stopPropagation()}>
                               <div style={{ display: 'flex', gap: 4 }}>
                                 <button className="btn btn--subtle btn--icon" title="Editar" onClick={() => { setEditingOwner(owner); setOwnerFormOpen(true) }}>
@@ -423,9 +423,9 @@ export default function OwnersPetsPage() {
                                   </div>
                                 ) : <span style={{ color: 'var(--text-tertiary)' }}>—</span>}
                               </td>
-                              <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{speciesLabel(pet.species) || '—'}</td>
-                              <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{pet.breed || '—'}</td>
-                              <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{pet.birthDate ? calcAge(pet.birthDate) : '—'}</td>
+                              <td style={{ color: 'var(--text-secondary)' }}>{speciesLabel(pet.species) || '—'}</td>
+                              <td style={{ color: 'var(--text-secondary)' }}>{pet.breed || '—'}</td>
+                              <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{pet.birthDate ? calcAge(pet.birthDate) : '—'}</td>
                               <td>
                                 <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
                                   <button className="btn btn--subtle btn--icon" onClick={e => { e.stopPropagation(); setEditingPet(pet); setPetFormOpen(true) }} title="Editar">

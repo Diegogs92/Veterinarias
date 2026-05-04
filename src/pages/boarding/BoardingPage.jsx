@@ -190,9 +190,9 @@ export default function BoardingPage() {
                           <td>
                             <div style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</div>
                           </td>
-                          <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(b.entryDate)}</td>
-                          <td style={{ textAlign: 'right', fontSize: 13 }}>{days}</td>
-                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
+                          <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(b.entryDate)}</td>
+                          <td style={{ textAlign: 'right' }}>{days}</td>
+                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap' }}>
                             {total ? formatCurrency(total) : '—'}
                           </td>
                           <td>

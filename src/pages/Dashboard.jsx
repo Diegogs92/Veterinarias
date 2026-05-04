@@ -83,8 +83,7 @@ export default function Dashboard() {
           <div className="stat-card" onClick={() => navigate('/internments')}>
             <div className="stat-card__icon" style={{
               color: stats.internCritical ? 'var(--vet-rose)' : 'var(--vet-teal)',
-              background: stats.internCritical ? 'var(--danger-3)' : 'var(--accent-3)',
-            }}>
+              background: stats.internCritical ? 'var(--danger-3)' : 'var(--accent-3)' }}>
               <Hospital size={32} strokeWidth={1.75} />
             </div>
             <div className="stat-card__label">Internados</div>
@@ -162,14 +161,12 @@ export default function Dashboard() {
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
                 padding: '26px 18px', gap: 12,
-                border: '1px solid var(--border)', cursor: 'pointer',
-              }}
+                border: '1px solid var(--border)', cursor: 'pointer' }}
             >
               <div style={{
                 width: 60, height: 60, borderRadius: 14,
                 background: 'var(--accent-3)', color,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
+                display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Icon size={30} strokeWidth={1.85} />
               </div>
               <div style={{ fontSize: 15.5, fontWeight: 700, color: 'var(--text-primary)' }}>{label}</div>

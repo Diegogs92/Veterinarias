@@ -209,9 +209,9 @@ export default function VaccinesPage() {
                               </div>
                             ) : <span style={{ color: 'var(--text-tertiary)' }}>—</span>}
                           </td>
-                          <td style={{ fontSize: 14 }}>{r.vaccineName}</td>
-                          <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{r.date ? formatDate(r.date) : '—'}</td>
-                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
+                          <td style={{ }}>{r.vaccineName}</td>
+                          <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{r.date ? formatDate(r.date) : '—'}</td>
+                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap' }}>
                             {r.price > 0 ? formatCurrency(r.price) : '—'}
                           </td>
                           <td>

@@ -102,8 +102,7 @@ export default function PetForm({ isOpen, onClose, onSave, initial = null, defau
             <div style={{
               width: 76, height: 76, borderRadius: 'var(--r-md)', flexShrink: 0,
               background: 'var(--bg-sub)', border: '1.5px dashed var(--border)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
-            }}>
+              display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               {hasPhoto
                 ? <img src={form.photo} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={() => setForm(f => ({ ...f, photo: '' }))} />
                 : <span style={{ color: 'var(--text-tertiary)' }}><SpeciesIcon species={form.species} size={32} strokeWidth={1.25} /></span>

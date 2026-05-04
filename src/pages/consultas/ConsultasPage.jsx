@@ -179,7 +179,7 @@ export default function ConsultasPage() {
                           onClick={() => setSelected(c)}
                           style={{ cursor: 'pointer', background: selected?.id === c.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
                         >
-                          <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                          <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                             {formatDate(c.date)}
                           </td>
                           <td>
@@ -203,7 +203,7 @@ export default function ConsultasPage() {
                           <td style={{ maxWidth: 220 }}>
                             <div style={{ fontSize: 14 }} className="truncate">{c.reason || '—'}</div>
                           </td>
-                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
+                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap' }}>
                             {c.price > 0 ? formatCurrency(c.price) : '—'}
                           </td>
                           <td style={{ whiteSpace: 'nowrap' }}>

@@ -249,8 +249,8 @@ export default function FinancesPage() {
                     }
                     return (
                       <tr key={sale.id}>
-                        <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(sale.date)}</td>
-                        <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{METHOD_LABEL[sale.paymentMethod] || '—'}</td>
+                        <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(sale.date)}</td>
+                        <td style={{ color: 'var(--text-secondary)' }}>{METHOD_LABEL[sale.paymentMethod] || '—'}</td>
                         <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-emerald)', whiteSpace: 'nowrap' }}>
                           + {formatCurrency(sale.total)}
                         </td>
@@ -326,8 +326,8 @@ export default function FinancesPage() {
                 <tbody>
                   {expenses.map(m => (
                     <tr key={m.id}>
-                      <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(m.date)}</td>
-                      <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{m.category || '—'}</td>
+                      <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(m.date)}</td>
+                      <td style={{ color: 'var(--text-secondary)' }}>{m.category || '—'}</td>
                       <td className="truncate" style={{ maxWidth: 240 }}>{m.description}</td>
                       <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-rose)', whiteSpace: 'nowrap' }}>
                         − {formatCurrency(m.amount)}

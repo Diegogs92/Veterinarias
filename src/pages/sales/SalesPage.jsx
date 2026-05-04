@@ -151,7 +151,7 @@ export default function SalesPage() {
                           onClick={() => setSelected(sale)}
                           style={{ cursor: 'pointer', background: selected?.id === sale.id ? 'color-mix(in srgb, var(--accent) 6%, transparent)' : undefined }}
                         >
-                          <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                          <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                             {formatDate(sale.date)}
                           </td>
                           <td style={{ maxWidth: 260 }}>
@@ -160,7 +160,7 @@ export default function SalesPage() {
                               <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>+{itemCount - 1} más</div>
                             )}
                           </td>
-                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap', fontSize: 14 }}>
+                          <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)', whiteSpace: 'nowrap' }}>
                             {formatCurrency(sale.total)}
                           </td>
                           <td>

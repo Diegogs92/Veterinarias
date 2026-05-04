@@ -157,8 +157,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                   marginTop: 8, padding: '7px 12px', borderRadius: 6, fontSize: 13, fontWeight: 500,
                   background: scanFeedback.found ? 'var(--ok-3)' : 'var(--danger-3)',
                   color: scanFeedback.found ? 'var(--ok)' : 'var(--danger)',
-                  border: `1px solid ${scanFeedback.found ? 'var(--ok)' : 'var(--danger)'}`,
-                }}>
+                  border: `1px solid ${scanFeedback.found ? 'var(--ok)' : 'var(--danger)'}` }}>
                   {scanFeedback.found ? `✓ Agregado: ${scanFeedback.name}` : `No encontrado: ${scanFeedback.name}`}
                 </div>
               )}
@@ -172,8 +171,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                     display: 'flex', alignItems: 'center', gap: 10,
                     width: '100%', padding: '9px 10px', background: 'none', border: 'none',
                     borderRadius: 8, cursor: 'pointer', textAlign: 'left', color: 'var(--text-primary)',
-                    transition: 'background var(--t-fast)',
-                  }}
+                    transition: 'background var(--t-fast)' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-sub)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'none'}
                   >
@@ -221,8 +219,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                             style={{
                               width: 72, fontSize: 12, color: 'var(--text-tertiary)',
                               background: 'transparent', border: 'none', borderBottom: '1px dashed var(--border)',
-                              outline: 'none', padding: '0 2px', lineHeight: 1.4,
-                            }}
+                              outline: 'none', padding: '0 2px', lineHeight: 1.4 }}
                             onMouseEnter={e => e.target.style.borderBottomColor = 'var(--accent)'}
                             onMouseLeave={e => e.target.style.borderBottomColor = 'var(--border)'}
                           />
@@ -281,8 +278,7 @@ export default function SaleForm({ isOpen, onClose, onSave, initial = null }) {
                           background: active ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'var(--bg-sub)',
                           color: active ? 'var(--accent)' : 'var(--text-secondary)',
                           fontWeight: active ? 700 : 500,
-                          fontSize: 13, transition: 'all var(--t-fast)',
-                        }}
+                          fontSize: 13, transition: 'all var(--t-fast)' }}
                       >
                         <Icon size={16} strokeWidth={2} style={{ flexShrink: 0 }} />
                         <span style={{ flex: 1, textAlign: 'left' }}>{label}</span>

@@ -208,13 +208,13 @@ export default function PetsPage() {
                             </div>
                           ) : <span style={{ color: 'var(--text-tertiary)' }}>—</span>}
                         </td>
-                        <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                        <td style={{ color: 'var(--text-secondary)' }}>
                           {speciesLabel(pet.species) || '—'}
                         </td>
-                        <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                        <td style={{ color: 'var(--text-secondary)' }}>
                           {pet.breed || '—'}
                         </td>
-                        <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                        <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                           {pet.birthDate ? calcAge(pet.birthDate) : '—'}
                         </td>
                         <td>

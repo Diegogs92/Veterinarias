@@ -179,10 +179,10 @@ export default function InternmentsPage() {
                           <td style={{ maxWidth: 200 }}>
                             <div style={{ fontSize: 14 }} className="truncate">{intern.reason || '—'}</div>
                           </td>
-                          <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                          <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                             {formatDate(intern.admissionDate)}
                           </td>
-                          <td style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                          <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                             {daysInterned(intern.admissionDate, intern.dischargeDate)}
                           </td>
                           <td style={{ whiteSpace: 'nowrap' }}>

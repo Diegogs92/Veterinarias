@@ -198,7 +198,7 @@ export default function CatalogPage() {
                             : <span style={{ color: 'var(--text-tertiary)' }}>—</span>
                           }
                         </td>
-                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-secondary)' }}>
+                        <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
                           {p.barcode || '—'}
                         </td>
                         <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--vet-teal)' }}>

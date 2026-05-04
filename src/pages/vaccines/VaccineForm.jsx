@@ -187,8 +187,7 @@ export default function VaccineForm({ isOpen, onClose, onSave, initial = null })
                       background: active ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'var(--bg-sub)',
                       color: active ? 'var(--accent)' : 'var(--text-secondary)',
                       fontWeight: active ? 700 : 500,
-                      fontSize: 12, transition: 'all var(--t-fast)',
-                    }}
+                      fontSize: 12, transition: 'all var(--t-fast)' }}
                   >
                     <Icon size={18} strokeWidth={2} />
                     <span style={{ textAlign: 'center', lineHeight: 1.2 }}>{label}</span>

@@ -49,8 +49,7 @@ export default function PetDetail() {
               background: 'var(--bg-input)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               overflow: 'hidden', flexShrink: 0,
-              color: 'var(--text-secondary)',
-            }}>
+              color: 'var(--text-secondary)' }}>
               {pet.photo
                 ? <img src={pet.photo} alt={pet.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : <SpeciesIcon species={pet.species} size={44} strokeWidth={1.25} />

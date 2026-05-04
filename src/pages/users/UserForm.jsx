@@ -78,8 +78,7 @@ export default function UserForm({ isOpen, onClose, onSave, initial = null, serv
         <div style={{
           marginBottom: 16, padding: '10px 14px', borderRadius: 8, fontSize: 13,
           background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)',
-          color: 'var(--vet-rose)',
-        }}>
+          color: 'var(--vet-rose)' }}>
           {serverError}
         </div>
       )}
@@ -132,8 +131,7 @@ export default function UserForm({ isOpen, onClose, onSave, initial = null, serv
               style={{
                 position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
                 background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)',
-                display: 'flex', padding: 2,
-              }}
+                display: 'flex', padding: 2 }}
             >
               {showPassword ? <EyeOff size={15} strokeWidth={2} /> : <Eye size={15} strokeWidth={2} />}
             </button>
@@ -154,8 +152,7 @@ export default function UserForm({ isOpen, onClose, onSave, initial = null, serv
                 borderRadius: 8, cursor: 'pointer',
                 border: `2px solid ${form.role === role ? 'var(--vet-teal)' : 'var(--border)'}`,
                 background: form.role === role ? 'rgba(20,184,166,0.06)' : 'transparent',
-                transition: 'border-color 0.15s, background 0.15s',
-              }}
+                transition: 'border-color 0.15s, background 0.15s' }}
             >
               <input
                 type="radio" name="role" value={role}

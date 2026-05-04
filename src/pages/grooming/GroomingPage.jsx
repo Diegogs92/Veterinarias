@@ -172,8 +172,7 @@ export default function GroomingPage() {
                                 width: 32, height: 32, borderRadius: 'var(--r-sm)',
                                 background: 'rgba(0,122,255,0.1)',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                color: 'var(--blue)', flexShrink: 0,
-                              }}>
+                                color: 'var(--blue)', flexShrink: 0 }}>
                                 <SpeciesIcon species={pet?.species} size={16} strokeWidth={1.5} />
                               </div>
                               <span style={{ fontWeight: 600, fontSize: 14 }}>{pet?.name || '—'}</span>
@@ -194,7 +193,7 @@ export default function GroomingPage() {
                               </div>
                             ) : <span style={{ color: 'var(--text-tertiary)' }}>—</span>}
                           </td>
-                          <td style={{ fontWeight: 700, color: 'var(--vet-teal)', fontSize: 14 }}>
+                          <td style={{ fontWeight: 700, color: 'var(--vet-teal)' }}>
                             {g.price > 0 ? formatCurrency(g.price) : '—'}
                           </td>
                           <td>
@@ -328,8 +327,7 @@ export default function GroomingPage() {
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   padding: '12px 14px', borderRadius: 'var(--r-md)',
                   border: '1px solid var(--border)', background: 'var(--bg-sub)',
-                  cursor: 'pointer', fontSize: 14, transition: 'all var(--t-fast)',
-                }}
+                  cursor: 'pointer', fontSize: 14, transition: 'all var(--t-fast)' }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent-3)'; e.currentTarget.style.borderColor = 'var(--accent)' }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-sub)'; e.currentTarget.style.borderColor = 'var(--border)' }}
               >

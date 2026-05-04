@@ -95,13 +95,12 @@ export default function OwnersPage() {
                         <span style={{
                           display: 'inline-flex', alignItems: 'center', gap: 5,
                           background: 'var(--bg-input)', borderRadius: 'var(--r-full)',
-                          padding: '2px 10px', fontSize: 13, fontWeight: 600,
-                        }}>
+                          padding: '2px 10px', fontSize: 13, fontWeight: 600 }}>
                           <Users size={12} strokeWidth={2} />
                           {petCount(owner.id)}
                         </span>
                       </td>
-                      <td style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>{formatDate(owner.createdAt)}</td>
+                      <td style={{ color: 'var(--text-tertiary)' }}>{formatDate(owner.createdAt)}</td>
                       <td onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex', gap: 4 }}>
                           <button className="btn btn--subtle btn--icon" title="Editar" onClick={() => { setEditing(owner); setFormOpen(true) }}>

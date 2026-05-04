@@ -75,8 +75,7 @@ export default function Login() {
                 style={{
                   position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
                   background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-                  color: 'rgba(255,255,255,0.55)', display: 'flex', alignItems: 'center',
-                }}
+                  color: 'rgba(255,255,255,0.55)', display: 'flex', alignItems: 'center' }}
               >
                 {showPassword ? <EyeOff size={18} strokeWidth={1.75} /> : <Eye size={18} strokeWidth={1.75} />}
               </button>

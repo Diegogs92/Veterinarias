@@ -91,8 +91,7 @@ export default function OwnerForm({ isOpen, onClose, onSave, initial = null }) {
           padding: '10px 0', background: 'transparent', border: 'none',
           color: 'var(--accent)', fontWeight: 600, fontSize: 14,
           borderTop: '1px solid var(--border)', borderBottom: showMore ? 'none' : '1px solid var(--border)',
-          marginBottom: showMore ? 12 : 0,
-        }}
+          marginBottom: showMore ? 12 : 0 }}
       >
         <ChevronDown size={16} style={{ transform: showMore ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }} />
         {showMore ? 'Ocultar datos opcionales' : 'Agregar email, dirección o descuento'}
