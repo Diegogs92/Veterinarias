@@ -65,9 +65,9 @@ export default function OwnersPetsPage() {
   const [deletingOwner, setDeletingOwner] = useState(null)
 
   const filteredOwners = useMemo(() =>
-    owners.items.filter(o =>
-      `${o.name} ${o.apellido} ${o.phone} ${o.email}`.toLowerCase().includes(ownerSearch.toLowerCase())
-    ),
+    owners.items
+      .filter(o => `${o.name} ${o.apellido} ${o.phone} ${o.email}`.toLowerCase().includes(ownerSearch.toLowerCase()))
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es')),
     [owners.items, ownerSearch]
   )
 
@@ -87,18 +87,20 @@ export default function OwnersPetsPage() {
   const [petFormOpen, setPetFormOpen] = useState(false)
   const [editingPet, setEditingPet] = useState(null)
   const [deletingPet, setDeletingPet] = useState(null)
-  const [petView, setPetView] = useState('cards')
+  const [petView, setPetView] = useState('table')
 
   const filteredPets = useMemo(() =>
-    pets.items.filter(p => {
-      const owner = owners.find(p.ownerId)
-      const searchStr = `${p.name} ${p.breed} ${owner?.name || ''} ${owner?.apellido || ''}`.toLowerCase()
-      return (
-        searchStr.includes(petSearch.toLowerCase()) &&
-        (!speciesFilter || p.species === speciesFilter) &&
-        (!ownerFilter || p.ownerId === ownerFilter)
-      )
-    }),
+    pets.items
+      .filter(p => {
+        const owner = owners.find(p.ownerId)
+        const searchStr = `${p.name} ${p.breed} ${owner?.name || ''} ${owner?.apellido || ''}`.toLowerCase()
+        return (
+          searchStr.includes(petSearch.toLowerCase()) &&
+          (!speciesFilter || p.species === speciesFilter) &&
+          (!ownerFilter || p.ownerId === ownerFilter)
+        )
+      })
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es')),
     [pets.items, petSearch, speciesFilter, ownerFilter, owners]
   )
 
