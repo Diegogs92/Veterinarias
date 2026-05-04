@@ -470,9 +470,19 @@ svg { display: block; }
 .chip--accent  { background: var(--accent-3); color: var(--accent); border-color: transparent; }
 .chip--ok      { background: var(--ok-3);     color: var(--ok);     border-color: transparent; }
 .chip--warn    { background: var(--warn-3);   color: var(--warn);   border-color: transparent; }
+.chip--yellow  { background: #FEFCE8;         color: #854D0E;       border-color: transparent; }
 .chip--danger  { background: var(--danger-3); color: var(--danger); border-color: transparent; }
 .chip--info    { background: var(--info-3);   color: var(--info);   border-color: transparent; }
 .chip .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+/* Selected row left border indicator */
+.table-wrap tbody tr > td:first-child {
+  border-left: 3px solid transparent;
+  transition: border-color var(--t-fast);
+}
+.table-wrap tbody tr[style*="color-mix"] > td:first-child {
+  border-left: 3px solid var(--accent);
+}
 
 /* Badge aliases → chip */
 .badge {

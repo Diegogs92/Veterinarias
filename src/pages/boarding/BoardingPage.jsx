@@ -28,7 +28,7 @@ function PendingBtn({ onClick }) {
   return (
     <button type="button" onClick={onClick}
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0, transition: 'color var(--t-fast)', color: hovered ? 'var(--ok)' : 'var(--warn)' }}
+      className={`chip ${hovered ? 'chip--ok' : 'chip--yellow'}`} style={{ border: 'none', cursor: 'pointer' }}
     >
       <Clock size={15} strokeWidth={2} />
       {hovered ? 'Cobrar' : 'No pagado'}
@@ -160,7 +160,7 @@ export default function BoardingPage() {
             )}
           />
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: selectedLive ? '1.5fr 1fr' : '1fr', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16 }}>
             <div className="card card--no-hover card--table">
               <div className="table-wrap">
                 <table>
@@ -197,12 +197,12 @@ export default function BoardingPage() {
                           </td>
                           <td>
                             {b.paid
-                              ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--ok)', fontSize: 13, fontWeight: 600 }}><CheckCircle2 size={15} strokeWidth={2} />Pagado</span>
+                              ? <span className="chip chip--ok"><CheckCircle2 size={13} strokeWidth={2.5} />Pagado</span>
                               : <PendingBtn onClick={(e) => { e.stopPropagation(); setPaying(b) }} />
                             }
                           </td>
                           <td>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: isActive ? 'var(--blue)' : 'var(--ok)' }}>
+                            <span className={`chip ${isActive ? 'chip--accent' : 'chip--ok'}`}>
                               {isActive ? 'En pensión' : 'Retirado'}
                             </span>
                           </td>

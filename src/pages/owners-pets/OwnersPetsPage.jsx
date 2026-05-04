@@ -198,7 +198,7 @@ export default function OwnersPetsPage() {
                 action={!ownerSearch && <button className="btn btn--primary" onClick={() => setOwnerFormOpen(true)}>+ Nuevo dueño</button>}
               />
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: selectedOwnerLive ? '1.5fr 1fr' : '1fr', gap: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16 }}>
                 <div className="card card--no-hover card--table">
                   <div className="table-wrap">
                     <table>
@@ -377,7 +377,7 @@ export default function OwnersPetsPage() {
                 )}
               />
             ) : petView === 'table' ? (
-              <div style={{ display: 'grid', gridTemplateColumns: selectedPetLive ? '1.5fr 1fr' : '1fr', gap: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16 }}>
                 <div className="card card--no-hover card--table">
                   <div className="table-wrap">
                     <table>

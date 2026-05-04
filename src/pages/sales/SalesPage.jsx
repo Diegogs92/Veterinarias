@@ -129,7 +129,7 @@ export default function SalesPage() {
             }
           />
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: selectedLive ? '1.5fr 1fr' : '1fr', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16 }}>
             <div className="card card--no-hover card--table">
               <div className="table-wrap">
                 <table>

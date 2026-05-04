@@ -9,10 +9,10 @@ import InternmentForm from './InternmentForm'
 import { formatDate, formatDateTime, todayStr } from '../../utils/helpers'
 
 const STATUS = {
-  active:     { label: 'Internado',  color: 'var(--warn)'   },
-  critical:   { label: 'Crítico',    color: 'var(--danger)' },
-  improving:  { label: 'Mejorando',  color: 'var(--blue)'   },
-  discharged: { label: 'Alta',       color: 'var(--ok)'     },
+  active:     { label: 'Internado',  chipClass: 'chip--warn'   },
+  critical:   { label: 'Crítico',    chipClass: 'chip--danger' },
+  improving:  { label: 'Mejorando',  chipClass: 'chip--accent' },
+  discharged: { label: 'Alta',       chipClass: 'chip--ok'     },
 }
 
 function Field({ label, children }) {
@@ -148,7 +148,7 @@ export default function InternmentsPage() {
             )}
           />
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: selectedLive ? '1.5fr 1fr' : '1fr', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16 }}>
             <div className="card card--no-hover card--table">
               <div className="table-wrap">
                 <table>
@@ -186,7 +186,7 @@ export default function InternmentsPage() {
                             {daysInterned(intern.admissionDate, intern.dischargeDate)}
                           </td>
                           <td style={{ whiteSpace: 'nowrap' }}>
-                            <span style={{ fontSize: 13, fontWeight: 600, color: st.color }}>{st.label}</span>
+                            <span className={`chip ${st.chipClass}`}>{st.label}</span>
                           </td>
                           <td>
                             <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
@@ -252,7 +252,7 @@ export default function InternmentsPage() {
                   <Field label="Estado">
                     {(() => {
                       const st = STATUS[selectedLive.status] || STATUS.active
-                      return <span style={{ fontWeight: 600, color: st.color }}>{st.label}</span>
+                      return <span className={`chip ${st.chipClass}`}>{st.label}</span>
                     })()}
                   </Field>
                   {selectedLive.observations && <Field label="Observaciones">{selectedLive.observations}</Field>}

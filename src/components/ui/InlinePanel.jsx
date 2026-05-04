@@ -1,7 +1,24 @@
 import { X } from 'lucide-react'
 
 export default function InlinePanel({ isOpen, onClose, title, children, width, headerColor }) {
-  if (!isOpen) return null
+  if (!isOpen) return (
+    <div style={{
+      width: width || '100%',
+      flexShrink: 0,
+      background: 'var(--bg-elev)',
+      border: '1px dashed var(--border)',
+      borderRadius: 'var(--r-lg)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 200,
+      alignSelf: 'flex-start',
+    }}>
+      <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>
+        Seleccioná una fila para ver el detalle
+      </span>
+    </div>
+  )
 
   return (
     <div
