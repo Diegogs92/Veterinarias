@@ -8,6 +8,8 @@ import InlinePanel from '../../components/ui/InlinePanel'
 import SpeciesIcon from '../../components/ui/SpeciesIcon'
 import CirugiasForm from './CirugiasForm'
 import { formatDate, formatCurrency } from '../../utils/helpers'
+import { useToast } from '../../hooks/useToast'
+import Toast from '../../components/ui/Toast'
 
 function PendingBtn({ onClick }) {
   const [hovered, setHovered] = useState(false)
@@ -45,6 +47,7 @@ function Divider() {
 }
 
 export default function CirugiasPage() {
+  const { toast, showToast } = useToast()
   const { cirugias, pets, owners } = useApp()
   const [search, setSearch]         = useState('')
   const [filterPago, setFilterPago] = useState('')
@@ -73,13 +76,14 @@ export default function CirugiasPage() {
     if (editing) cirugias.update(editing.id, data)
     else cirugias.add(data)
     setEditing(null)
-  }
+    showToast('Cirugía guardada')}
 
-  const handleDelete   = () => { if (deleting?.id === selected?.id) setSelected(null); cirugias.remove(deleting.id); setDeleting(null) }
+  const handleDelete   = () => { if (deleting?.id === selected?.id) setSelected(null); cirugias.remove(deleting.id); setDeleting(null); showToast('Cirugía eliminada', 'danger')}
   const handleMarkPaid = (method) => {
     const price        = paying.costos || 0
     const surchargeAmt = Math.round(price * method.surcharge)
     cirugias.update(paying.id, { paid: true, paymentMethod: method.value, paidAmount: price + surchargeAmt })
+    showToast('Pago registrado')
     setPaying(null)
   }
 

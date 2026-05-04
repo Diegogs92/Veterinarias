@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react'
 import { Search, Plus, Pencil, Trash2, Stethoscope, Clock, CheckCircle2 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
+import { useToast } from '../../hooks/useToast'
+import Toast from '../../components/ui/Toast'
 
 const WhatsAppIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -55,6 +57,7 @@ function Divider() {
 }
 
 export default function ConsultasPage() {
+  const { toast, showToast } = useToast()
   const { consultas, pets, owners, syncDebt } = useApp()
   const [search, setSearch]         = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
@@ -78,7 +81,8 @@ export default function ConsultasPage() {
 
   const handleSave = (data) => {
     let savedId
-    if (editing) { consultas.update(editing.id, data); savedId = editing.id }
+    if (editing) { consultas.update(editing.id, data); savedId = editing.id
+    showToast('Consulta guardada')}
     else { const created = consultas.add(data); savedId = created.id }
     if (data.price > 0) {
       const pet = pets.find(data.petId)
@@ -90,14 +94,14 @@ export default function ConsultasPage() {
   const handleMarkPaid = (method) => {
     const surchargeAmt = Math.round((paying.price || 0) * method.surcharge)
     consultas.update(paying.id, { paymentStatus: 'paid', paymentMethod: method.value, price: (paying.price || 0) + surchargeAmt })
+    showToast('Pago registrado')
     setPaying(null)
   }
 
   const handleDelete = () => {
     if (deleting.price > 0) {
       const pet = pets.find(deleting.petId)
-      if (pet?.ownerId) syncDebt('consulta', deleting.id, pet.ownerId, deleting.price, deleting.price)
-    }
+      if (pet?.ownerId) syncDebt('consulta', deleting.id, pet.ownerId, deleting.price, deleting.price); showToast('Consulta eliminada', 'danger')}
     consultas.remove(deleting.id)
     setDeleting(null)
   }

@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Search, Pencil, Trash2, Scissors, CheckCircle2, Clock } from 'lucide-react'
+import { useToast } from '../../hooks/useToast'
+import Toast from '../../components/ui/Toast'
 
 const WhatsAppIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -55,6 +57,7 @@ function Divider() {
 }
 
 export default function GroomingPage() {
+  const { toast, showToast } = useToast()
   const { grooming, pets, owners } = useApp()
   const [search, setSearch]         = useState('')
   const [filterService, setFilterService] = useState('')
@@ -84,10 +87,11 @@ export default function GroomingPage() {
   }, [grooming.items, search, filterService, filterPago, filterFecha, pets, owners])
 
   const handleSave     = (data) => { if (editing) grooming.update(editing.id, data); else grooming.add(data); setEditing(null) }
-  const handleDelete   = () => { if (deleting?.id === selected?.id) setSelected(null); grooming.remove(deleting.id); setDeleting(null) }
+  const handleDelete   = () => { if (deleting?.id === selected?.id) setSelected(null); grooming.remove(deleting.id); setDeleting(null); showToast('Turno eliminado', 'danger')}
   const handleMarkPaid = (method) => {
     const surchargeAmt = Math.round((paying.price || 0) * method.surcharge)
     grooming.update(paying.id, { paid: true, paymentMethod: method.value, price: (paying.price || 0) + surchargeAmt })
+    showToast('Pago registrado')
     setPaying(null)
   }
 

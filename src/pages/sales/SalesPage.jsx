@@ -1,5 +1,7 @@
-import { useState, useMemo, useCallback } from 'react'
-import { Search, Plus, Pencil, Trash2, ShoppingCart, CircleCheck } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Search, Plus, Pencil, Trash2, ShoppingCart } from 'lucide-react'
+import { useToast } from '../../hooks/useToast'
+import Toast from '../../components/ui/Toast'
 import { useApp } from '../../context/AppContext'
 import Header from '../../components/layout/Header'
 import EmptyState from '../../components/ui/EmptyState'
@@ -32,12 +34,7 @@ export default function SalesPage() {
   const [editing, setEditing]         = useState(null)
   const [deleting, setDeleting]       = useState(null)
   const [selected, setSelected]       = useState(null)
-  const [toast, setToast]             = useState(false)
-
-  const showToast = useCallback(() => {
-    setToast(true)
-    setTimeout(() => setToast(false), 3000)
-  }, [])
+  const { toast, showToast }          = useToast()
 
   const today = new Date().toISOString().slice(0, 10)
   const startOfWeek = (() => { const d = new Date(); d.setDate(d.getDate() - d.getDay()); return d.toISOString().slice(0, 10) })()
@@ -66,7 +63,7 @@ export default function SalesPage() {
     else sales.add(data)
     setEditing(null)
     setFormOpen(false)
-    if (!editing) showToast()
+    if (!editing) showToast('Venta registrada')
   }
 
   const handleDelete = () => { if (!deleting) return; sales.remove(deleting.id); setDeleting(null) }
@@ -231,14 +228,7 @@ export default function SalesPage() {
         initial={editing}
       />
 
-      {toast && (
-        <div className="toast-wrap">
-          <div className="toast toast--ok" style={{ background: 'var(--ok)', borderLeft: 'none' }}>
-            <CircleCheck size={20} strokeWidth={2.5} style={{ color: 'white', flexShrink: 0 }} />
-            <span style={{ fontWeight: 600, fontSize: 14, color: 'white' }}>Venta realizada con éxito</span>
-          </div>
-        </div>
-      )}
+      <Toast toast={toast} />
 
       {deleting && (
         <Modal

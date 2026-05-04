@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, Pencil, Trash2, Users, PawPrint, Grid3x3, List } from 'lucide-react'
+import { useToast } from '../../hooks/useToast'
+import Toast from '../../components/ui/Toast'
 
 function WhatsAppIcon({ size = 18 }) {
   return (
@@ -52,6 +54,7 @@ function Divider() {
 }
 
 export default function OwnersPetsPage() {
+  const { toast, showToast } = useToast()
   const { owners, pets } = useApp()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()

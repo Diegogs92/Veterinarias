@@ -7,6 +7,8 @@ import Modal from '../../components/ui/Modal'
 import InlinePanel from '../../components/ui/InlinePanel'
 import InternmentForm from './InternmentForm'
 import { formatDate, formatDateTime, todayStr } from '../../utils/helpers'
+import { useToast } from '../../hooks/useToast'
+import Toast from '../../components/ui/Toast'
 
 const STATUS = {
   active:     { label: 'Internado',  chipClass: 'chip--warn'   },
@@ -37,6 +39,7 @@ function daysInterned(admissionDate, dischargeDate) {
 }
 
 export default function InternmentsPage() {
+  const { toast, showToast } = useToast()
   const { internments, pets, owners, addDailyNote, removeDailyNote } = useApp()
   const [statusFilter, setStatusFilter] = useState('active')
   const [search, setSearch]             = useState('')
@@ -73,8 +76,8 @@ export default function InternmentsPage() {
   )
 
   const handleSave      = (data) => { if (editing) internments.update(editing.id, data); else internments.add(data); setEditing(null) }
-  const handleDischarge = () => { internments.update(dischargeTarget.id, { status: 'discharged', dischargeDate: todayStr() }); setDischargeTarget(null) }
-  const handleDelete    = () => { if (deleting?.id === selected?.id) setSelected(null); internments.remove(deleting.id); setDeleting(null) }
+  const handleDischarge = () => { internments.update(dischargeTarget.id, { status: 'discharged', dischargeDate: todayStr() }); showToast('Alta registrada'); setDischargeTarget(null) }
+  const handleDelete    = () => { if (deleting?.id === selected?.id) setSelected(null); internments.remove(deleting.id); setDeleting(null); showToast('Registro eliminado', 'danger')}
   const handleAddNote   = (id) => {
     if (!newNote.trim()) return
     addDailyNote(id, newNote.trim())

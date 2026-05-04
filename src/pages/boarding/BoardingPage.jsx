@@ -7,6 +7,8 @@ import Modal from '../../components/ui/Modal'
 import InlinePanel from '../../components/ui/InlinePanel'
 import BoardingForm from './BoardingForm'
 import { formatDate, formatCurrency, todayStr } from '../../utils/helpers'
+import { useToast } from '../../hooks/useToast'
+import Toast from '../../components/ui/Toast'
 
 const WhatsAppIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -59,6 +61,7 @@ function Divider() {
 }
 
 export default function BoardingPage() {
+  const { toast, showToast } = useToast()
   const { boarding, pets, owners } = useApp()
   const [search, setSearch]               = useState('')
   const [statusFilter, setStatusFilter]   = useState('active')
@@ -92,13 +95,14 @@ export default function BoardingPage() {
   )
 
   const handleSave     = (data) => { if (editing) boarding.update(editing.id, data); else boarding.add(data); setEditing(null) }
-  const handleCheckout = () => { boarding.update(checkoutTarget.id, { status: 'completed', exitDate: todayStr() }); setCheckoutTarget(null) }
-  const handleDelete   = () => { if (deleting?.id === selected?.id) setSelected(null); boarding.remove(deleting.id); setDeleting(null) }
+  const handleCheckout = () => { boarding.update(checkoutTarget.id, { status: 'completed', exitDate: todayStr() }); showToast('Mascota retirada'); setCheckoutTarget(null) }
+  const handleDelete   = () => { if (deleting?.id === selected?.id) setSelected(null); boarding.remove(deleting.id); setDeleting(null); showToast('Registro eliminado', 'danger')}
   const handleMarkPaid = (method) => {
     const days         = calcDays(paying.entryDate, paying.exitDate)
     const price        = paying.dailyPrice > 0 ? paying.dailyPrice * days : 0
     const surchargeAmt = Math.round(price * method.surcharge)
     boarding.update(paying.id, { paid: true, paymentMethod: method.value, paidAmount: price + surchargeAmt })
+    showToast('Pago registrado')
     setPaying(null)
   }
 

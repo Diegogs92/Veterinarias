@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react'
+import { useToast } from '../../hooks/useToast'
+import Toast from '../../components/ui/Toast'
 import {
   Syringe, Dog, Cat, ShieldCheck, RotateCw, AlertTriangle,
   Pencil, Trash2, Plus, Search, CalendarCheck, BookOpen,
@@ -64,6 +66,7 @@ function Divider() {
 }
 
 export default function VaccinesPage() {
+  const { toast, showToast } = useToast()
   const { vaccineCatalog, petVaccines, pets, owners } = useApp()
 
   const [species, setSpecies]       = useState('dog')
@@ -113,6 +116,7 @@ export default function VaccinesPage() {
 
   const handleMarkPaid = (method) => {
     petVaccines.update(paying.id, { paid: true, paymentMethod: method.value })
+    showToast('Pago registrado')
     setPaying(null)
   }
 
